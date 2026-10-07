@@ -27,12 +27,12 @@ export const HietCollegeLogo: React.FC<Props> = ({
   // Official emblem of HIET Shahpur (Authentic gear crest + Dhauladhar peaks + Motto)
   const renderEmblem = () => (
     <div 
-      className={`relative group/emblem ${iconSizes[size]} rounded-2xl bg-white dark:bg-slate-900 flex items-center justify-center p-1 shrink-0 shadow-lg ${
-        glow ? 'shadow-blue-600/30 ring-2 ring-blue-500/30 dark:ring-cyan-400/40' : ''
-      } border border-slate-200/90 dark:border-blue-500/40 transform hover:scale-105 transition-all duration-300`}
+      className={`relative group/emblem ${iconSizes[size]} rounded-2xl bg-white dark:bg-[#141414] flex items-center justify-center p-1 shrink-0 shadow-lg ${
+        glow ? 'shadow-blue-600/30 ring-2 ring-blue-500/30 dark:ring-[#404040]' : ''
+      } border border-slate-200/90 dark:border-[#303030] transform hover:scale-105 transition-all duration-300`}
     >
       {/* Background soft glow */}
-      <div className="absolute inset-0 bg-radial-glow from-blue-500/10 dark:from-cyan-400/15 to-transparent rounded-2xl pointer-events-none" />
+      <div className="absolute inset-0 bg-radial-glow from-blue-500/10 dark:from-white/5 to-transparent rounded-2xl pointer-events-none" />
 
       {/* Official Real HIET College Logo */}
       {!imageError ? (
@@ -43,13 +43,13 @@ export const HietCollegeLogo: React.FC<Props> = ({
           className="w-full h-full object-contain filter drop-shadow-xs group-hover/emblem:scale-105 group-hover/emblem:rotate-2 transition-transform duration-300"
         />
       ) : (
-        <GraduationCap className="w-4/5 h-4/5 text-blue-600 dark:text-cyan-300" />
+        <GraduationCap className="w-4/5 h-4/5 text-blue-600 dark:text-white" />
       )}
 
       {/* Glowing live beacon dot */}
       <span className="absolute -top-1 -right-1 flex h-3 w-3">
         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-        <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-400 border-2 border-slate-900" />
+        <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-400 border-2 border-slate-900 dark:border-[#141414]" />
       </span>
     </div>
   );

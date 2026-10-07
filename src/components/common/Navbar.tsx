@@ -72,7 +72,7 @@ export const Navbar: React.FC<Props> = ({
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-white dark:bg-[#0f172a] border-b border-slate-200 dark:border-slate-800 transition-colors">
+    <header className="sticky top-0 z-40 w-full bg-white dark:bg-[#0a0a0a] border-b border-slate-200 dark:border-[#2a2a2a] transition-colors">
       <div className="w-full px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
         
         {/* Left: HIET Branding & Mobile Menu Toggle */}
@@ -80,7 +80,7 @@ export const Navbar: React.FC<Props> = ({
           {user && (
             <button
               onClick={onToggleSidebar}
-              className="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition lg:hidden"
+              className="p-2 rounded-xl text-slate-600 dark:text-[#d4d4d4] hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1a1a1a] transition lg:hidden"
               aria-label="Toggle navigation drawer"
             >
               <Menu className="w-5 h-5" />
@@ -88,7 +88,7 @@ export const Navbar: React.FC<Props> = ({
           )}
 
           <div className="flex items-center gap-3 select-none">
-            <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 p-1 border border-slate-200 dark:border-slate-700 flex items-center justify-center shrink-0 shadow-2xs">
+            <div className="w-10 h-10 rounded-xl bg-white dark:bg-[#141414] p-1 border border-slate-200 dark:border-[#303030] flex items-center justify-center shrink-0 shadow-2xs">
               {!logoError ? (
                 <img
                   src="/images/hiet_crest.png"
@@ -97,16 +97,16 @@ export const Navbar: React.FC<Props> = ({
                   className="w-full h-full object-contain"
                 />
               ) : (
-                <div className="w-full h-full rounded-lg bg-[#0f2942] dark:bg-sky-600 flex items-center justify-center text-white font-extrabold text-sm">
+                <div className="w-full h-full rounded-lg bg-[#0f2942] dark:bg-[#282828] flex items-center justify-center text-white font-extrabold text-sm">
                   H
                 </div>
               )}
             </div>
             <div>
-              <span className="font-extrabold text-[#0f2942] dark:text-white text-sm sm:text-base tracking-tight block leading-tight">
+              <span className="font-extrabold text-[#0f2942] dark:text-[#f5f5f5] text-sm sm:text-base tracking-tight block leading-tight">
                 HIET GROUP OF INSTITUTIONS
               </span>
-              <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold block leading-none mt-0.5">
+              <span className="text-[11px] text-slate-500 dark:text-[#a3a3a3] font-semibold block leading-none mt-0.5">
                 HIET Digital Campus
               </span>
             </div>
@@ -116,13 +116,13 @@ export const Navbar: React.FC<Props> = ({
         {/* Center: Global Search Bar */}
         <div className="hidden md:flex flex-1 max-w-md mx-4">
           <div className="relative w-full">
-            <Search className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3.5 top-2.5" />
+            <Search className="w-4 h-4 text-slate-400 dark:text-[#858585] absolute left-3.5 top-2.5" />
             <input
               type="text"
               value={globalSearch}
               onChange={e => setGlobalSearch(e.target.value)}
               placeholder="Search students, faculty, syllabus, timetable..."
-              className="w-full pl-9 pr-4 py-2 text-xs text-slate-900 dark:text-white bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100/70 dark:hover:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:border-[#0f2942] dark:focus:border-sky-400 rounded-xl outline-hidden transition"
+              className="w-full pl-9 pr-4 py-2 text-xs text-slate-900 dark:text-[#f5f5f5] bg-slate-50 dark:bg-[#181818] hover:bg-slate-100/70 dark:hover:bg-[#202020] focus:bg-white dark:focus:bg-[#181818] border border-slate-200 dark:border-[#3a3a3a] focus:border-[#0f2942] dark:focus:border-[#d4d4d4] rounded-xl outline-hidden transition placeholder:text-slate-400 dark:placeholder:text-[#858585]"
             />
           </div>
         </div>
@@ -134,27 +134,27 @@ export const Navbar: React.FC<Props> = ({
               {/* Notification Bell */}
               <button
                 onClick={onOpenNotifications}
-                className="w-9 h-9 rounded-xl text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center relative transition"
+                className="w-9 h-9 rounded-xl text-slate-600 dark:text-[#d4d4d4] hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1a1a1a] flex items-center justify-center relative transition"
                 title="Notifications"
                 aria-label="View notifications"
               >
                 <Bell className="w-4 h-4" />
                 {unreadCount > 0 && (
-                  <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#0f2942] dark:bg-sky-400" />
+                  <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#0f2942] dark:bg-white" />
                 )}
               </button>
 
               {/* Profile Pill */}
               <div 
                 onClick={onOpenProfile}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 hover:border-[#0f2942] dark:hover:border-slate-600 transition cursor-pointer"
+                className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-[#141414] border border-slate-200 dark:border-[#303030] hover:border-[#0f2942] dark:hover:border-[#4a4a4a] transition cursor-pointer"
                 title="View Profile"
               >
                 {getRoleIcon()}
-                <span className="text-xs font-bold text-slate-900 dark:text-white max-w-[120px] sm:max-w-[160px] truncate">
+                <span className="text-xs font-bold text-slate-900 dark:text-[#f5f5f5] max-w-[120px] sm:max-w-[160px] truncate">
                   {user.name}
                 </span>
-                <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold hidden sm:inline border-l border-slate-200 dark:border-slate-700 pl-2">
+                <span className="text-[10px] text-slate-500 dark:text-[#a3a3a3] font-semibold hidden sm:inline border-l border-slate-200 dark:border-[#303030] pl-2">
                   {getRoleLabel()}
                 </span>
               </div>
@@ -162,7 +162,7 @@ export const Navbar: React.FC<Props> = ({
               {/* Logout Button */}
               <button
                 onClick={() => setShowLogoutConfirm(true)}
-                className="w-9 h-9 rounded-xl text-slate-600 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 flex items-center justify-center transition shrink-0"
+                className="w-9 h-9 rounded-xl text-slate-600 dark:text-[#a3a3a3] hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-[#202020] flex items-center justify-center transition shrink-0"
                 title="Sign Out"
                 aria-label="Sign out"
               >
@@ -183,15 +183,15 @@ export const Navbar: React.FC<Props> = ({
 
       {/* Logout Confirmation Dialog (Section 52) */}
       {showLogoutConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-xs p-4 overflow-y-auto">
-          <div className="bg-white dark:bg-[#131d2e] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl max-w-sm w-full p-6 text-center space-y-4 my-auto animate-scale-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 backdrop-blur-xs p-4 overflow-y-auto">
+          <div className="bg-white dark:bg-[#171717] rounded-2xl border border-slate-200 dark:border-[#303030] shadow-2xl max-w-sm w-full p-6 text-center space-y-4 my-auto animate-scale-in">
             <div className="w-12 h-12 rounded-2xl bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 flex items-center justify-center mx-auto">
               <LogOut className="w-6 h-6" />
             </div>
 
             <div>
-              <h3 className="text-base font-bold text-slate-900 dark:text-white">Sign Out Confirmation</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              <h3 className="text-base font-bold text-slate-900 dark:text-[#f5f5f5]">Sign Out Confirmation</h3>
+              <p className="text-xs text-slate-500 dark:text-[#a3a3a3] mt-1">
                 Are you sure you want to sign out? Your session will be safely cleared and you will be redirected to the login portal.
               </p>
             </div>
@@ -200,7 +200,7 @@ export const Navbar: React.FC<Props> = ({
               <button
                 type="button"
                 onClick={() => setShowLogoutConfirm(false)}
-                className="flex-1 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+                className="flex-1 py-2.5 rounded-xl border border-slate-300 dark:border-[#3a3a3a] text-slate-700 dark:text-[#e5e5e5] text-xs font-bold hover:bg-slate-50 dark:hover:bg-[#262626] transition"
               >
                 Cancel
               </button>

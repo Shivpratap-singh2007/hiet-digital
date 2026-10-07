@@ -77,7 +77,7 @@ export const CustomPhoneHeader: React.FC<Props> = ({
 
   return (
     <header 
-      className="sticky top-0 z-40 w-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 shadow-xs transition-colors duration-200 pt-safe"
+      className="sticky top-0 z-40 w-full bg-white/95 dark:bg-[#0a0a0a]/95 backdrop-blur-md border-b border-slate-200 dark:border-[#2a2a2a] shadow-xs transition-colors duration-200 pt-safe"
       style={{
         paddingTop: 'env(safe-area-inset-top, 0px)'
       }}
@@ -91,7 +91,7 @@ export const CustomPhoneHeader: React.FC<Props> = ({
           {onToggleSidebar && (
             <button
               onClick={onToggleSidebar}
-              className="p-1.5 rounded-lg text-slate-600 hover:bg-slate-100 transition shrink-0"
+              className="p-1.5 rounded-lg text-slate-600 dark:text-[#a3a3a3] hover:bg-slate-100 dark:hover:bg-[#1f1f1f] transition shrink-0"
               title="Menu"
             >
               <Menu className="w-5 h-5" />
@@ -105,10 +105,10 @@ export const CustomPhoneHeader: React.FC<Props> = ({
             )}
             {config.showLogoText && (
               <div className="leading-tight">
-                <span className="font-extrabold text-xs sm:text-sm tracking-tight text-[#0f2942] block truncate max-w-[170px]">
+                <span className="font-extrabold text-xs sm:text-sm tracking-tight text-[#0f2942] dark:text-[#f5f5f5] block truncate max-w-[170px]">
                   HIET GROUP OF INSTITUTIONS
                 </span>
-                <span className="text-[10px] text-slate-500 font-medium block -mt-0.5">
+                <span className="text-[10px] text-slate-500 dark:text-[#a3a3a3] font-medium block -mt-0.5">
                   HIET Digital Campus
                 </span>
               </div>
@@ -124,7 +124,7 @@ export const CustomPhoneHeader: React.FC<Props> = ({
           {/* 1. Optional Search Icon */}
           {config.showSearch && (
             <button
-              className="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition shrink-0"
+              className="p-1.5 rounded-lg text-slate-500 dark:text-[#a3a3a3] hover:text-slate-800 dark:hover:text-[#f5f5f5] hover:bg-slate-100 dark:hover:bg-[#1f1f1f] transition shrink-0"
               title="Search"
             >
               <Search className="w-4 h-4 text-slate-500" />
@@ -158,16 +158,16 @@ export const CustomPhoneHeader: React.FC<Props> = ({
           {config.showNotifications && (
             <button
               onClick={onOpenNotifications}
-              className="p-1.5 rounded-lg text-slate-600 hover:text-blue-600 hover:bg-slate-100 transition shrink-0 relative cursor-pointer"
+              className="p-1.5 rounded-lg text-slate-600 dark:text-[#a3a3a3] hover:text-blue-600 dark:hover:text-[#f5f5f5] hover:bg-slate-100 dark:hover:bg-[#1f1f1f] transition shrink-0 relative cursor-pointer"
               title="Official Notices & Circulars"
             >
-              <Bell className="w-4 h-4 text-slate-600" />
+              <Bell className="w-4 h-4 text-slate-600 dark:text-[#a3a3a3]" />
               {unreadCount > 0 ? (
                 <span className="absolute -top-0.5 -right-0.5 min-w-[15px] h-3.5 px-0.5 rounded-full bg-rose-600 text-white text-[9px] font-black flex items-center justify-center animate-pulse shadow-xs">
                   {unreadCount > 9 ? '9+' : unreadCount}
                 </span>
               ) : (
-                <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-slate-300" />
+                <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-[#404040]" />
               )}
             </button>
           )}
@@ -176,7 +176,7 @@ export const CustomPhoneHeader: React.FC<Props> = ({
           {config.showThemeToggle && (
             <button
               onClick={toggleTheme}
-              className="p-1.5 rounded-lg text-slate-500 dark:text-amber-300 hover:text-slate-800 dark:hover:text-amber-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition shrink-0 cursor-pointer"
+              className="p-1.5 rounded-lg text-slate-500 dark:text-amber-300 hover:text-slate-800 dark:hover:text-amber-200 hover:bg-slate-100 dark:hover:bg-[#282828] transition shrink-0 cursor-pointer"
               title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
             >
               {theme === 'dark' ? (

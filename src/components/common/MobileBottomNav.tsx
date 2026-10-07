@@ -94,7 +94,7 @@ export const MobileBottomNav: React.FC<Props> = ({
   return (
     <nav 
       aria-label="Mobile Bottom Navigation"
-      className={`${forceVisible ? 'flex' : 'lg:hidden'} fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200/90 dark:border-slate-800 shadow-lg w-full max-w-full transition-all duration-300 pb-safe`}
+      className={`${forceVisible ? 'flex' : 'lg:hidden'} fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-[#0a0a0a]/95 backdrop-blur-md border-t border-slate-200/90 dark:border-[#2a2a2a] shadow-lg w-full max-w-full transition-all duration-300 pb-safe`}
       style={{
         paddingBottom: 'env(safe-area-inset-bottom, 0px)'
       }}
@@ -110,16 +110,16 @@ export const MobileBottomNav: React.FC<Props> = ({
               onClick={() => onSelectTab(item.id)}
               className={`flex-1 flex flex-col items-center justify-center py-1 px-1 rounded-2xl transition-all relative ${
                 isActive 
-                  ? 'text-[#0f2942] dark:text-cyan-400 font-bold scale-105' 
-                  : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 font-medium'
+                  ? 'text-[#0f2942] dark:text-white font-bold scale-105' 
+                  : 'text-slate-500 hover:text-slate-800 dark:text-[#969696] dark:hover:text-[#f5f5f5] font-medium'
               }`}
             >
               {/* Active Indicator Top Bar */}
               {isActive && (
-                <span className="absolute -top-1 w-6 h-1 bg-[#0f2942] dark:bg-cyan-400 rounded-full" />
+                <span className="absolute -top-1 w-6 h-1 bg-[#0f2942] dark:bg-white rounded-full" />
               )}
 
-              <div className={`p-1 rounded-xl transition-colors ${isActive ? 'bg-slate-100 text-[#0f2942] dark:bg-blue-950/60 dark:text-cyan-400' : ''}`}>
+              <div className={`p-1 rounded-xl transition-colors ${isActive ? 'bg-slate-100 text-[#0f2942] dark:bg-[#282828] dark:text-white' : ''}`}>
                 <Icon className="w-5 h-5" />
               </div>
               

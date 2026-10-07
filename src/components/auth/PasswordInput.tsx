@@ -41,7 +41,7 @@ export const PasswordInput: React.FC<PasswordInputProps> = ({
   const [showPassword, setShowPassword] = useState(false);
 
   // Default institutional styling matching HIET Digital Campus design
-  const defaultClass = "w-full pl-3.5 pr-12 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:border-[#0f2942] dark:focus:border-cyan-400 focus:ring-1 focus:ring-[#0f2942] dark:focus:ring-cyan-400 focus:outline-hidden placeholder:text-slate-400 dark:placeholder:text-slate-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed";
+  const defaultClass = "w-full pl-3.5 pr-12 py-2.5 rounded-xl border border-slate-300 dark:border-[#3a3a3a] bg-white dark:bg-[#181818] text-slate-900 dark:text-[#f5f5f5] text-xs focus:border-[#0f2942] dark:focus:border-[#d4d4d4] focus:ring-1 focus:ring-[#0f2942] dark:focus:ring-[#d4d4d4] focus:outline-hidden placeholder:text-slate-400 dark:placeholder:text-[#858585] transition-colors disabled:opacity-50 disabled:cursor-not-allowed dark:disabled:bg-[#151515]";
 
   // Ensure right padding of pr-12 is preserved so text never overlaps eye toggle button
   const finalInputClass = className
@@ -53,7 +53,7 @@ export const PasswordInput: React.FC<PasswordInputProps> = ({
       {label && (
         <label
           htmlFor={id}
-          className={labelClassName || "block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5"}
+          className={labelClassName || "block text-xs font-bold text-slate-700 dark:text-[#d4d4d4] mb-1.5"}
         >
           {label}
         </label>
@@ -74,7 +74,7 @@ export const PasswordInput: React.FC<PasswordInputProps> = ({
           onClick={() => setShowPassword(prev => !prev)}
           disabled={disabled}
           tabIndex={0}
-          className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors focus:outline-hidden focus:ring-1 focus:ring-slate-300 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+          className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:text-[#858585] dark:hover:text-[#f5f5f5] hover:bg-slate-100 dark:hover:bg-[#282828] transition-colors focus:outline-hidden focus:ring-1 focus:ring-slate-300 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
           aria-label={showPassword ? "Hide password" : "Show password"}
           title={showPassword ? "Hide password" : "Show password"}
         >

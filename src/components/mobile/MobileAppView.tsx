@@ -157,7 +157,7 @@ export const MobileAppView: React.FC<Props> = ({
   };
 
   return (
-    <div className="min-h-screen bg-[#f4f6fa] dark:bg-[#0b1329] text-slate-800 dark:text-slate-100 flex flex-col font-sans pb-20 select-none transition-colors duration-200">
+    <div className="min-h-screen bg-[#f4f6fa] dark:bg-[#0a0a0a] text-slate-800 dark:text-[#f5f5f5] flex flex-col font-sans pb-20 select-none transition-colors duration-200">
       
       {/* 1. CSM App Top Bar */}
       <CustomPhoneHeader

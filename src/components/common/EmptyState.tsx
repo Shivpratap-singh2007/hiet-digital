@@ -22,18 +22,18 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
 }) => {
   return (
     <div
-      className={`bg-white dark:bg-[#131d2e] border border-slate-200 dark:border-slate-800 rounded-2xl p-8 sm:p-12 text-center flex flex-col items-center justify-center max-w-lg mx-auto my-6 shadow-2xs ${className}`}
+      className={`bg-white dark:bg-[#141414] border border-slate-200 dark:border-[#303030] rounded-2xl p-8 sm:p-12 text-center flex flex-col items-center justify-center max-w-lg mx-auto my-6 shadow-2xs ${className}`}
     >
-      <div className="w-12 h-12 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 flex items-center justify-center mb-4">
+      <div className="w-12 h-12 rounded-2xl bg-slate-50 dark:bg-[#1f1f1f] border border-slate-200 dark:border-[#303030] text-slate-400 dark:text-[#858585] flex items-center justify-center mb-4">
         <Icon className="w-6 h-6" />
       </div>
 
-      <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 tracking-tight">
+      <h3 className="text-base font-bold text-slate-900 dark:text-[#f5f5f5] tracking-tight">
         {title}
       </h3>
 
       {description && (
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm leading-relaxed">
+        <p className="text-xs text-slate-500 dark:text-[#a3a3a3] mt-1 max-w-sm leading-relaxed">
           {description}
         </p>
       )}

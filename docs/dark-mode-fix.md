@@ -219,7 +219,24 @@ Configured in `src/index.css`:
 | **TypeScript Typecheck** | `tsc -b` completes with 0 errors | **PASS** |
 | **Production Build** | `vite build` completes successfully; generates optimized CSS and JS bundles | **PASS** |
 
+## 8. Neutral Black & White Dark Mode Update
+
+> **Notice:** Dark palette updated to neutral black/white/gray.
+
+The dark-mode color scheme was updated from a navy/blue-tinted dark mode to a premium neutral black-and-white aesthetic while keeping 100% of existing UI/UX and layout intact:
+
+- **Main app background:** Near-black (`#0A0A0A`)
+- **Sidebar:** Pure black (`#050505`), active item neutral charcoal (`#282828`), border (`#242424`), text (`#F0F0F0`)
+- **Top Header:** Near-black (`#0A0A0A`), bottom border (`#2A2A2A`)
+- **Cards & Data Tables:** Charcoal dark gray (`#141414`), borders (`#303030`), headers (`#1A1A1A`), hover rows (`#202020`)
+- **Inputs & Forms:** Neutral dark gray (`#181818`), border (`#3A3A3A`), focus ring (`#D4D4D4`), text (`#F5F5F5`), placeholder (`#858585`)
+- **Modals & Drawers:** Overlay (`rgba(0,0,0,0.65)`), panel (`#171717`), border (`#303030`)
+- **Typography:** Near white (`#F5F5F5`), muted supporting text (`#A3A3A3`)
+- **Controlled Accents:** Brand blue and red remain strictly confined to primary action buttons, small active nav indicators, and semantic status badges.
+- **Light Mode:** 100% untouched and pristine.
+- **Theme Persistence:** Persists across reloads, system sync, and login/logout transitions.
+
 ---
 
 ## Summary
-The dark mode feature is fully operational, accessible, persistent, and seamlessly integrated into HIET Digital Campus without altering any approved UI layout, components, or spacing.
+The dark mode feature is fully operational, accessible, persistent, and seamlessly integrated into HIET Digital Campus with a crisp, neutral black/white/gray dark aesthetic without altering any approved UI layout, components, or spacing.
