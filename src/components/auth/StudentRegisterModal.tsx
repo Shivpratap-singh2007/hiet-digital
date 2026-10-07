@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { isSupabaseConfigured } from '../../lib/supabase';
 import { StudentMaster } from '../../types';
 import { formatAuthError, normalizeAuthEmail, isValidAuthEmail } from '../../lib/authErrors';
+import { PasswordInput, PasswordRules } from './PasswordInput';
 
 interface Props {
   isOpen: boolean;
@@ -334,40 +335,27 @@ export const StudentRegisterModal: React.FC<Props> = ({ isOpen, onClose, onSucce
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      Create Password
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="password"
-                        value={password}
-                        onChange={e => setPassword(e.target.value)}
-                        placeholder="Min 6 characters"
-                        required
-                        className="w-full pl-3.5 pr-10 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none"
-                      />
-                      <Lock className="w-4 h-4 text-slate-400 absolute right-3 top-3" />
-                    </div>
-                  </div>
+                  <PasswordInput
+                    id="new-password"
+                    label="Create Password"
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    placeholder="Min 6 characters"
+                    autoComplete="new-password"
+                    required
+                  />
 
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      Confirm Password
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="password"
-                        value={confirmPassword}
-                        onChange={e => setConfirmPassword(e.target.value)}
-                        placeholder="Re-enter password"
-                        required
-                        className="w-full pl-3.5 pr-10 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none"
-                      />
-                      <Lock className="w-4 h-4 text-slate-400 absolute right-3 top-3" />
-                    </div>
-                  </div>
+                  <PasswordInput
+                    id="confirm-password"
+                    label="Confirm Password"
+                    value={confirmPassword}
+                    onChange={e => setConfirmPassword(e.target.value)}
+                    placeholder="Re-enter password"
+                    autoComplete="new-password"
+                    required
+                  />
                 </div>
+                <PasswordRules />
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">

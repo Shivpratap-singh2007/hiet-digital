@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { KeyRound, ShieldAlert, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { PasswordInput, PasswordRules } from '../auth/PasswordInput';
 
 export const ChangePasswordModal: React.FC = () => {
   const { changePassword, user } = useAuth();
@@ -52,33 +53,31 @@ export const ChangePasswordModal: React.FC = () => {
         )}
 
         <form onSubmit={handleSubmit} className="mt-5 space-y-4">
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
-              New Password
-            </label>
-            <input
-              type="password"
-              value={newPassword}
-              onChange={e => setNewPassword(e.target.value)}
-              placeholder="Minimum 6 characters"
-              required
-              className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-hiet-600"
-            />
-          </div>
+          <PasswordInput
+            id="new-password"
+            label="New Password"
+            labelClassName="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1"
+            className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-hiet-600"
+            value={newPassword}
+            onChange={e => setNewPassword(e.target.value)}
+            placeholder="Minimum 6 characters"
+            autoComplete="new-password"
+            required
+          />
 
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
-              Confirm New Password
-            </label>
-            <input
-              type="password"
-              value={confirmPassword}
-              onChange={e => setConfirmPassword(e.target.value)}
-              placeholder="Re-enter password"
-              required
-              className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-hiet-600"
-            />
-          </div>
+          <PasswordInput
+            id="confirm-password"
+            label="Confirm New Password"
+            labelClassName="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1"
+            className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-hiet-600"
+            value={confirmPassword}
+            onChange={e => setConfirmPassword(e.target.value)}
+            placeholder="Re-enter password"
+            autoComplete="new-password"
+            required
+          />
+
+          <PasswordRules />
 
           <button
             type="submit"

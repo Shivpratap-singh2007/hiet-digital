@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { isSupabaseConfigured } from '../../lib/supabase';
 import { TeacherMaster } from '../../types';
 import { formatAuthError, normalizeAuthEmail, isValidAuthEmail } from '../../lib/authErrors';
+import { PasswordInput, PasswordRules } from './PasswordInput';
 
 interface Props {
   isOpen: boolean;
@@ -447,41 +448,28 @@ export const TeacherRegisterModal: React.FC<Props> = ({ isOpen, onClose, onSucce
                 </div>
               </div>
 
-              {/* Password */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Password
-                </label>
-                <div className="relative">
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={e => setPassword(e.target.value)}
-                    placeholder="Create a secure password (min 6 characters)"
-                    required
-                    className="w-full pl-3.5 pr-10 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none"
-                  />
-                  <Lock className="w-4 h-4 text-slate-400 absolute right-3 top-3" />
-                </div>
-              </div>
+              {/* Password Fields */}
+              <PasswordInput
+                id="new-password"
+                label="Password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                placeholder="Create a secure password (min 6 characters)"
+                autoComplete="new-password"
+                required
+              />
 
-              {/* Confirm Password */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Confirm Password
-                </label>
-                <div className="relative">
-                  <input
-                    type="password"
-                    value={confirmPassword}
-                    onChange={e => setConfirmPassword(e.target.value)}
-                    placeholder="Re-enter your password"
-                    required
-                    className="w-full pl-3.5 pr-10 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none"
-                  />
-                  <Lock className="w-4 h-4 text-slate-400 absolute right-3 top-3" />
-                </div>
-              </div>
+              <PasswordInput
+                id="confirm-password"
+                label="Confirm Password"
+                value={confirmPassword}
+                onChange={e => setConfirmPassword(e.target.value)}
+                placeholder="Re-enter your password"
+                autoComplete="new-password"
+                required
+              />
+
+              <PasswordRules />
 
               <div className="p-3 bg-amber-50/60 rounded-xl border border-amber-200/60 text-[11px] text-amber-900 leading-relaxed">
                 🔒 <strong>Secure Authentication:</strong> Credentials are encrypted and handled via Supabase Authentication. Passwords are never stored in plain text or in the faculty directory table.

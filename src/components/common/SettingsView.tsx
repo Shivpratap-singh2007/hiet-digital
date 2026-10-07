@@ -15,6 +15,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { PageHeader } from './PageHeader';
+import { PasswordInput, PasswordRules } from '../auth/PasswordInput';
 
 interface Props {
   initialTab?: 'appearance' | 'profile' | 'security' | 'notifications';
@@ -468,31 +469,33 @@ export const SettingsView: React.FC<Props> = ({ initialTab = 'appearance' }) => 
           )}
 
           <form onSubmit={handlePasswordSubmit} className="space-y-4 text-xs">
-            <div>
-              <label className="font-bold text-slate-700 block mb-1">New Password</label>
-              <input
-                type="password"
-                required
-                minLength={6}
-                value={newPassword}
-                onChange={e => setNewPassword(e.target.value)}
-                placeholder="Enter new secure password"
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-hidden focus:border-[#0f2942]"
-              />
-            </div>
+            <PasswordInput
+              id="settings-new-password"
+              label="New Password"
+              labelClassName="font-bold text-slate-700 block mb-1"
+              required
+              minLength={6}
+              value={newPassword}
+              onChange={e => setNewPassword(e.target.value)}
+              placeholder="Enter new secure password"
+              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-hidden focus:border-[#0f2942]"
+              autoComplete="new-password"
+            />
 
-            <div>
-              <label className="font-bold text-slate-700 block mb-1">Confirm New Password</label>
-              <input
-                type="password"
-                required
-                minLength={6}
-                value={confirmPassword}
-                onChange={e => setConfirmPassword(e.target.value)}
-                placeholder="Re-enter new password"
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-hidden focus:border-[#0f2942]"
-              />
-            </div>
+            <PasswordInput
+              id="settings-confirm-password"
+              label="Confirm New Password"
+              labelClassName="font-bold text-slate-700 block mb-1"
+              required
+              minLength={6}
+              value={confirmPassword}
+              onChange={e => setConfirmPassword(e.target.value)}
+              placeholder="Re-enter new password"
+              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-hidden focus:border-[#0f2942]"
+              autoComplete="new-password"
+            />
+
+            <PasswordRules />
 
             <button
               type="submit"
