@@ -1,0 +1,17 @@
+{
+  "short_name": "HIET Campus",
+  "name": "HIET GROUP OF INSTITUTIONS • HIET Digital Campus",
+  "description": "Official Digital Campus Portal of HIET Group of Institutions, Vidyanagar, Shahpur, Distt. Kangra (H.P.)",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#ffffff",
+  "theme_color": "#0f2942",
+  "display": "standalone",
+  "orientation": "portrait"
+}
