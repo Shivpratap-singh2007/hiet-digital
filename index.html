@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" class="light" style="color-scheme: light;">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/images/hiet_crest.png" />
@@ -11,8 +11,31 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <title>HIET GROUP OF INSTITUTIONS • HIET Digital Campus</title>
+    <script>
+      (function () {
+        try {
+          const storageKey = "hiet-digital-campus-theme";
+          const savedTheme = localStorage.getItem(storageKey) || localStorage.getItem("hiet_theme_mode") || "system";
+          const systemDark = window.matchMedia &&
+            window.matchMedia("(prefers-color-scheme: dark)").matches;
+          const resolvedTheme =
+            savedTheme === "dark" ||
+            (savedTheme === "system" && systemDark)
+              ? "dark"
+              : "light";
+
+          document.documentElement.classList.remove("light", "dark");
+          document.documentElement.classList.add(resolvedTheme);
+          document.documentElement.style.colorScheme = resolvedTheme;
+        } catch (error) {
+          document.documentElement.classList.remove("dark");
+          document.documentElement.classList.add("light");
+          document.documentElement.style.colorScheme = "light";
+        }
+      })();
+    </script>
   </head>
-  <body class="bg-[#f8fafc] min-h-screen text-slate-800 antialiased selection:bg-[#0f2942] selection:text-white">
+  <body class="bg-[#f8fafc] dark:bg-[#0b1322] min-h-screen text-slate-800 dark:text-slate-100 antialiased selection:bg-[#0f2942] selection:text-white transition-colors duration-200">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

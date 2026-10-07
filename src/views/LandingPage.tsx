@@ -127,12 +127,12 @@ export const LandingPage: React.FC<Props> = ({
     <div className="min-h-screen bg-[#f8fafc] text-slate-800 font-sans flex flex-col selection:bg-[#0f2942] selection:text-white">
       
       {/* 1. PUBLIC INSTITUTIONAL HEADER (Section 4) */}
-      <header className="sticky top-0 z-40 bg-white border-b border-slate-200 px-4 sm:px-8 py-3.5 transition-all">
+      <header className="sticky top-0 z-40 bg-white dark:bg-[#0f172a] border-b border-slate-200 dark:border-slate-800 px-4 sm:px-8 py-3.5 transition-all">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           
           {/* Left: HIET Logo & Institution Name */}
           <div className="flex items-center gap-3 select-none">
-            <div className="w-10 h-10 rounded-xl bg-white p-1 border border-slate-200 flex items-center justify-center shrink-0 shadow-2xs">
+            <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 p-1 border border-slate-200 dark:border-slate-700 flex items-center justify-center shrink-0 shadow-2xs">
               {!logoError ? (
                 <img
                   src="/images/hiet_crest.png"
@@ -147,10 +147,10 @@ export const LandingPage: React.FC<Props> = ({
               )}
             </div>
             <div>
-              <span className="font-extrabold text-[#0f2942] text-sm sm:text-base tracking-tight block leading-tight">
+              <span className="font-extrabold text-[#0f2942] dark:text-cyan-400 text-sm sm:text-base tracking-tight block leading-tight">
                 HIET GROUP OF INSTITUTIONS
               </span>
-              <span className="text-[11px] text-slate-500 font-medium hidden sm:block">
+              <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium hidden sm:block">
                 Vidyanagar, Shahpur, Distt. Kangra (H.P.)
               </span>
             </div>
@@ -160,13 +160,13 @@ export const LandingPage: React.FC<Props> = ({
           <div className="flex items-center gap-3 text-xs">
             <button
               onClick={() => setShowAbout(true)}
-              className="text-slate-600 hover:text-[#0f2942] font-semibold px-2 py-1 transition"
+              className="text-slate-600 dark:text-slate-300 hover:text-[#0f2942] dark:hover:text-cyan-400 font-semibold px-2 py-1 transition"
             >
               About
             </button>
             <button
               onClick={() => setShowContact(true)}
-              className="text-slate-600 hover:text-[#0f2942] font-semibold px-2 py-1 transition"
+              className="text-slate-600 dark:text-slate-300 hover:text-[#0f2942] dark:hover:text-cyan-400 font-semibold px-2 py-1 transition"
             >
               Contact
             </button>
@@ -175,7 +175,7 @@ export const LandingPage: React.FC<Props> = ({
                 const el = document.getElementById('login-card');
                 el?.scrollIntoView({ behavior: 'smooth' });
               }}
-              className="px-4 py-2 bg-[#0f2942] hover:bg-[#0a1c2e] text-white font-bold rounded-xl shadow-xs transition"
+              className="px-4 py-2 bg-[#0f2942] hover:bg-[#0a1c2e] dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-bold rounded-xl shadow-xs transition"
             >
               Sign In
             </button>
@@ -186,11 +186,11 @@ export const LandingPage: React.FC<Props> = ({
 
       {/* 2. CENTERED INSTITUTIONAL LOGIN SCREEN (Section 3 - CGC Reference) */}
       <main className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-8">
-        <div id="login-card" className="w-full max-w-md bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden my-auto">
+        <div id="login-card" className="w-full max-w-md bg-white dark:bg-[#131d2e] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl overflow-hidden my-auto">
           
           {/* Top Institutional Branding */}
-          <div className="pt-8 pb-5 px-6 sm:px-8 border-b border-slate-100 flex flex-col items-center text-center">
-            <div className="w-16 h-16 rounded-2xl bg-white border border-slate-200 p-1.5 flex items-center justify-center shadow-2xs mb-3">
+          <div className="pt-8 pb-5 px-6 sm:px-8 border-b border-slate-100 dark:border-slate-800 flex flex-col items-center text-center">
+            <div className="w-16 h-16 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-1.5 flex items-center justify-center shadow-2xs mb-3">
               <img
                 src="/images/hiet_crest.png"
                 alt="HIET Crest"
@@ -198,19 +198,19 @@ export const LandingPage: React.FC<Props> = ({
               />
             </div>
 
-            <h2 className="font-extrabold text-[#0f2942] text-base sm:text-lg tracking-tight leading-snug">
+            <h2 className="font-extrabold text-[#0f2942] dark:text-cyan-400 text-base sm:text-lg tracking-tight leading-snug">
               HIET GROUP OF INSTITUTIONS
             </h2>
-            <p className="text-xs text-slate-500 font-medium mt-1">
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">
               Vidyanagar, Shahpur, Distt. Kangra (H.P.)
             </p>
 
-            <div className="w-12 h-0.5 bg-slate-200 mt-4 mb-3 rounded-full" />
+            <div className="w-12 h-0.5 bg-slate-200 dark:bg-slate-700 mt-4 mb-3 rounded-full" />
 
-            <h3 className="text-xl font-extrabold text-slate-900 tracking-tight">
+            <h3 className="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">
               Sign In
             </h3>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               Access your verified HIET Digital Campus account
             </p>
           </div>
@@ -280,7 +280,7 @@ export const LandingPage: React.FC<Props> = ({
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                   Roll / Enrollment No / Faculty ID
                 </label>
                 <div className="relative">
@@ -289,7 +289,7 @@ export const LandingPage: React.FC<Props> = ({
                     value={identifier}
                     onChange={e => setIdentifier(e.target.value)}
                     placeholder="e.g. 210106, FAC001, or name@hiet.ac.in"
-                    className="w-full pl-3.5 pr-10 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 text-xs focus:border-[#0f2942] focus:ring-1 focus:ring-[#0f2942] focus:outline-hidden"
+                    className="w-full pl-3.5 pr-10 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:border-[#0f2942] dark:focus:border-cyan-400 focus:ring-1 focus:ring-[#0f2942] dark:focus:ring-cyan-400 focus:outline-hidden placeholder:text-slate-400 dark:placeholder:text-slate-500"
                     required
                   />
                   <User className="w-4 h-4 text-slate-400 absolute right-3.5 top-3" />
@@ -311,7 +311,7 @@ export const LandingPage: React.FC<Props> = ({
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-2.5 bg-[#0f2942] hover:bg-[#0a1c2e] text-white text-xs font-extrabold tracking-wider uppercase rounded-xl shadow-xs transition flex items-center justify-center gap-2 active:scale-98 disabled:opacity-50 mt-1"
+                className="w-full py-2.5 bg-[#0f2942] hover:bg-[#0a1c2e] dark:bg-blue-600 dark:hover:bg-blue-700 text-white text-xs font-extrabold tracking-wider uppercase rounded-xl shadow-xs transition flex items-center justify-center gap-2 active:scale-98 disabled:opacity-50 mt-1"
               >
                 {loading ? (
                   <span>Authenticating...</span>
@@ -329,31 +329,31 @@ export const LandingPage: React.FC<Props> = ({
               <button
                 type="button"
                 onClick={() => setShowForgotPassword(true)}
-                className="text-xs text-slate-500 hover:text-[#0f2942] font-semibold hover:underline"
+                className="text-xs text-slate-500 dark:text-slate-400 hover:text-[#0f2942] dark:hover:text-cyan-400 font-semibold hover:underline"
               >
                 Forgot Password?
               </button>
             </div>
 
             {/* For Students & Faculty verification/sign-up flows */}
-            <div className="pt-4 border-t border-slate-100 space-y-2.5 text-xs text-center">
+            <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-2.5 text-xs text-center">
               <div>
-                <span className="text-slate-500">New Student? </span>
+                <span className="text-slate-500 dark:text-slate-400">New Student? </span>
                 <button
                   type="button"
                   onClick={onOpenStudentRegister}
-                  className="font-bold text-[#0f2942] hover:underline"
+                  className="font-bold text-[#0f2942] dark:text-cyan-400 hover:underline"
                 >
                   Verify & Sign Up
                 </button>
               </div>
 
               <div>
-                <span className="text-slate-500">Faculty member? </span>
+                <span className="text-slate-500 dark:text-slate-400">Faculty member? </span>
                 <button
                   type="button"
                   onClick={onOpenTeacherRegister}
-                  className="font-bold text-[#0f2942] hover:underline"
+                  className="font-bold text-[#0f2942] dark:text-cyan-400 hover:underline"
                 >
                   Faculty verification / sign-in flow
                 </button>
@@ -365,21 +365,21 @@ export const LandingPage: React.FC<Props> = ({
       </main>
 
       {/* 3. FOOTER */}
-      <footer className="bg-white border-t border-slate-200 py-4 px-4 text-center text-xs text-slate-500">
+      <footer className="bg-white dark:bg-[#0f172a] border-t border-slate-200 dark:border-slate-800 py-4 px-4 text-center text-xs text-slate-500 dark:text-slate-400">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
           <span>© 2026 Himachal Institute of Engineering & Technology (HIET). All rights reserved.</span>
-          <span className="font-semibold text-slate-700">Affiliated to HPTU Hamirpur • Approved by AICTE</span>
+          <span className="font-semibold text-slate-700 dark:text-slate-300">Affiliated to HPTU Hamirpur • Approved by AICTE</span>
         </div>
       </footer>
 
       {/* About Modal */}
       {showAbout && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-xs p-4">
-          <div className="bg-white border border-slate-200 rounded-2xl shadow-xl max-w-md w-full p-6 text-xs text-slate-600 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h3 className="font-bold text-slate-900 text-sm">About HIET Digital Campus</h3>
-              <button onClick={() => setShowAbout(false)} className="p-1 rounded-lg hover:bg-slate-100">
-                <X className="w-4 h-4 text-slate-500" />
+          <div className="bg-white dark:bg-[#131d2e] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl max-w-md w-full p-6 text-xs text-slate-600 dark:text-slate-300 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <h3 className="font-bold text-slate-900 dark:text-white text-sm">About HIET Digital Campus</h3>
+              <button onClick={() => setShowAbout(false)} className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
+                <X className="w-4 h-4 text-slate-500 dark:text-slate-400" />
               </button>
             </div>
             <p className="leading-relaxed">
@@ -391,7 +391,7 @@ export const LandingPage: React.FC<Props> = ({
             <div className="pt-2 text-right">
               <button
                 onClick={() => setShowAbout(false)}
-                className="px-4 py-2 bg-[#0f2942] text-white rounded-xl font-bold"
+                className="px-4 py-2 bg-[#0f2942] hover:bg-[#0a1c2e] dark:bg-blue-600 dark:hover:bg-blue-700 text-white rounded-xl font-bold transition"
               >
                 Close
               </button>
@@ -403,32 +403,32 @@ export const LandingPage: React.FC<Props> = ({
       {/* Contact Modal */}
       {showContact && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-xs p-4">
-          <div className="bg-white border border-slate-200 rounded-2xl shadow-xl max-w-md w-full p-6 text-xs text-slate-600 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h3 className="font-bold text-slate-900 text-sm">Contact Campus Administration</h3>
-              <button onClick={() => setShowContact(false)} className="p-1 rounded-lg hover:bg-slate-100">
-                <X className="w-4 h-4 text-slate-500" />
+          <div className="bg-white dark:bg-[#131d2e] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl max-w-md w-full p-6 text-xs text-slate-600 dark:text-slate-300 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <h3 className="font-bold text-slate-900 dark:text-white text-sm">Contact Campus Administration</h3>
+              <button onClick={() => setShowContact(false)} className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
+                <X className="w-4 h-4 text-slate-500 dark:text-slate-400" />
               </button>
             </div>
             <div className="space-y-3">
               <div className="flex items-start gap-3">
-                <MapPin className="w-4 h-4 text-[#0f2942] shrink-0 mt-0.5" />
+                <MapPin className="w-4 h-4 text-[#0f2942] dark:text-cyan-400 shrink-0 mt-0.5" />
                 <div>
-                  <strong className="text-slate-900 block">Campus Address:</strong>
+                  <strong className="text-slate-900 dark:text-white block">Campus Address:</strong>
                   <span>Vidyanagar, Shahpur, Distt. Kangra, Himachal Pradesh – 176206</span>
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <Phone className="w-4 h-4 text-[#0f2942] shrink-0" />
+                <Phone className="w-4 h-4 text-[#0f2942] dark:text-cyan-400 shrink-0" />
                 <div>
-                  <strong className="text-slate-900 block">Helpdesk Phone:</strong>
+                  <strong className="text-slate-900 dark:text-white block">Helpdesk Phone:</strong>
                   <span>+91 1892 238191 / +91 94180 11001</span>
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <Mail className="w-4 h-4 text-[#0f2942] shrink-0" />
+                <Mail className="w-4 h-4 text-[#0f2942] dark:text-cyan-400 shrink-0" />
                 <div>
-                  <strong className="text-slate-900 block">Official Email:</strong>
+                  <strong className="text-slate-900 dark:text-white block">Official Email:</strong>
                   <span>info@hiet.ac.in • principal@hiet.ac.in</span>
                 </div>
               </div>
@@ -436,7 +436,7 @@ export const LandingPage: React.FC<Props> = ({
             <div className="pt-2 text-right">
               <button
                 onClick={() => setShowContact(false)}
-                className="px-4 py-2 bg-[#0f2942] text-white rounded-xl font-bold"
+                className="px-4 py-2 bg-[#0f2942] hover:bg-[#0a1c2e] dark:bg-blue-600 dark:hover:bg-blue-700 text-white rounded-xl font-bold transition"
               >
                 Close
               </button>
@@ -448,25 +448,25 @@ export const LandingPage: React.FC<Props> = ({
       {/* Forgot Password Modal */}
       {showForgotPassword && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-xs p-4">
-          <div className="bg-white border border-slate-200 rounded-2xl shadow-xl max-w-md w-full p-6 text-xs text-slate-600 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h3 className="font-bold text-slate-900 text-sm">Reset Password</h3>
-              <button onClick={() => setShowForgotPassword(false)} className="p-1 rounded-lg hover:bg-slate-100">
-                <X className="w-4 h-4 text-slate-500" />
+          <div className="bg-white dark:bg-[#131d2e] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl max-w-md w-full p-6 text-xs text-slate-600 dark:text-slate-300 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <h3 className="font-bold text-slate-900 dark:text-white text-sm">Reset Password</h3>
+              <button onClick={() => setShowForgotPassword(false)} className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
+                <X className="w-4 h-4 text-slate-500 dark:text-slate-400" />
               </button>
             </div>
             <p className="leading-relaxed">
               To reset your institutional account password, please contact your department HOD or the college administrative help desk with your University Roll Number / Faculty ID.
             </p>
-            <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
-              <div className="font-bold text-slate-900">IT Cell & Student Records Desk</div>
+            <div className="p-3 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl space-y-1">
+              <div className="font-bold text-slate-900 dark:text-slate-100">IT Cell & Student Records Desk</div>
               <div>Administrative Block, Ground Floor</div>
               <div>Email: itcell@hiet.ac.in</div>
             </div>
             <div className="pt-2 text-right">
               <button
                 onClick={() => setShowForgotPassword(false)}
-                className="px-4 py-2 bg-[#0f2942] text-white rounded-xl font-bold"
+                className="px-4 py-2 bg-[#0f2942] hover:bg-[#0a1c2e] dark:bg-blue-600 dark:hover:bg-blue-700 text-white rounded-xl font-bold transition"
               >
                 Understood
               </button>

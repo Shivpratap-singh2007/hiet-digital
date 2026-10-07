@@ -168,7 +168,7 @@ const MainLayout: React.FC = () => {
   // 1. Unauthenticated Experience: Clean Institutional Portal & Login Screen
   if (!user && !devPreviewActive) {
     return (
-      <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex flex-col font-sans relative overflow-x-hidden selection:bg-[#0f2942] selection:text-white">
+      <div className="min-h-screen bg-[#f8fafc] dark:bg-[#0b1322] text-slate-800 dark:text-slate-100 flex flex-col font-sans relative overflow-x-hidden selection:bg-[#0f2942] selection:text-white transition-colors duration-200">
         <StudentRegisterModal
           isOpen={showStudentRegModal}
           onClose={() => setShowStudentRegModal(false)}
@@ -215,7 +215,7 @@ const MainLayout: React.FC = () => {
 
   // 2. Authenticated Experience: Responsive shell with Sticky Top Header, Left Sidebar & Main Content
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex flex-col font-sans relative overflow-x-hidden selection:bg-[#0f2942] selection:text-white">
+    <div className="min-h-screen bg-[#f8fafc] dark:bg-[#0b1322] text-slate-800 dark:text-slate-100 flex flex-col font-sans relative overflow-x-hidden selection:bg-[#0f2942] selection:text-white transition-colors duration-200">
       {/* Sticky Top Header */}
       <Navbar
         onToggleSidebar={() => setIsMobileSidebarOpen(prev => !prev)}

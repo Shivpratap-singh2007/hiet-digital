@@ -3,7 +3,45 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @layer base {
-  :root {
+  :root,
+  .light {
+    --background: 246 248 251;
+    --foreground: 22 32 51;
+
+    --card: 255 255 255;
+    --card-foreground: 22 32 51;
+
+    --popover: 255 255 255;
+    --popover-foreground: 22 32 51;
+
+    --primary: 11 31 58;
+    --primary-foreground: 255 255 255;
+
+    --secondary: 235 240 247;
+    --secondary-foreground: 22 32 51;
+
+    --muted: 244 246 250;
+    --muted-foreground: 102 112 133;
+
+    --accent: 230 237 248;
+    --accent-foreground: 22 32 51;
+
+    --border: 229 234 240;
+    --input: 229 234 240;
+    --ring: 21 87 166;
+
+    --sidebar: 11 31 58;
+    --sidebar-foreground: 240 244 248;
+    --sidebar-muted: 157 176 202;
+    --sidebar-active: 21 87 166;
+    --sidebar-border: 31 53 84;
+
+    --success: 22 132 91;
+    --warning: 183 121 31;
+    --danger: 197 48 48;
+    --info: 43 108 176;
+
+    /* HIET Brand Design Tokens */
     --color-primary: #0f2942;
     --color-primary-pressed: #091a2b;
     --color-canvas: #ffffff;
@@ -24,20 +62,59 @@
   }
 
   .dark {
-    --color-canvas: #121212;
-    --color-surface-soft: #181818;
-    --color-surface-card: #202020;
-    --color-secondary-bg: #2a2a2a;
-    --color-secondary-pressed: #333333;
-    --color-hairline: #333333;
-    --color-hairline-soft: #2a2a2a;
-    --color-ink: #ffffff;
-    --color-ink-soft: #eaeaea;
-    --color-body: #d1d1cc;
-    --color-mute: #a0a09a;
-    --color-ash: #787872;
-    --color-stone: #444444;
-    --color-surface-dark: #121212;
+    --background: 12 18 30;
+    --foreground: 235 241 248;
+
+    --card: 20 30 46;
+    --card-foreground: 235 241 248;
+
+    --popover: 20 30 46;
+    --popover-foreground: 235 241 248;
+
+    --primary: 80 146 226;
+    --primary-foreground: 8 18 33;
+
+    --secondary: 31 45 67;
+    --secondary-foreground: 235 241 248;
+
+    --muted: 27 39 58;
+    --muted-foreground: 164 178 199;
+
+    --accent: 35 58 91;
+    --accent-foreground: 241 245 249;
+
+    --border: 48 65 91;
+    --input: 48 65 91;
+    --ring: 99 164 255;
+
+    --sidebar: 7 13 25;
+    --sidebar-foreground: 231 237 245;
+    --sidebar-muted: 148 163 184;
+    --sidebar-active: 30 89 163;
+    --sidebar-border: 30 46 69;
+
+    --success: 52 211 153;
+    --warning: 251 191 36;
+    --danger: 248 113 113;
+    --info: 96 165 250;
+
+    /* HIET Brand Design Tokens (Institutional Navy Dark) */
+    --color-primary: #1557a6;
+    --color-primary-pressed: #0f3d75;
+    --color-canvas: #0b1322;
+    --color-surface-soft: #0b1322;
+    --color-surface-card: #131d2e;
+    --color-secondary-bg: #1e293b;
+    --color-secondary-pressed: #334155;
+    --color-hairline: #1e293b;
+    --color-hairline-soft: #1e293b;
+    --color-ink: #f8fafc;
+    --color-ink-soft: #e2e8f0;
+    --color-body: #cbd5e1;
+    --color-mute: #94a3b8;
+    --color-ash: #64748b;
+    --color-stone: #475569;
+    --color-surface-dark: #070d19;
     color-scheme: dark;
   }
 
@@ -256,3 +333,72 @@
   background-color: var(--color-ink);
   color: var(--color-canvas);
 }
+
+/* ========================================================
+   SEMANTIC THEME TOKENS & DARK MODE SYSTEM (Section 7 & 8)
+   ======================================================== */
+@theme {
+  --color-background: rgb(var(--background));
+  --color-foreground: rgb(var(--foreground));
+  --color-card: rgb(var(--card));
+  --color-card-foreground: rgb(var(--card-foreground));
+  --color-popover: rgb(var(--popover));
+  --color-popover-foreground: rgb(var(--popover-foreground));
+  --color-secondary: rgb(var(--secondary));
+  --color-secondary-foreground: rgb(var(--secondary-foreground));
+  --color-muted: rgb(var(--muted));
+  --color-muted-foreground: rgb(var(--muted-foreground));
+  --color-accent: rgb(var(--accent));
+  --color-accent-foreground: rgb(var(--accent-foreground));
+  --color-border: rgb(var(--border));
+  --color-input: rgb(var(--input));
+  --color-ring: rgb(var(--ring));
+}
+
+@layer utilities {
+  .dark :where(.bg-white:not([data-keep-light]):not(.keep-light)) {
+    background-color: var(--color-surface-card);
+  }
+  .dark :where(.bg-slate-50:not([data-keep-light]):not(.keep-light)) {
+    background-color: var(--color-surface-dark);
+  }
+  .dark :where(.bg-slate-100:not([data-keep-light]):not(.keep-light)) {
+    background-color: #1e293b;
+  }
+  .dark :where(.border-slate-200:not([data-keep-light])) {
+    border-color: var(--color-hairline);
+  }
+  .dark :where(.border-slate-100:not([data-keep-light])) {
+    border-color: var(--color-hairline-soft);
+  }
+  .dark :where(.divide-slate-200 > :not([hidden]) ~ :not([hidden])) {
+    border-color: var(--color-hairline);
+  }
+  .dark :where(.divide-slate-100 > :not([hidden]) ~ :not([hidden])) {
+    border-color: var(--color-hairline-soft);
+  }
+  .dark :where(.text-slate-900:not([data-keep-light])) {
+    color: var(--color-ink);
+  }
+  .dark :where(.text-slate-800:not([data-keep-light])) {
+    color: var(--color-ink-soft);
+  }
+  .dark :where(.text-slate-700:not([data-keep-light])) {
+    color: var(--color-body);
+  }
+  .dark :where(.text-slate-600:not([data-keep-light])) {
+    color: var(--color-mute);
+  }
+  .dark :where(.text-slate-500:not([data-keep-light])) {
+    color: var(--color-ash);
+  }
+  .dark :where(.text-\[\#0f2942\]:not([data-keep-light])) {
+    color: #60a5fa;
+  }
+  .dark input:not([type="checkbox"]):not([type="radio"]):not([data-keep-light]),
+  .dark select:not([data-keep-light]),
+  .dark textarea:not([data-keep-light]) {
+    color-scheme: dark;
+  }
+}
+

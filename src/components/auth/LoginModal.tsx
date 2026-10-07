@@ -134,20 +134,20 @@ export const LoginModal: React.FC<Props> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-xs p-3 sm:p-4 animate-fade-in overflow-y-auto">
-      <div className="bg-white border border-slate-200 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden my-auto max-h-[94vh] flex flex-col font-sans">
+      <div className="bg-white dark:bg-[#131d2e] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden my-auto max-h-[94vh] flex flex-col font-sans">
         
         {/* Institutional Header Banner */}
-        <div className="pt-6 pb-4 px-6 border-b border-slate-100 flex flex-col items-center text-center relative shrink-0">
+        <div className="pt-6 pb-4 px-6 border-b border-slate-100 dark:border-slate-800 flex flex-col items-center text-center relative shrink-0">
           <button
             onClick={onClose}
-            className="absolute right-3.5 top-3.5 p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"
+            className="absolute right-3.5 top-3.5 p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
             aria-label="Close"
           >
             <X className="w-5 h-5" />
           </button>
 
           {/* Official HIET Crest */}
-          <div className="w-14 h-14 rounded-2xl bg-white p-1 border border-slate-200 flex items-center justify-center shadow-2xs mb-2.5">
+          <div className="w-14 h-14 rounded-2xl bg-white dark:bg-slate-800 p-1 border border-slate-200 dark:border-slate-700 flex items-center justify-center shadow-2xs mb-2.5">
             {!logoError ? (
               <img
                 src="/images/hiet_crest.png"
@@ -163,20 +163,20 @@ export const LoginModal: React.FC<Props> = ({
           </div>
 
           {/* Official Institution Name & Address */}
-          <h2 className="font-extrabold text-[#0f2942] text-base tracking-tight leading-tight">
+          <h2 className="font-extrabold text-[#0f2942] dark:text-cyan-400 text-base tracking-tight leading-tight">
             HIET GROUP OF INSTITUTIONS
           </h2>
-          <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">
             Vidyanagar, Shahpur, Distt. Kangra (H.P.)
           </p>
 
-          <div className="w-12 h-0.5 bg-slate-200 mt-3 mb-2 rounded-full" />
+          <div className="w-12 h-0.5 bg-slate-200 dark:bg-slate-700 mt-3 mb-2 rounded-full" />
 
           {/* Sign In Header */}
-          <h3 className="text-xl font-extrabold text-slate-900 tracking-tight">
+          <h3 className="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">
             Sign In
           </h3>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Access your verified HIET Digital Campus account
           </p>
         </div>
@@ -249,7 +249,7 @@ export const LoginModal: React.FC<Props> = ({
 
           <form onSubmit={handleSubmit} className="space-y-3.5">
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                 Roll / Enrollment No / Faculty ID
               </label>
               <div className="relative">
@@ -258,7 +258,7 @@ export const LoginModal: React.FC<Props> = ({
                   value={identifier}
                   onChange={e => setIdentifier(e.target.value)}
                   placeholder="e.g. 210106, FAC001, or name@hiet.ac.in"
-                  className="w-full pl-3.5 pr-10 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 text-xs focus:border-[#0f2942] focus:ring-1 focus:ring-[#0f2942] focus:outline-hidden"
+                  className="w-full pl-3.5 pr-10 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:border-[#0f2942] dark:focus:border-cyan-400 focus:ring-1 focus:ring-[#0f2942] dark:focus:ring-cyan-400 focus:outline-hidden placeholder:text-slate-400 dark:placeholder:text-slate-500"
                   autoFocus
                   required
                 />
@@ -281,7 +281,7 @@ export const LoginModal: React.FC<Props> = ({
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2.5 bg-[#0f2942] hover:bg-[#0a1c2e] text-white text-xs font-extrabold tracking-wider uppercase rounded-xl shadow-xs transition flex items-center justify-center gap-2 active:scale-98 disabled:opacity-50 mt-2"
+              className="w-full py-2.5 bg-[#0f2942] hover:bg-[#0a1c2e] dark:bg-blue-600 dark:hover:bg-blue-700 text-white text-xs font-extrabold tracking-wider uppercase rounded-xl shadow-xs transition flex items-center justify-center gap-2 active:scale-98 disabled:opacity-50 mt-2"
             >
               {loading ? (
                 <span>Authenticating...</span>
@@ -299,37 +299,37 @@ export const LoginModal: React.FC<Props> = ({
             <button
               type="button"
               onClick={() => setShowForgotPassword(true)}
-              className="text-xs text-slate-500 hover:text-[#0f2942] font-semibold hover:underline"
+              className="text-xs text-slate-500 dark:text-slate-400 hover:text-[#0f2942] dark:hover:text-cyan-400 font-semibold hover:underline"
             >
               Forgot Password?
             </button>
           </div>
 
           {/* Links for Students & Faculty */}
-          <div className="pt-3 border-t border-slate-100 space-y-2 text-xs text-center">
+          <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2 text-xs text-center">
             <div>
-              <span className="text-slate-500">New Student? </span>
+              <span className="text-slate-500 dark:text-slate-400">New Student? </span>
               <button
                 type="button"
                 onClick={() => {
                   onClose();
                   onOpenStudentRegister();
                 }}
-                className="font-bold text-[#0f2942] hover:underline"
+                className="font-bold text-[#0f2942] dark:text-cyan-400 hover:underline"
               >
                 Verify & Sign Up
               </button>
             </div>
 
             <div>
-              <span className="text-slate-500">Faculty member? </span>
+              <span className="text-slate-500 dark:text-slate-400">Faculty member? </span>
               <button
                 type="button"
                 onClick={() => {
                   onClose();
                   onOpenTeacherRegister();
                 }}
-                className="font-bold text-[#0f2942] hover:underline"
+                className="font-bold text-[#0f2942] dark:text-cyan-400 hover:underline"
               >
                 Faculty verification / sign-in flow
               </button>
@@ -338,15 +338,15 @@ export const LoginModal: React.FC<Props> = ({
 
           {/* Forgot Password Note */}
           {showForgotPassword && (
-            <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1 text-xs animate-fade-in text-slate-700 text-left">
-              <div className="font-bold text-slate-900">Forgot Password Assistance</div>
+            <div className="p-3 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl space-y-1 text-xs animate-fade-in text-slate-700 dark:text-slate-300 text-left">
+              <div className="font-bold text-slate-900 dark:text-slate-100">Forgot Password Assistance</div>
               <p className="text-[11px] leading-relaxed">
                 Please contact your department HOD or the college administrative records desk with your roll number or faculty ID to receive a temporary reset password.
               </p>
               <button
                 type="button"
                 onClick={() => setShowForgotPassword(false)}
-                className="text-[11px] font-bold text-[#0f2942] hover:underline mt-1 block"
+                className="text-[11px] font-bold text-[#0f2942] dark:text-cyan-400 hover:underline mt-1 block"
               >
                 Dismiss
               </button>

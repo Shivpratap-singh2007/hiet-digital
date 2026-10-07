@@ -22,18 +22,18 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
 }) => {
   return (
     <div
-      className={`bg-white border border-slate-200 rounded-2xl p-8 sm:p-12 text-center flex flex-col items-center justify-center max-w-lg mx-auto my-6 shadow-2xs ${className}`}
+      className={`bg-white dark:bg-[#131d2e] border border-slate-200 dark:border-slate-800 rounded-2xl p-8 sm:p-12 text-center flex flex-col items-center justify-center max-w-lg mx-auto my-6 shadow-2xs ${className}`}
     >
-      <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-200 text-slate-400 flex items-center justify-center mb-4">
+      <div className="w-12 h-12 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 flex items-center justify-center mb-4">
         <Icon className="w-6 h-6" />
       </div>
 
-      <h3 className="text-base font-bold text-slate-900 tracking-tight">
+      <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 tracking-tight">
         {title}
       </h3>
 
       {description && (
-        <p className="text-xs text-slate-500 mt-1 max-w-sm leading-relaxed">
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm leading-relaxed">
           {description}
         </p>
       )}
@@ -42,7 +42,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
         <button
           type="button"
           onClick={action.onClick}
-          className="mt-4 px-4 py-2 bg-[#0f2942] hover:bg-[#0a1c2e] text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-xs"
+          className="mt-4 px-4 py-2 bg-[#0f2942] hover:bg-[#0a1c2e] dark:bg-blue-600 dark:hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-xs"
         >
           {action.icon && <action.icon className="w-3.5 h-3.5" />}
           <span>{action.label}</span>

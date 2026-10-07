@@ -41,7 +41,7 @@ export const PasswordInput: React.FC<PasswordInputProps> = ({
   const [showPassword, setShowPassword] = useState(false);
 
   // Default institutional styling matching HIET Digital Campus design
-  const defaultClass = "w-full pl-3.5 pr-12 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 text-xs focus:border-[#0f2942] focus:ring-1 focus:ring-[#0f2942] focus:outline-hidden placeholder:text-slate-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed";
+  const defaultClass = "w-full pl-3.5 pr-12 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:border-[#0f2942] dark:focus:border-cyan-400 focus:ring-1 focus:ring-[#0f2942] dark:focus:ring-cyan-400 focus:outline-hidden placeholder:text-slate-400 dark:placeholder:text-slate-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed";
 
   // Ensure right padding of pr-12 is preserved so text never overlaps eye toggle button
   const finalInputClass = className

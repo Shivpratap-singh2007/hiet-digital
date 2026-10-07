@@ -129,14 +129,14 @@ export const SettingsView: React.FC<Props> = ({ initialTab = 'appearance' }) => 
       />
 
       {/* 2. Settings Tab Navigation */}
-      <div className="flex border-b border-slate-200 overflow-x-auto gap-2">
+      <div className="flex border-b border-slate-200 dark:border-slate-800 overflow-x-auto gap-2">
         <button
           type="button"
           onClick={() => setActiveTab('appearance')}
           className={`py-3 px-4 font-bold text-xs flex items-center gap-2 border-b-2 transition whitespace-nowrap ${
             activeTab === 'appearance'
-              ? 'border-[#0f2942] text-[#0f2942]'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
+              ? 'border-[#0f2942] dark:border-sky-400 text-[#0f2942] dark:text-sky-400'
+              : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
           }`}
         >
           <Sun className="w-4 h-4" />
@@ -148,8 +148,8 @@ export const SettingsView: React.FC<Props> = ({ initialTab = 'appearance' }) => 
           onClick={() => setActiveTab('profile')}
           className={`py-3 px-4 font-bold text-xs flex items-center gap-2 border-b-2 transition whitespace-nowrap ${
             activeTab === 'profile'
-              ? 'border-[#0f2942] text-[#0f2942]'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
+              ? 'border-[#0f2942] dark:border-sky-400 text-[#0f2942] dark:text-sky-400'
+              : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
           }`}
         >
           <User className="w-4 h-4" />
@@ -161,8 +161,8 @@ export const SettingsView: React.FC<Props> = ({ initialTab = 'appearance' }) => 
           onClick={() => setActiveTab('security')}
           className={`py-3 px-4 font-bold text-xs flex items-center gap-2 border-b-2 transition whitespace-nowrap ${
             activeTab === 'security'
-              ? 'border-[#0f2942] text-[#0f2942]'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
+              ? 'border-[#0f2942] dark:border-sky-400 text-[#0f2942] dark:text-sky-400'
+              : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
           }`}
         >
           <KeyRound className="w-4 h-4" />
@@ -174,8 +174,8 @@ export const SettingsView: React.FC<Props> = ({ initialTab = 'appearance' }) => 
           onClick={() => setActiveTab('notifications')}
           className={`py-3 px-4 font-bold text-xs flex items-center gap-2 border-b-2 transition whitespace-nowrap ${
             activeTab === 'notifications'
-              ? 'border-[#0f2942] text-[#0f2942]'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
+              ? 'border-[#0f2942] dark:border-sky-400 text-[#0f2942] dark:text-sky-400'
+              : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
           }`}
         >
           <Bell className="w-4 h-4" />
@@ -185,10 +185,10 @@ export const SettingsView: React.FC<Props> = ({ initialTab = 'appearance' }) => 
 
       {/* 3. Appearance Tab (Section 5, 54) */}
       {activeTab === 'appearance' && (
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-6">
+        <div className="bg-white dark:bg-[#131d2e] rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-6">
           <div>
-            <h2 className="text-base font-bold text-[#0f2942]">Display Appearance</h2>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <h2 className="text-base font-bold text-[#0f2942] dark:text-white">Display Appearance</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               Choose your interface theme. HIET Digital Campus defaults to Light Mode with accessible contrast.
             </p>
           </div>
@@ -200,27 +200,27 @@ export const SettingsView: React.FC<Props> = ({ initialTab = 'appearance' }) => 
               onClick={() => setThemeMode('light')}
               className={`p-4 rounded-xl border text-left transition relative flex flex-col justify-between ${
                 themeMode === 'light'
-                  ? 'border-[#0f2942] ring-2 ring-[#0f2942]/20 bg-blue-50/30'
-                  : 'border-slate-200 hover:border-slate-300 bg-white'
+                  ? 'border-[#0f2942] dark:border-sky-400 ring-2 ring-[#0f2942]/20 dark:ring-sky-400/20 bg-blue-50/30 dark:bg-sky-950/30'
+                  : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 bg-white dark:bg-slate-800/40'
               }`}
             >
               <div className="space-y-3">
-                <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 flex items-center justify-center">
                   <Sun className="w-5 h-5" />
                 </div>
                 <div>
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-sm text-slate-900">Light Mode</span>
+                    <span className="font-bold text-sm text-slate-900 dark:text-white">Light Mode</span>
                     {themeMode === 'light' && (
-                      <CheckCircle2 className="w-4 h-4 text-[#0f2942]" />
+                      <CheckCircle2 className="w-4 h-4 text-[#0f2942] dark:text-sky-400" />
                     )}
                   </div>
-                  <p className="text-xs text-slate-500 mt-1">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                     Official HIET Light Theme. High contrast navy & clean white surfaces. Recommended for everyday campus operations.
                   </p>
                 </div>
               </div>
-              <span className="mt-4 text-[10px] font-bold uppercase tracking-wider text-[#0f2942] bg-blue-100/70 px-2 py-0.5 rounded-md inline-block w-fit">
+              <span className="mt-4 text-[10px] font-bold uppercase tracking-wider text-[#0f2942] dark:text-sky-300 bg-blue-100/70 dark:bg-blue-950/60 px-2 py-0.5 rounded-md inline-block w-fit">
                 Default Theme
               </span>
             </button>
@@ -231,27 +231,27 @@ export const SettingsView: React.FC<Props> = ({ initialTab = 'appearance' }) => 
               onClick={() => setThemeMode('dark')}
               className={`p-4 rounded-xl border text-left transition relative flex flex-col justify-between ${
                 themeMode === 'dark'
-                  ? 'border-[#0f2942] ring-2 ring-[#0f2942]/20 bg-slate-50'
-                  : 'border-slate-200 hover:border-slate-300 bg-white'
+                  ? 'border-[#0f2942] dark:border-sky-400 ring-2 ring-[#0f2942]/20 dark:ring-sky-400/20 bg-slate-50 dark:bg-slate-800/80'
+                  : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 bg-white dark:bg-slate-800/40'
               }`}
             >
               <div className="space-y-3">
-                <div className="w-10 h-10 rounded-xl bg-slate-900 text-slate-200 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-slate-900 dark:bg-slate-800 text-slate-200 dark:text-slate-100 border border-slate-700 flex items-center justify-center">
                   <Moon className="w-5 h-5" />
                 </div>
                 <div>
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-sm text-slate-900">Dark Mode</span>
+                    <span className="font-bold text-sm text-slate-900 dark:text-white">Dark Mode</span>
                     {themeMode === 'dark' && (
-                      <CheckCircle2 className="w-4 h-4 text-[#0f2942]" />
+                      <CheckCircle2 className="w-4 h-4 text-[#0f2942] dark:text-sky-400" />
                     )}
                   </div>
-                  <p className="text-xs text-slate-500 mt-1">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                     Professional dark navy and slate palette. Preserves readability and contrast without harsh inverted colors.
                   </p>
                 </div>
               </div>
-              <span className="mt-4 text-[10px] font-bold uppercase tracking-wider text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md inline-block w-fit">
+              <span className="mt-4 text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md inline-block w-fit">
                 Optional
               </span>
             </button>
@@ -262,27 +262,27 @@ export const SettingsView: React.FC<Props> = ({ initialTab = 'appearance' }) => 
               onClick={() => setThemeMode('system')}
               className={`p-4 rounded-xl border text-left transition relative flex flex-col justify-between ${
                 themeMode === 'system'
-                  ? 'border-[#0f2942] ring-2 ring-[#0f2942]/20 bg-blue-50/30'
-                  : 'border-slate-200 hover:border-slate-300 bg-white'
+                  ? 'border-[#0f2942] dark:border-sky-400 ring-2 ring-[#0f2942]/20 dark:ring-sky-400/20 bg-blue-50/30 dark:bg-sky-950/30'
+                  : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 bg-white dark:bg-slate-800/40'
               }`}
             >
               <div className="space-y-3">
-                <div className="w-10 h-10 rounded-xl bg-blue-100 text-[#0f2942] flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-950/60 text-[#0f2942] dark:text-sky-300 flex items-center justify-center">
                   <Laptop className="w-5 h-5" />
                 </div>
                 <div>
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-sm text-slate-900">System Preference</span>
+                    <span className="font-bold text-sm text-slate-900 dark:text-white">System Preference</span>
                     {themeMode === 'system' && (
-                      <CheckCircle2 className="w-4 h-4 text-[#0f2942]" />
+                      <CheckCircle2 className="w-4 h-4 text-[#0f2942] dark:text-sky-400" />
                     )}
                   </div>
-                  <p className="text-xs text-slate-500 mt-1">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                     Automatically synchronizes with your operating system or mobile device display preference.
                   </p>
                 </div>
               </div>
-              <span className="mt-4 text-[10px] font-bold uppercase tracking-wider text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md inline-block w-fit">
+              <span className="mt-4 text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md inline-block w-fit">
                 Auto Detect
               </span>
             </button>
@@ -359,82 +359,82 @@ export const SettingsView: React.FC<Props> = ({ initialTab = 'appearance' }) => 
           </div>
 
           {/* Read-Only Verified Profile Form (Section 53) */}
-          <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+          <div className="lg:col-span-7 bg-white dark:bg-[#131d2e] rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
               <div>
-                <h3 className="text-base font-bold text-[#0f2942]">Identity Details</h3>
-                <p className="text-xs text-slate-500 mt-0.5">Verified enrollment & institutional records (Immutable)</p>
+                <h3 className="text-base font-bold text-[#0f2942] dark:text-white">Identity Details</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Verified enrollment & institutional records (Immutable)</p>
               </div>
-              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-800 bg-emerald-100 px-2.5 py-1 rounded-full">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 px-2.5 py-1 rounded-full">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                 Verified
               </span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
               <div>
-                <label className="font-bold text-slate-600 block mb-1">Full Legal Name</label>
+                <label className="font-bold text-slate-600 dark:text-slate-400 block mb-1">Full Legal Name</label>
                 <input
                   type="text"
                   value={user?.name || ''}
                   disabled
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 font-medium cursor-not-allowed"
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-700 dark:text-slate-200 font-medium cursor-not-allowed"
                 />
               </div>
 
               <div>
-                <label className="font-bold text-slate-600 block mb-1">Institutional Role</label>
+                <label className="font-bold text-slate-600 dark:text-slate-400 block mb-1">Institutional Role</label>
                 <input
                   type="text"
                   value={getRoleDisplay()}
                   disabled
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 font-medium cursor-not-allowed"
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-700 dark:text-slate-200 font-medium cursor-not-allowed"
                 />
               </div>
 
               <div>
-                <label className="font-bold text-slate-600 block mb-1">Institutional Email</label>
+                <label className="font-bold text-slate-600 dark:text-slate-400 block mb-1">Institutional Email</label>
                 <input
                   type="text"
                   value={user?.email || ''}
                   disabled
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 font-medium cursor-not-allowed"
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-700 dark:text-slate-200 font-medium cursor-not-allowed"
                 />
               </div>
 
               <div>
-                <label className="font-bold text-slate-600 block mb-1">Roll No / Faculty ID</label>
+                <label className="font-bold text-slate-600 dark:text-slate-400 block mb-1">Roll No / Faculty ID</label>
                 <input
                   type="text"
                   value={user?.studentMaster?.roll_no || user?.teacherMaster?.faculty_id || 'HIET-OFFICIAL'}
                   disabled
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 font-mono font-bold cursor-not-allowed"
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-700 dark:text-slate-200 font-mono font-bold cursor-not-allowed"
                 />
               </div>
 
               <div>
-                <label className="font-bold text-slate-600 block mb-1">Department</label>
+                <label className="font-bold text-slate-600 dark:text-slate-400 block mb-1">Department</label>
                 <input
                   type="text"
                   value={user?.studentMaster?.department || user?.teacherMaster?.department || 'CSE'}
                   disabled
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 font-medium cursor-not-allowed"
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-700 dark:text-slate-200 font-medium cursor-not-allowed"
                 />
               </div>
 
               <div>
-                <label className="font-bold text-slate-600 block mb-1">Branch / Specialization</label>
+                <label className="font-bold text-slate-600 dark:text-slate-400 block mb-1">Branch / Specialization</label>
                 <input
                   type="text"
                   value={user?.studentMaster?.branch || 'Computer Science & Engineering'}
                   disabled
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 font-medium cursor-not-allowed"
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-700 dark:text-slate-200 font-medium cursor-not-allowed"
                 />
               </div>
             </div>
 
-            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-[11px] text-slate-500 flex items-start gap-2">
-              <AlertCircle className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
+            <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700 text-[11px] text-slate-500 dark:text-slate-400 flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 text-slate-400 dark:text-slate-500 shrink-0 mt-0.5" />
               <span>
                 To request modifications to verified name, department, or enrollment credentials, contact the Office of the Registrar or Dean Academics with valid documentary proof.
               </span>
@@ -445,10 +445,10 @@ export const SettingsView: React.FC<Props> = ({ initialTab = 'appearance' }) => 
 
       {/* 5. Security & Password Tab (Section 52, 54) */}
       {activeTab === 'security' && (
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs max-w-xl space-y-6">
+        <div className="bg-white dark:bg-[#131d2e] rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs max-w-xl space-y-6">
           <div>
-            <h2 className="text-base font-bold text-[#0f2942]">Security & Authentication Credentials</h2>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <h2 className="text-base font-bold text-[#0f2942] dark:text-white">Security & Authentication Credentials</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               Update your Supabase password. Use at least 6 characters with a combination of letters and numbers.
             </p>
           </div>
@@ -456,8 +456,8 @@ export const SettingsView: React.FC<Props> = ({ initialTab = 'appearance' }) => 
           {passwordMsg && (
             <div className={`p-3.5 rounded-xl text-xs flex items-center gap-2 ${
               passwordMsg.type === 'success'
-                ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                : 'bg-rose-50 text-rose-800 border border-rose-200'
+                ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
+                : 'bg-rose-50 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800'
             }`}>
               {passwordMsg.type === 'success' ? (
                 <CheckCircle2 className="w-4 h-4 shrink-0" />
@@ -472,26 +472,26 @@ export const SettingsView: React.FC<Props> = ({ initialTab = 'appearance' }) => 
             <PasswordInput
               id="settings-new-password"
               label="New Password"
-              labelClassName="font-bold text-slate-700 block mb-1"
+              labelClassName="font-bold text-slate-700 dark:text-slate-300 block mb-1"
               required
               minLength={6}
               value={newPassword}
               onChange={e => setNewPassword(e.target.value)}
               placeholder="Enter new secure password"
-              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-hidden focus:border-[#0f2942]"
+              className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-hidden focus:border-[#0f2942] dark:focus:border-sky-400"
               autoComplete="new-password"
             />
 
             <PasswordInput
               id="settings-confirm-password"
               label="Confirm New Password"
-              labelClassName="font-bold text-slate-700 block mb-1"
+              labelClassName="font-bold text-slate-700 dark:text-slate-300 block mb-1"
               required
               minLength={6}
               value={confirmPassword}
               onChange={e => setConfirmPassword(e.target.value)}
               placeholder="Re-enter new password"
-              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:outline-hidden focus:border-[#0f2942]"
+              className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-hidden focus:border-[#0f2942] dark:focus:border-sky-400"
               autoComplete="new-password"
             />
 
@@ -500,7 +500,7 @@ export const SettingsView: React.FC<Props> = ({ initialTab = 'appearance' }) => 
             <button
               type="submit"
               disabled={passwordLoading}
-              className="px-5 py-2.5 bg-[#0f2942] hover:bg-[#0a1c2e] text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-xs disabled:opacity-50"
+              className="px-5 py-2.5 bg-[#0f2942] dark:bg-sky-600 hover:bg-[#0a1c2e] dark:hover:bg-sky-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-xs disabled:opacity-50"
             >
               {passwordLoading ? 'Updating Password...' : 'Save New Password'}
             </button>
@@ -510,26 +510,26 @@ export const SettingsView: React.FC<Props> = ({ initialTab = 'appearance' }) => 
 
       {/* 6. Notifications Tab (Section 38, 54) */}
       {activeTab === 'notifications' && (
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs max-w-xl space-y-6">
+        <div className="bg-white dark:bg-[#131d2e] rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs max-w-xl space-y-6">
           <div>
-            <h2 className="text-base font-bold text-[#0f2942]">Institutional Notification Preferences</h2>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <h2 className="text-base font-bold text-[#0f2942] dark:text-white">Institutional Notification Preferences</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               Control the notification channels and alert triggers sent to your portal.
             </p>
           </div>
 
           {notifSaved && (
-            <div className="p-3.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs flex items-center gap-2">
+            <div className="p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-xs flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4" />
               <span>Notification preferences saved successfully.</span>
             </div>
           )}
 
           <form onSubmit={handleSaveNotifications} className="space-y-4 text-xs">
-            <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+            <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
               <div>
-                <p className="font-bold text-slate-800">Attendance Warning Alerts</p>
-                <p className="text-[11px] text-slate-500">Receive alerts if aggregate attendance falls below 75% statutory requirement.</p>
+                <p className="font-bold text-slate-800 dark:text-slate-200">Attendance Warning Alerts</p>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">Receive alerts if aggregate attendance falls below 75% statutory requirement.</p>
               </div>
               <input
                 type="checkbox"
@@ -539,10 +539,10 @@ export const SettingsView: React.FC<Props> = ({ initialTab = 'appearance' }) => 
               />
             </div>
 
-            <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+            <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
               <div>
-                <p className="font-bold text-slate-800">Academic Deadlines & Submissions</p>
-                <p className="text-[11px] text-slate-500">Notifications regarding assignment deadlines, sessional results, and timetable changes.</p>
+                <p className="font-bold text-slate-800 dark:text-slate-200">Academic Deadlines & Submissions</p>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">Notifications regarding assignment deadlines, sessional results, and timetable changes.</p>
               </div>
               <input
                 type="checkbox"
@@ -552,10 +552,10 @@ export const SettingsView: React.FC<Props> = ({ initialTab = 'appearance' }) => 
               />
             </div>
 
-            <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+            <div className="flex items-center justify-between p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
               <div>
-                <p className="font-bold text-slate-800">Administrative Notices & Circulars</p>
-                <p className="text-[11px] text-slate-500">Official notices from the Office of the Principal and Head of Department.</p>
+                <p className="font-bold text-slate-800 dark:text-slate-200">Administrative Notices & Circulars</p>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">Official notices from the Office of the Principal and Head of Department.</p>
               </div>
               <input
                 type="checkbox"
@@ -567,7 +567,7 @@ export const SettingsView: React.FC<Props> = ({ initialTab = 'appearance' }) => 
 
             <button
               type="submit"
-              className="px-5 py-2.5 bg-[#0f2942] hover:bg-[#0a1c2e] text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-xs"
+              className="px-5 py-2.5 bg-[#0f2942] dark:bg-sky-600 hover:bg-[#0a1c2e] dark:hover:bg-sky-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-xs"
             >
               Save Preferences
             </button>
@@ -578,14 +578,14 @@ export const SettingsView: React.FC<Props> = ({ initialTab = 'appearance' }) => 
       {/* 7. Logout Confirmation Dialog (Section 52) */}
       {showLogoutConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-xs p-4 overflow-y-auto">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-sm w-full p-6 text-center space-y-4 my-auto animate-scale-in">
-            <div className="w-12 h-12 rounded-2xl bg-rose-100 text-rose-700 flex items-center justify-center mx-auto">
+          <div className="bg-white dark:bg-[#131d2e] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl max-w-sm w-full p-6 text-center space-y-4 my-auto animate-scale-in">
+            <div className="w-12 h-12 rounded-2xl bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 flex items-center justify-center mx-auto">
               <LogOut className="w-6 h-6" />
             </div>
 
             <div>
-              <h3 className="text-base font-bold text-slate-900">Sign Out Confirmation</h3>
-              <p className="text-xs text-slate-500 mt-1">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">Sign Out Confirmation</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                 Are you sure you want to sign out? Your session will be safely cleared and you will be redirected to the public login portal.
               </p>
             </div>
@@ -594,7 +594,7 @@ export const SettingsView: React.FC<Props> = ({ initialTab = 'appearance' }) => 
               <button
                 type="button"
                 onClick={() => setShowLogoutConfirm(false)}
-                className="flex-1 py-2.5 rounded-xl border border-slate-300 text-slate-700 text-xs font-bold hover:bg-slate-50 transition"
+                className="flex-1 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition"
               >
                 Cancel
               </button>
