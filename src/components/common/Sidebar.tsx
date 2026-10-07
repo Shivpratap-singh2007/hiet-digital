@@ -126,7 +126,7 @@ export const Sidebar: React.FC<Props> = ({
         return 'Head of Department';
       case 'teacher':
       case 'faculty':
-        return 'Faculty Member';
+        return user?.activeRoles?.includes('hod') ? 'Faculty Member (HOD)' : 'Faculty Member';
       case 'student':
         return 'Student';
       case 'security_guard':

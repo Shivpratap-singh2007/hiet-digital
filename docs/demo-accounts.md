@@ -1,50 +1,59 @@
-# HIET DIGITAL CAMPUS — DEVELOPMENT DEMO ACCOUNTS
+# HIET DIGITAL CAMPUS — MASTER DEMO ACCOUNTS DIRECTORY
 **Institution:** Himachal Institute of Engineering & Technology, Shahpur (H.P.)  
-**Environment:** Development & Evaluation Only  
+**Environment:** Development & Institutional Evaluation  
+**Default Password for all Demo Accounts:** `Hiet@12345`
 
-> [!CAUTION]
-> **IMPORTANT SECURITY NOTICE:**  
-> These credentials are for **LOCAL/DEVELOPMENT USE ONLY**.  
-> Never use these accounts or passwords in production. Demo credentials must never be shown or enabled in production mode (`import.meta.env.PROD === true`).
+> [!IMPORTANT]
+> **MULTI-ROLE NOTICE (Dr. Anuj Sharma):**  
+> Dr. Anuj Sharma possesses dual roles (`faculty` and `hod`).  
+> Logging in with `anuj.sharma@hiet.demo` or `HIET-FAC-CSE-001` provides instant access to the **Faculty Workspace** with an active **Workspace Switcher** in the top navigation bar to toggle to **HOD — Computer Science & Engineering** without logging out.
 
 ---
 
-## 1. Demo Credentials Matrix
+## 1. Master Demonstration Credentials Matrix
 
-All accounts share the standard development password:  
-**Password:** `Hiet@12345`
-
-| Role | Name | Email / Login ID | Identifier (Roll No / Emp Code) | Expected Dashboard | Primary Modules |
+| Persona Category | Full Name | Primary Email | Alternative Login ID / Roll No | Roles & Workspaces | Initial Route |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **student** | Aditya Nanda | `student.cse01@hiet.demo` | `HIET-CSE-2026-001` | `/app/student` | Attendance (82%), Timetable, Syllabus, PYQs, Assignments, Results, Sessionals, Leave, Doubts, Gate Pass, Hostel Outpass, Presence |
-| **faculty** | Dr. Anuj Sharma | `faculty.cse01@hiet.demo` | `HIET-FAC-CSE-001` | `/app/faculty` | Assigned Subjects, Class Timetable, Attendance Sessions, Submissions Grading, Smart Board Lessons, Doubt Replies |
-| **hod** | Dr. Anuj Sharma (HOD) | `hod.cse@hiet.demo` | `HIET-HOD-CSE-001` | `/app/hod` | CSE Department Students & Faculty, Subject Allocation, Workload, Syllabus Coverage, Smart Board Activity, Approvals |
-| **principal** | Dr. Rajesh Kumar | `principal@hiet.demo` | `HIET-PRI-001` | `/app/admin` | Campus Overview, All Departments, Catalog, Attendance, Hall Tickets, No-Dues, Events, Import Tool, Audit Trail |
-| **managing_director** | Mr. R. K. Sharma | `md@hiet.demo` | `HIET-MD-001` | `/app/md` | Institutional KPIs, Department Comparisons, Academic Trends, Syllabus Oversight, Audit Logs |
-| **security** | Ramesh Thakur | `security@hiet.demo` | `HIET-SEC-001` | `/app/security` | QR Scanner, Gate Pass Verification, Hostel Outpasses, Entry/Exit Logs, Campus Presence, Security Alerts |
-| **warden** | Ms. Neha Verma | `warden@hiet.demo` | `HIET-WAR-001` | `/app/warden` | Hostel Outpass Applications, Movement Logs, Inside/Outside Count, Overdue Student Tracking |
-| **library_staff** | Sunita Devi | `library@hiet.demo` | `HIET-LIB-001` | `/app/library` | Library Dues Status, No-Dues Verification, Library Clearance Clear/Hold Actions |
-| **lab_staff** | Mohit Kumar | `lab@hiet.demo` | `HIET-LAB-001` | `/app/lab` | Lab Equipment Grievances, Lab Clearance Status, Equipment Maintenance Logs |
-| **it_staff** | Vikram Singh | `it@hiet.demo` | `HIET-IT-001` | `/app/it` | IT Support Tickets, 48-Hour SLA Tracking, Server & Network Health Logs |
+| **Faculty & HOD (Dual-Role)** | Dr. Anuj Sharma | `anuj.sharma@hiet.demo` / `faculty.cse01@hiet.demo` | `HIET-FAC-CSE-001` | `faculty`, `hod` (CSE Dept) | `/app/faculty` (Switchable to `/app/hod`) |
+| **Faculty Member** | Dr. Neha Kapoor | `neha.kapoor@hiet.demo` | `HIET-FAC-CSE-002` | `faculty` (CSE Dept) | `/app/faculty` |
+| **Assistant Professor** | Mr. Rohit Verma | `rohit.verma@hiet.demo` | `HIET-FAC-CSE-003` | `faculty` (CSE Dept) | `/app/faculty` |
+| **Student (CSE 6th Sem)** | Aditya Sharma | `aditya.sharma@hiet.demo` / `student.cse01@hiet.demo` | `HIET-CSE-001` | `student` | `/app/student` |
+| **Student (CSE 6th Sem)** | Aarav Sharma | `aarav.sharma@hiet.demo` | `HIET-CSE-002` | `student` | `/app/student` |
+| **Student (CSE 6th Sem)** | Priya Verma | `priya.verma@hiet.demo` | `HIET-CSE-003` | `student` | `/app/student` |
+| **Principal / Director** | Dr. Rajesh Kumar | `principal@hiet.demo` | `HIET-PRI-001` | `principal`, `admin` | `/app/admin` |
+| **Managing Director** | Mr. R. K. Sharma | `md@hiet.demo` | `HIET-MD-001` | `managing_director` | `/app/md` |
+| **Campus Security Incharge**| Ramesh Thakur | `security@hiet.demo` | `HIET-SEC-001` | `security` | `/app/security` |
+| **Hostel Warden** | Ms. Neha Verma | `warden@hiet.demo` | `HIET-WAR-001` | `warden` | `/app/warden` |
+| **Library Officer** | Sunita Devi | `library@hiet.demo` | `HIET-LIB-001` | `library_staff` | `/app/library` |
+| **Laboratories Incharge** | Mohit Kumar | `lab@hiet.demo` | `HIET-LAB-001` | `lab_staff` | `/app/lab` |
+| **IT Systems Administrator**| Vikram Singh | `it@hiet.demo` | `HIET-IT-001` | `it_staff` | `/app/it` |
 
 ---
 
-## 2. Authentication Support
+## 2. Identifier Resolution & Login Support
 
 The institutional login screen accepts either:
-1. **Email Address** (e.g., `student.cse01@hiet.demo`)
-2. **Identifier** (e.g., `HIET-CSE-2026-001` or `HIET-FAC-CSE-001`)
+1. **Email Address** (e.g., `anuj.sharma@hiet.demo`, `aditya.sharma@hiet.demo`)
+2. **Institutional Identifier** (e.g., `HIET-FAC-CSE-001`, `HIET-CSE-001`)
 
-When entering an identifier, the system securely invokes the server-side `resolve_login_identifier` RPC to map the identifier to the corresponding account before authenticating.
+### Identifier Resolution Process
+When logging in with an identifier:
+- System calls the PostgreSQL RPC `resolve_login_identifier(p_identifier TEXT)`.
+- It searches across:
+  - `students_master.roll_no`
+  - `teachers_master.faculty_id`
+  - `users.email` prefix
+- Resolves to the institutional email address and completes secure authentication.
+- Seamless local fallback is provided in development mode if Supabase is offline.
 
 ---
 
-## 3. Fast Development Switcher
+## 3. Fast Development Evaluation Page
 
-In development mode (`import.meta.env.DEV === true`), you can visit:  
+In development mode (`npm run dev`), you can directly visit:  
 **URL:** `http://localhost:5173/dev/demo-accounts`
 
-This page provides:
+Features:
 - Single-click **Quick Login** into any role
-- **Copy Email** and **Copy Password** actions
-- Real-time role overview table in the approved institutional design
+- One-click **Copy Credentials**
+- Instant switching between student, faculty, HOD, and executive dashboards

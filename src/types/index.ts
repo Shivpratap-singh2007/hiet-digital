@@ -62,6 +62,12 @@ export interface TeacherMaster {
   created_at?: string;
 }
 
+export interface WorkspaceOption {
+  roleKey: string;
+  label: string;
+  departmentName?: string;
+}
+
 export interface Profile {
   id: string;
   auth_user_id: string;
@@ -75,6 +81,12 @@ export interface Profile {
   avatar_url?: string;
   created_at?: string;
   updated_at?: string;
+  // Multi-role and workspace support
+  activeRoles?: string[];
+  activeWorkspaceRole?: string;
+  workspaceRoles?: WorkspaceOption[];
+  department?: string;
+  department_id?: string;
   // Enriched joins for convenience
   studentMaster?: StudentMaster;
   teacherMaster?: TeacherMaster;
@@ -682,7 +694,7 @@ export interface AttendanceReconciliationRecord {
 // =============================================================================
 // SMART BOARD TEACHING & SYLLABUS TRACKER (Sections 39-47)
 // =============================================================================
-export type SmartBoardSyncStatus = 'Pending Sync' | 'Syncing' | 'Synced' | 'Failed';
+export type SmartBoardSyncStatus = 'Pending Sync' | 'Syncing' | 'Synced' | 'Failed' | 'Reviewed';
 
 export interface SmartBoardLesson {
   id: string;

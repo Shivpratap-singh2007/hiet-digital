@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Profile, StudentMaster, TeacherMaster, UserRole } from '../types';
+import { Profile, StudentMaster, TeacherMaster, UserRole, WorkspaceOption } from '../types';
 import { apiService, isSupabaseConfigured, supabase } from '../lib/supabase';
 import { dataStore } from '../lib/mockData';
 import { formatAuthError, normalizeAuthEmail } from '../lib/authErrors';
@@ -7,10 +7,14 @@ import { formatAuthError, normalizeAuthEmail } from '../lib/authErrors';
 interface AuthContextType {
   user: Profile | null;
   role: UserRole | null;
+  activeRoles: string[];
+  activeWorkspaceRole: string | null;
+  workspaceRoles: { roleKey: string; label: string; departmentName?: string }[];
   isLoading: boolean;
   mustChangePassword: boolean;
   login: (emailOrId: string, password?: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
+  switchWorkspace: (workspaceRole: string) => Promise<void>;
   verifyStudentRollNo: (rollNo: string) => Promise<{ success: boolean; data?: StudentMaster; error?: string }>;
   verifyTeacherFacultyId: (facultyId: string) => Promise<{ success: boolean; data?: TeacherMaster; error?: string }>;
   verifyFaculty: (facultyId: string, fullName: string) => Promise<{ success: boolean; data?: TeacherMaster; error?: string }>;
@@ -45,8 +49,10 @@ export function getRoleRedirect(role?: string | null): string {
 }
 
 // =============================================================================
-// MASTER DEMO PROFILES (Part C & D Specification)
+// MASTER DEMO PROFILES (Section 15 Specification)
 // =============================================================================
+
+// Student 1: Aditya Nanda (CSE Sem 1 Sec A)
 export const DEMO_STUDENT_ADITYA: Profile & { identifier: string } = {
   id: 'prof-std-cse-2026-001',
   auth_user_id: 'auth-std-cse-2026-001',
@@ -56,6 +62,9 @@ export const DEMO_STUDENT_ADITYA: Profile & { identifier: string } = {
   name: 'Aditya Nanda',
   email: 'student.cse01@hiet.demo',
   must_change_password: false,
+  activeRoles: ['student'],
+  activeWorkspaceRole: 'student',
+  department: 'CSE',
   studentMaster: {
     id: 'std-cse-2026-001',
     roll_no: 'HIET-CSE-2026-001',
@@ -77,25 +86,162 @@ export const DEMO_STUDENT_ADITYA: Profile & { identifier: string } = {
   }
 };
 
+// Student 2: Aarav Sharma (CSE Sem 1 Sec A)
+export const DEMO_STUDENT_AARAV: Profile & { identifier: string } = {
+  id: 'prof-std-cse-2026-002',
+  auth_user_id: 'auth-std-cse-2026-002',
+  role: 'student',
+  student_id: 'std-cse-2026-002',
+  identifier: 'HIET-CSE-2026-002',
+  name: 'Aarav Sharma',
+  email: 'student.cse02@hiet.demo',
+  must_change_password: false,
+  activeRoles: ['student'],
+  activeWorkspaceRole: 'student',
+  department: 'CSE',
+  studentMaster: {
+    id: 'std-cse-2026-002',
+    roll_no: 'HIET-CSE-2026-002',
+    name: 'Aarav Sharma',
+    father_name: 'Sh. Rajesh Sharma',
+    mother_name: 'Smt. Sunita Sharma',
+    dob: '2004-08-15',
+    course: 'B.Tech',
+    department: 'CSE',
+    branch: 'CSE',
+    semester: 1,
+    section: 'A',
+    college_email: 'student.cse02@hiet.demo',
+    phone: '+91 98160 44002',
+    avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+    cgpa: 7.55,
+    sgpa: 7.62,
+    status: 'active'
+  }
+};
+
+// Student 3: Priya Verma (CSE Sem 1 Sec A)
+export const DEMO_STUDENT_PRIYA: Profile & { identifier: string } = {
+  id: 'prof-std-cse-2026-003',
+  auth_user_id: 'auth-std-cse-2026-003',
+  role: 'student',
+  student_id: 'std-cse-2026-003',
+  identifier: 'HIET-CSE-2026-003',
+  name: 'Priya Verma',
+  email: 'student.cse03@hiet.demo',
+  must_change_password: false,
+  activeRoles: ['student'],
+  activeWorkspaceRole: 'student',
+  department: 'CSE',
+  studentMaster: {
+    id: 'std-cse-2026-002',
+    roll_no: 'HIET-CSE-2026-003',
+    name: 'Priya Verma',
+    father_name: 'Sh. Vijay Verma',
+    mother_name: 'Smt. Anjali Verma',
+    dob: '2004-11-20',
+    course: 'B.Tech',
+    department: 'CSE',
+    branch: 'CSE',
+    semester: 1,
+    section: 'A',
+    college_email: 'student.cse03@hiet.demo',
+    phone: '+91 98160 44003',
+    avatar_url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
+    cgpa: 9.15,
+    sgpa: 9.20,
+    status: 'active'
+  }
+};
+
+// Faculty 1: Dr. Anuj Sharma (Faculty + HOD CSE)
 export const DEMO_FACULTY_ANUJ: Profile & { identifier: string } = {
   id: 'prof-tch-fac-cse-001',
   auth_user_id: 'auth-tch-fac-cse-001',
-  role: 'teacher',
+  role: 'faculty',
   teacher_id: 'tch-fac-cse-001',
   faculty_id: 'HIET-FAC-CSE-001',
   identifier: 'HIET-FAC-CSE-001',
   name: 'Dr. Anuj Sharma',
-  email: 'faculty.cse01@hiet.demo',
+  email: 'anuj.sharma@hiet.demo',
   must_change_password: false,
+  activeRoles: ['faculty', 'hod'],
+  activeWorkspaceRole: 'faculty',
+  workspaceRoles: [
+    { roleKey: 'faculty', label: 'Faculty Workspace', departmentName: 'CSE' },
+    { roleKey: 'hod', label: 'HOD — Computer Science & Engineering', departmentName: 'Computer Science & Engineering' }
+  ],
+  department: 'CSE',
   teacherMaster: {
     id: 'tch-fac-cse-001',
     faculty_id: 'HIET-FAC-CSE-001',
     full_name: 'Dr. Anuj Sharma',
     name: 'Dr. Anuj Sharma',
     department: 'CSE',
-    designation: 'Associate Professor',
-    college_email: 'faculty.cse01@hiet.demo',
+    designation: 'Professor & Head',
+    college_email: 'anuj.sharma@hiet.demo',
     phone: '+91 98160 55001',
+    role: 'teacher',
+    is_hod: true,
+    is_class_incharge: false,
+    avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+    status: 'active'
+  }
+};
+
+// Faculty 2: Dr. Neha Kapoor (Faculty)
+export const DEMO_FACULTY_NEHA: Profile & { identifier: string } = {
+  id: 'prof-tch-fac-cse-002',
+  auth_user_id: 'auth-tch-fac-cse-002',
+  role: 'faculty',
+  teacher_id: 'tch-fac-cse-002',
+  faculty_id: 'HIET-FAC-CSE-002',
+  identifier: 'HIET-FAC-CSE-002',
+  name: 'Dr. Neha Kapoor',
+  email: 'faculty.cse02@hiet.demo',
+  must_change_password: false,
+  activeRoles: ['faculty'],
+  activeWorkspaceRole: 'faculty',
+  department: 'CSE',
+  teacherMaster: {
+    id: 'tch-fac-cse-002',
+    faculty_id: 'HIET-FAC-CSE-002',
+    full_name: 'Dr. Neha Kapoor',
+    name: 'Dr. Neha Kapoor',
+    department: 'CSE',
+    designation: 'Assistant Professor',
+    college_email: 'faculty.cse02@hiet.demo',
+    phone: '+91 98160 55002',
+    role: 'teacher',
+    is_hod: false,
+    avatar_url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80',
+    status: 'active'
+  }
+};
+
+// Faculty 3: Mr. Rohit Mehta (Faculty + Class In-Charge)
+export const DEMO_FACULTY_ROHIT: Profile & { identifier: string } = {
+  id: 'prof-tch-fac-cse-003',
+  auth_user_id: 'auth-tch-fac-cse-003',
+  role: 'faculty',
+  teacher_id: 'tch-fac-cse-003',
+  faculty_id: 'HIET-FAC-CSE-003',
+  identifier: 'HIET-FAC-CSE-003',
+  name: 'Mr. Rohit Mehta',
+  email: 'faculty.cse03@hiet.demo',
+  must_change_password: false,
+  activeRoles: ['faculty', 'class_incharge'],
+  activeWorkspaceRole: 'faculty',
+  department: 'CSE',
+  teacherMaster: {
+    id: 'tch-fac-cse-003',
+    faculty_id: 'HIET-FAC-CSE-003',
+    full_name: 'Mr. Rohit Mehta',
+    name: 'Mr. Rohit Mehta',
+    department: 'CSE',
+    designation: 'Assistant Professor',
+    college_email: 'faculty.cse03@hiet.demo',
+    phone: '+91 98160 55003',
     role: 'teacher',
     is_hod: false,
     is_class_incharge: true,
@@ -104,32 +250,6 @@ export const DEMO_FACULTY_ANUJ: Profile & { identifier: string } = {
       semester: 1,
       section: 'A'
     },
-    avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-    status: 'active'
-  }
-};
-
-export const DEMO_HOD_ANUJ: Profile & { identifier: string } = {
-  id: 'prof-tch-hod-cse-001',
-  auth_user_id: 'auth-tch-hod-cse-001',
-  role: 'hod',
-  teacher_id: 'tch-hod-cse-001',
-  faculty_id: 'HIET-HOD-CSE-001',
-  identifier: 'HIET-HOD-CSE-001',
-  name: 'Dr. Anuj Sharma (HOD)',
-  email: 'hod.cse@hiet.demo',
-  must_change_password: false,
-  teacherMaster: {
-    id: 'tch-hod-cse-001',
-    faculty_id: 'HIET-HOD-CSE-001',
-    full_name: 'Dr. Anuj Sharma (HOD)',
-    name: 'Dr. Anuj Sharma (HOD)',
-    department: 'CSE',
-    designation: 'Professor & Head',
-    college_email: 'hod.cse@hiet.demo',
-    phone: '+91 98160 55002',
-    role: 'hod',
-    is_hod: true,
     avatar_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
     status: 'active'
   }
@@ -142,6 +262,8 @@ export const DEMO_PRINCIPAL_RAJESH: Profile & { identifier: string } = {
   name: 'Dr. Rajesh Kumar',
   email: 'principal@hiet.demo',
   identifier: 'HIET-PRI-001',
+  activeRoles: ['principal'],
+  activeWorkspaceRole: 'principal',
   must_change_password: false
 };
 
@@ -152,6 +274,8 @@ export const DEMO_MD_SHARMA: Profile & { identifier: string } = {
   name: 'Mr. R. K. Sharma',
   email: 'md@hiet.demo',
   identifier: 'HIET-MD-001',
+  activeRoles: ['managing_director'],
+  activeWorkspaceRole: 'managing_director',
   must_change_password: false
 };
 
@@ -162,6 +286,8 @@ export const DEMO_SECURITY_RAMESH: Profile & { identifier: string } = {
   name: 'Ramesh Thakur',
   email: 'security@hiet.demo',
   identifier: 'HIET-SEC-001',
+  activeRoles: ['security', 'security_guard'],
+  activeWorkspaceRole: 'security',
   must_change_password: false
 };
 
@@ -172,6 +298,8 @@ export const DEMO_WARDEN_NEHA: Profile & { identifier: string } = {
   name: 'Ms. Neha Verma',
   email: 'warden@hiet.demo',
   identifier: 'HIET-WAR-001',
+  activeRoles: ['warden'],
+  activeWorkspaceRole: 'warden',
   must_change_password: false
 };
 
@@ -182,6 +310,8 @@ export const DEMO_LIBRARY_SUNITA: Profile & { identifier: string } = {
   name: 'Sunita Devi',
   email: 'library@hiet.demo',
   identifier: 'HIET-LIB-001',
+  activeRoles: ['library_staff'],
+  activeWorkspaceRole: 'library_staff',
   must_change_password: false
 };
 
@@ -192,6 +322,8 @@ export const DEMO_LAB_MOHIT: Profile & { identifier: string } = {
   name: 'Mohit Kumar',
   email: 'lab@hiet.demo',
   identifier: 'HIET-LAB-001',
+  activeRoles: ['lab_staff'],
+  activeWorkspaceRole: 'lab_staff',
   must_change_password: false
 };
 
@@ -202,13 +334,18 @@ export const DEMO_IT_VIKRAM: Profile & { identifier: string } = {
   name: 'Vikram Singh',
   email: 'it@hiet.demo',
   identifier: 'HIET-IT-001',
+  activeRoles: ['it_staff'],
+  activeWorkspaceRole: 'it_staff',
   must_change_password: false
 };
 
 export const MASTER_DEMO_ACCOUNTS = [
   DEMO_STUDENT_ADITYA,
+  DEMO_STUDENT_AARAV,
+  DEMO_STUDENT_PRIYA,
   DEMO_FACULTY_ANUJ,
-  DEMO_HOD_ANUJ,
+  DEMO_FACULTY_NEHA,
+  DEMO_FACULTY_ROHIT,
   DEMO_PRINCIPAL_RAJESH,
   DEMO_MD_SHARMA,
   DEMO_SECURITY_RAMESH,
@@ -394,7 +531,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const saved = localStorage.getItem('hiet_current_user');
       if (saved && saved !== 'null' && saved !== 'undefined') {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        const savedWorkspace = localStorage.getItem('hiet_active_workspace_role');
+        if (savedWorkspace && parsed.activeRoles && (parsed.activeRoles.includes(savedWorkspace) || (savedWorkspace === 'hod' && parsed.activeRoles.includes('hod')))) {
+          parsed.role = savedWorkspace;
+          parsed.activeWorkspaceRole = savedWorkspace;
+        }
+        return parsed;
       }
     } catch {
       // Fallback
@@ -721,7 +864,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (isDemoAllowed) {
         const matchedDemo = MASTER_DEMO_ACCOUNTS.find(
           acc => acc.email.toLowerCase() === input.toLowerCase() ||
-                 acc.identifier.toUpperCase() === input.toUpperCase()
+                 acc.identifier.toUpperCase() === input.toUpperCase() ||
+                 (acc.email === 'anuj.sharma@hiet.demo' && (input.toLowerCase() === 'faculty.cse01@hiet.demo' || input.toLowerCase() === 'hod.cse@hiet.demo'))
         );
         if (matchedDemo) {
           if (password && password !== 'Hiet@12345') {
@@ -730,9 +874,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               error: 'Invalid password. Please check your credentials and try again.'
             };
           }
-          setUser(matchedDemo);
+          let finalProfile = { ...matchedDemo };
+          if (matchedDemo.activeRoles && matchedDemo.activeRoles.includes('hod')) {
+            const savedWorkspace = localStorage.getItem('hiet_active_workspace_role') || 'faculty';
+            finalProfile.role = savedWorkspace as UserRole;
+            finalProfile.activeWorkspaceRole = savedWorkspace;
+          }
+          setUser(finalProfile);
           if (typeof window !== 'undefined') {
-            window.history.replaceState(null, '', getRoleRedirect(matchedDemo.role));
+            window.history.replaceState(null, '', getRoleRedirect(finalProfile.role));
           }
           return { success: true };
         }
@@ -1021,6 +1171,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     setUser(null);
     localStorage.removeItem('hiet_current_user');
+    localStorage.removeItem('hiet_active_workspace_role');
     sessionStorage.clear();
     if (typeof window !== 'undefined') {
       window.history.replaceState(null, '', '/login');
@@ -1137,15 +1288,59 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const activeRoles: string[] = user?.activeRoles || (user?.role ? [user.role] : []);
+  const activeWorkspaceRole: string | null = user?.activeWorkspaceRole || user?.role || null;
+  const workspaceRoles: WorkspaceOption[] = user?.workspaceRoles || (
+    activeRoles.includes('hod') && (activeRoles.includes('faculty') || activeRoles.includes('teacher'))
+      ? [
+          { roleKey: 'faculty', label: 'Faculty Workspace', departmentName: user?.department || 'CSE' },
+          { roleKey: 'hod', label: `HOD — ${user?.department || 'Computer Science & Engineering'}`, departmentName: user?.department || 'Computer Science & Engineering' }
+        ]
+      : []
+  );
+
+  const switchWorkspace = async (workspaceRole: string) => {
+    if (!user) return;
+    const cleanRole = workspaceRole.toLowerCase() as UserRole;
+    const updatedUser: Profile = {
+      ...user,
+      role: cleanRole,
+      activeWorkspaceRole: cleanRole
+    };
+    setUser(updatedUser);
+    localStorage.setItem('hiet_current_user', JSON.stringify(updatedUser));
+    localStorage.setItem('hiet_active_workspace_role', cleanRole);
+
+    if (isSupabaseConfigured && supabase) {
+      try {
+        await supabase.from('user_workspace_preferences').upsert({
+          user_id: user.id,
+          active_workspace_role_key: cleanRole,
+          updated_at: new Date().toISOString()
+        });
+      } catch (e) {
+        console.warn('Could not save workspace preference to Supabase:', e);
+      }
+    }
+
+    if (typeof window !== 'undefined') {
+      window.history.replaceState(null, '', getRoleRedirect(cleanRole));
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
         user,
         role: user?.role || null,
+        activeRoles,
+        activeWorkspaceRole,
+        workspaceRoles,
         isLoading,
         mustChangePassword: Boolean(user?.must_change_password),
         login,
         logout,
+        switchWorkspace,
         verifyStudentRollNo,
         verifyTeacherFacultyId,
         verifyFaculty,

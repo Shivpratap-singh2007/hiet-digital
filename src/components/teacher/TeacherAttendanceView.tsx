@@ -1,13 +1,23 @@
-import React, { useState } from 'react';
-import { CalendarCheck, CheckCircle2, XCircle, Save, Filter, Users, Calendar } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { CalendarCheck, CheckCircle2, XCircle, Save, Filter, QrCode, AlertTriangle, ShieldCheck, RefreshCw, Radio } from 'lucide-react';
 import { dataStore } from '../../lib/mockData';
 import { useAuth } from '../../context/AuthContext';
 import { apiService } from '../../lib/supabase';
-import { AttendanceRecord, StudentMaster } from '../../types';
+import { AttendanceRecord } from '../../types';
+import { DynamicQRCodeCanvas } from '../common/DynamicQRCodeCanvas';
+import { 
+  attendanceService, 
+  CLASSROOM_COORDINATES, 
+  DynamicSessionState, 
+  LiveScanLogEntry 
+} from '../../lib/attendanceService';
 
 export const TeacherAttendanceView: React.FC = () => {
   const { user } = useAuth();
   const teacherId = user?.teacher_id || 'tch-01';
+
+  // Mode: Manual Register vs Dynamic QR Session
+  const [activeTab, setActiveTab] = useState<'manual' | 'dynamic_qr'>('manual');
 
   // Cascading Selector States as strictly specified in Section 26
   const [department, setDepartment] = useState<string>('CSE');
@@ -45,6 +55,92 @@ export const TeacherAttendanceView: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
+  // Dynamic QR Session State
+  const [qrSession, setQrSession] = useState<DynamicSessionState | null>(null);
+  const [secondsRemaining, setSecondsRemaining] = useState<number>(6);
+  const [liveScanLogs, setLiveScanLogs] = useState<LiveScanLogEntry[]>([]);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Subject code helper
+  const getSubjectCode = () => {
+    if (subject === 'Mathematics') return 'CS-601';
+    if (subject === 'Physics') return 'CS-602';
+    if (subject === 'Machine Learning Foundations') return 'AIML-401';
+    return 'CS-603';
+  };
+
+  // Start or manage dynamic session
+  const startDynamicSession = () => {
+    const session = attendanceService.startOrRefreshSession({
+      subjectName: subject,
+      subjectCode: getSubjectCode(),
+      semester,
+      branch,
+      section,
+      facultyId: teacherId,
+      facultyName: user?.name || 'Dr. Anuj Sharma',
+      roomName: CLASSROOM_COORDINATES.roomName,
+    });
+    setQrSession(session);
+    setSecondsRemaining(6);
+    setLiveScanLogs(attendanceService.getSessionLogs(session.sessionId));
+  };
+
+  // 6-second dynamic refresh loop when Dynamic QR tab is active
+  useEffect(() => {
+    if (activeTab !== 'dynamic_qr') {
+      if (timerRef.current) clearInterval(timerRef.current);
+      return;
+    }
+
+    // Initialize or refresh
+    startDynamicSession();
+
+    // 1-second countdown interval
+    timerRef.current = setInterval(() => {
+      setSecondsRemaining(prev => {
+        if (prev <= 1) {
+          // Time to refresh dynamic token
+          const refreshed = attendanceService.startOrRefreshSession({
+            subjectName: subject,
+            subjectCode: getSubjectCode(),
+            semester,
+            branch,
+            section,
+            facultyId: teacherId,
+            facultyName: user?.name || 'Dr. Anuj Sharma',
+          });
+          setQrSession(refreshed);
+          return 6;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    // Listen to live student scans
+    const unsubscribe = attendanceService.subscribe((event) => {
+      if (event.type === 'SCAN_RECEIVED' || event.type === 'OVERRIDE_APPROVED') {
+        const active = attendanceService.getActiveSession();
+        if (active) {
+          const updatedLogs = attendanceService.getSessionLogs(active.sessionId);
+          setLiveScanLogs([...updatedLogs]);
+          // Also mark present in attendance map
+          if (event.entry && typeof event.entry === 'object') {
+            const entry = event.entry as LiveScanLogEntry;
+            if (entry.status === 'verified') {
+              setAttendanceMap(m => ({ ...m, [entry.studentId]: 'Present' }));
+            }
+          }
+        }
+      }
+    });
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+      unsubscribe();
+    };
+  }, [activeTab, subject, branch, semester, section]);
+
   // Toggle single student
   const handleToggle = (studentId: string, status: 'Present' | 'Absent') => {
     setAttendanceMap(prev => ({ ...prev, [studentId]: status }));
@@ -67,7 +163,7 @@ export const TeacherAttendanceView: React.FC = () => {
       student_id: s.id,
       subject_id: `sub-${branch.toLowerCase()}-${semester}`,
       subject_name: subject,
-      subject_code: subject === 'Mathematics' ? 'CS-601' : subject === 'Physics' ? 'CS-602' : 'CS-603',
+      subject_code: getSubjectCode(),
       date,
       status: attendanceMap[s.id] || 'Present',
       marked_by: teacherId
@@ -79,57 +175,123 @@ export const TeacherAttendanceView: React.FC = () => {
     setTimeout(() => setSaveSuccess(false), 3000);
   };
 
+  // Manual Override approval for flagged student
+  const handleApproveFlagged = async (studentId: string) => {
+    if (!qrSession) return;
+    await attendanceService.approveFlaggedStudent(qrSession.sessionId, studentId);
+    setAttendanceMap(prev => ({ ...prev, [studentId]: 'Present' }));
+    setLiveScanLogs([...attendanceService.getSessionLogs(qrSession.sessionId)]);
+  };
+
   const presentCount = Object.values(attendanceMap).filter(s => s === 'Present').length;
   const absentCount = Object.values(attendanceMap).filter(s => s === 'Absent').length;
+
+  const verifiedScansCount = liveScanLogs.filter(l => l.status === 'verified').length;
+  const flaggedScansCount = liveScanLogs.filter(l => l.status === 'flagged').length;
+  const invalidScansCount = liveScanLogs.filter(l => l.status === 'invalid').length;
+
+  // JSON payload for QR code
+  const qrPayload = qrSession ? JSON.stringify({
+    institution: 'HIET',
+    sessionId: qrSession.sessionId,
+    subject: qrSession.subjectName,
+    subjectCode: qrSession.subjectCode,
+    branch: qrSession.branch,
+    semester: qrSession.semester,
+    section: qrSession.section,
+    lat: qrSession.geofenceLat,
+    lng: qrSession.geofenceLng,
+    radius: qrSession.geofenceRadius,
+    token: qrSession.qrToken,
+    issuedAt: qrSession.issuedAt,
+    expiresAt: qrSession.expiresAt
+  }) : '';
 
   return (
     <div className="space-y-4 animate-fade-in font-sans">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 flex items-center gap-2">
+          <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
             <CalendarCheck className="w-5 h-5 text-amber-600" />
             <span>Classroom Attendance Register</span>
           </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Select course criteria, mark student presence, and submit official records
+          <p className="text-xs text-slate-500 dark:text-neutral-400 mt-0.5">
+            Select course criteria, mark student presence, or launch 30m geofenced dynamic QR
           </p>
         </div>
 
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs transition active:scale-95 shrink-0"
-        >
-          <Save className="w-4 h-4" />
-          <span>{saving ? 'Saving...' : 'Save Attendance'}</span>
-        </button>
+        <div className="flex items-center gap-2">
+          {/* Top-Right Tab Toggle */}
+          <div className="flex items-center p-1 bg-slate-100 dark:bg-neutral-800 rounded-xl border border-slate-200 dark:border-neutral-700">
+            <button
+              type="button"
+              onClick={() => setActiveTab('manual')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
+                activeTab === 'manual'
+                  ? 'bg-white dark:bg-neutral-900 text-slate-900 dark:text-white shadow-xs'
+                  : 'text-slate-500 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-white'
+              }`}
+            >
+              <span>Manual Register</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('dynamic_qr')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
+                activeTab === 'dynamic_qr'
+                  ? 'bg-amber-600 text-white shadow-xs'
+                  : 'text-slate-500 hover:text-slate-900 dark:text-neutral-400 dark:hover:text-white'
+              }`}
+            >
+              <QrCode className="w-3.5 h-3.5" />
+              <span>Dynamic QR Session (30m)</span>
+            </button>
+          </div>
+
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs transition active:scale-95 shrink-0"
+          >
+            <Save className="w-4 h-4" />
+            <span>{saving ? 'Saving...' : 'Save Records'}</span>
+          </button>
+        </div>
       </div>
 
       {saveSuccess && (
-        <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center gap-2 text-xs text-emerald-800 font-bold animate-fade-in">
-          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+        <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-2xl flex items-center gap-2 text-xs text-emerald-800 dark:text-emerald-300 font-bold animate-fade-in">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
           <span>Attendance register saved and synced to student transcripts!</span>
         </div>
       )}
 
-      {/* Cascading Filter Strip as Specified in Section 26: Dept -> Branch -> Semester -> Section -> Subject -> Date */}
-      <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2.5">
-        <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
-          <Filter className="w-3.5 h-3.5 text-amber-600" />
-          <span>Course & Lecture Filter Criteria:</span>
+      {/* Cascading Filter Strip: Dept -> Branch -> Semester -> Section -> Subject -> Date */}
+      <div className="p-3.5 bg-slate-50 dark:bg-neutral-900 rounded-2xl border border-slate-200 dark:border-neutral-800 space-y-2.5">
+        <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-neutral-300">
+          <div className="flex items-center gap-1.5">
+            <Filter className="w-3.5 h-3.5 text-amber-600" />
+            <span>Course & Lecture Filter Criteria:</span>
+          </div>
+          {activeTab === 'dynamic_qr' && (
+            <span className="flex items-center gap-1 text-[11px] font-mono text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-full border border-amber-200 dark:border-amber-800">
+              <Radio className="w-3 h-3 animate-pulse text-amber-600" />
+              Live Dynamic Broadcast
+            </span>
+          )}
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
           {/* 1. Department */}
           <div>
-            <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">
+            <label className="text-[10px] font-bold text-slate-500 dark:text-neutral-400 uppercase block mb-1">
               Department
             </label>
             <select
               value={department}
               onChange={e => setDepartment(e.target.value)}
-              className="w-full text-xs font-semibold bg-white border border-slate-300 rounded-xl px-2.5 py-1.5 focus:outline-none"
+              className="w-full text-xs font-semibold bg-white dark:bg-neutral-800 border border-slate-300 dark:border-neutral-700 rounded-xl px-2.5 py-1.5 focus:outline-none dark:text-white"
             >
               <option value="CSE">CSE Department</option>
             </select>
@@ -137,7 +299,7 @@ export const TeacherAttendanceView: React.FC = () => {
 
           {/* 2. Branch */}
           <div>
-            <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">
+            <label className="text-[10px] font-bold text-slate-500 dark:text-neutral-400 uppercase block mb-1">
               Branch
             </label>
             <select
@@ -147,7 +309,7 @@ export const TeacherAttendanceView: React.FC = () => {
                 setBranch(b);
                 setSemester(b === 'CSE AI & ML' ? 4 : 6);
               }}
-              className="w-full text-xs font-semibold bg-white border border-slate-300 rounded-xl px-2.5 py-1.5 focus:outline-none"
+              className="w-full text-xs font-semibold bg-white dark:bg-neutral-800 border border-slate-300 dark:border-neutral-700 rounded-xl px-2.5 py-1.5 focus:outline-none dark:text-white"
             >
               <option value="CSE">CSE</option>
               <option value="CSE AI & ML">CSE AI & ML</option>
@@ -156,13 +318,13 @@ export const TeacherAttendanceView: React.FC = () => {
 
           {/* 3. Semester */}
           <div>
-            <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">
+            <label className="text-[10px] font-bold text-slate-500 dark:text-neutral-400 uppercase block mb-1">
               Semester
             </label>
             <select
               value={semester}
               onChange={e => setSemester(Number(e.target.value))}
-              className="w-full text-xs font-semibold bg-white border border-slate-300 rounded-xl px-2.5 py-1.5 focus:outline-none"
+              className="w-full text-xs font-semibold bg-white dark:bg-neutral-800 border border-slate-300 dark:border-neutral-700 rounded-xl px-2.5 py-1.5 focus:outline-none dark:text-white"
             >
               {branch === 'CSE' ? (
                 <>
@@ -180,13 +342,13 @@ export const TeacherAttendanceView: React.FC = () => {
 
           {/* 4. Section */}
           <div>
-            <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">
+            <label className="text-[10px] font-bold text-slate-500 dark:text-neutral-400 uppercase block mb-1">
               Section
             </label>
             <select
               value={section}
               onChange={e => setSection(e.target.value)}
-              className="w-full text-xs font-semibold bg-white border border-slate-300 rounded-xl px-2.5 py-1.5 focus:outline-none"
+              className="w-full text-xs font-semibold bg-white dark:bg-neutral-800 border border-slate-300 dark:border-neutral-700 rounded-xl px-2.5 py-1.5 focus:outline-none dark:text-white"
             >
               <option value="A">Section A</option>
               <option value="B">Section B</option>
@@ -195,13 +357,13 @@ export const TeacherAttendanceView: React.FC = () => {
 
           {/* 5. Subject */}
           <div>
-            <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">
+            <label className="text-[10px] font-bold text-slate-500 dark:text-neutral-400 uppercase block mb-1">
               Subject
             </label>
             <select
               value={subject}
               onChange={e => setSubject(e.target.value)}
-              className="w-full text-xs font-semibold bg-white border border-slate-300 rounded-xl px-2.5 py-1.5 focus:outline-none"
+              className="w-full text-xs font-semibold bg-white dark:bg-neutral-800 border border-slate-300 dark:border-neutral-700 rounded-xl px-2.5 py-1.5 focus:outline-none dark:text-white"
             >
               {branch === 'CSE' ? (
                 <>
@@ -222,112 +384,271 @@ export const TeacherAttendanceView: React.FC = () => {
 
           {/* 6. Date */}
           <div>
-            <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">
+            <label className="text-[10px] font-bold text-slate-500 dark:text-neutral-400 uppercase block mb-1">
               Lecture Date
             </label>
             <input
               type="date"
               value={date}
               onChange={e => setDate(e.target.value)}
-              className="w-full text-xs font-semibold bg-white border border-slate-300 rounded-xl px-2 py-1.5 focus:outline-none"
+              className="w-full text-xs font-semibold bg-white dark:bg-neutral-800 border border-slate-300 dark:border-neutral-700 rounded-xl px-2 py-1.5 focus:outline-none dark:text-white"
             />
           </div>
         </div>
 
         {/* Quick Batch Summary & Controls */}
-        <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-200 text-xs">
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-200 dark:border-neutral-800 text-xs">
           <div className="flex items-center gap-2">
-            <span className="text-slate-600 font-medium">Batch Roster: <strong>{displayStudents.length} Students</strong></span>
-            <span className="text-slate-300">•</span>
-            <span className="text-emerald-700 font-bold">{presentCount} Present</span>
-            <span className="text-slate-300">•</span>
-            <span className="text-rose-700 font-bold">{absentCount} Absent</span>
+            <span className="text-slate-600 dark:text-neutral-300 font-medium">Batch Roster: <strong>{displayStudents.length} Students</strong></span>
+            <span className="text-slate-300 dark:text-neutral-600">•</span>
+            <span className="text-emerald-700 dark:text-emerald-400 font-bold">{presentCount} Present</span>
+            <span className="text-slate-300 dark:text-neutral-600">•</span>
+            <span className="text-rose-700 dark:text-rose-400 font-bold">{absentCount} Absent</span>
           </div>
 
-          <div className="flex items-center gap-1.5">
-            <button
-              type="button"
-              onClick={() => handleMarkAll('Present')}
-              className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-[11px] transition"
-            >
-              Mark All Present
-            </button>
-            <button
-              type="button"
-              onClick={() => handleMarkAll('Absent')}
-              className="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-[11px] transition"
-            >
-              Mark All Absent
-            </button>
-          </div>
+          {activeTab === 'manual' && (
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => handleMarkAll('Present')}
+                className="px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 text-emerald-700 dark:text-emerald-300 font-bold text-[11px] transition"
+              >
+                Mark All Present
+              </button>
+              <button
+                type="button"
+                onClick={() => handleMarkAll('Absent')}
+                className="px-2.5 py-1 rounded-lg bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 text-rose-700 dark:text-rose-300 font-bold text-[11px] transition"
+              >
+                Mark All Absent
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Student Attendance List (Example format: CSE001 Aarav Sharma Present / Absent) */}
-      <div className="space-y-2">
-        {displayStudents.map((s, idx) => {
-          const isPresent = (attendanceMap[s.id] || 'Present') === 'Present';
-          return (
-            <div
-              key={s.id}
-              className={`p-3 sm:p-3.5 rounded-2xl border transition flex items-center justify-between gap-3 ${
-                isPresent
-                  ? 'bg-white border-slate-200'
-                  : 'bg-rose-50/50 border-rose-200'
-              }`}
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <span className="w-6 text-center text-xs font-mono font-bold text-slate-400">
-                  {idx + 1}
-                </span>
+      {/* DYNAMIC QR SESSION VIEW */}
+      {activeTab === 'dynamic_qr' && qrSession && (
+        <div className="space-y-4">
+          {/* Geofence & Countdown Banner */}
+          <div className="p-4 bg-gradient-to-r from-neutral-900 to-slate-900 text-white rounded-2xl border border-neutral-800 shadow-md flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="space-y-1 text-center md:text-left">
+              <div className="flex items-center justify-center md:justify-start gap-2">
+                <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0" />
+                <h3 className="text-sm font-extrabold text-white">
+                  30m Classroom Geofence Active: {qrSession.roomName}
+                </h3>
+              </div>
+              <p className="text-xs text-neutral-300">
+                Center Coordinates: <code className="font-mono text-amber-300">32.2190000° N, 76.2708000° E</code> • Radius: <strong className="text-white">30 Meters</strong> • Max GPS Uncertainty: <strong className="text-white">20 Meters</strong>
+              </p>
+            </div>
 
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs font-black text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded">
-                      {s.roll_no}
-                    </span>
-                    <h4 className="font-extrabold text-sm text-slate-900 truncate">
-                      {s.name}
-                    </h4>
-                  </div>
-                  <p className="text-[11px] text-slate-500 font-medium">
-                    {s.branch} • Sec {s.section}
-                  </p>
+            {/* Countdown Badge */}
+            <div className="flex items-center gap-3 shrink-0">
+              <div className="flex flex-col items-center justify-center bg-white/10 backdrop-blur-md px-3.5 py-2 rounded-xl border border-white/20">
+                <span className="text-[10px] uppercase font-bold text-neutral-300 tracking-wider">Dynamic Token</span>
+                <span className="text-lg font-mono font-black text-amber-400 flex items-center gap-1">
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin text-amber-400" />
+                  {secondsRemaining}s
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* QR Code and Live Scanner Feed Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+            {/* Dynamic QR Display Column */}
+            <div className="lg:col-span-5 bg-white dark:bg-neutral-900 p-6 rounded-2xl border border-slate-200 dark:border-neutral-800 flex flex-col items-center justify-center text-center space-y-4 shadow-xs">
+              <div className="space-y-1">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 uppercase tracking-wider">
+                  Projector / Smart Board View
+                </span>
+                <h4 className="text-base font-extrabold text-slate-900 dark:text-white">
+                  {subject} ({getSubjectCode()})
+                </h4>
+                <p className="text-xs text-slate-500 dark:text-neutral-400">
+                  Semester {semester} • Section {section} • Room C-101
+                </p>
+              </div>
+
+              {/* Live Canvas Dynamic QR */}
+              <div className="p-3 bg-white rounded-2xl shadow-inner border border-slate-200 dark:border-neutral-700">
+                <DynamicQRCodeCanvas value={qrPayload} size={220} />
+              </div>
+
+              <div className="space-y-1 text-xs">
+                <p className="font-semibold text-slate-700 dark:text-neutral-300">
+                  Students must scan using the Student Portal camera
+                </p>
+                <p className="text-[11px] text-slate-400 dark:text-neutral-500">
+                  QR dynamically rotates cryptographic payload every 6 seconds to prevent screenshot proxies.
+                </p>
+              </div>
+            </div>
+
+            {/* Live Session Feed & Override Panel */}
+            <div className="lg:col-span-7 space-y-3">
+              {/* Stat Counters */}
+              <div className="grid grid-cols-3 gap-2.5">
+                <div className="p-3 bg-white dark:bg-neutral-900 rounded-xl border border-slate-200 dark:border-neutral-800 text-center">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 dark:text-neutral-500 block">Verified (≤30m)</span>
+                  <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400">{verifiedScansCount}</span>
+                </div>
+                <div className="p-3 bg-white dark:bg-neutral-900 rounded-xl border border-slate-200 dark:border-neutral-800 text-center">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 dark:text-neutral-500 block">Flagged (&gt;20m acc)</span>
+                  <span className="text-2xl font-black text-amber-600 dark:text-amber-400">{flaggedScansCount}</span>
+                </div>
+                <div className="p-3 bg-white dark:bg-neutral-900 rounded-xl border border-slate-200 dark:border-neutral-800 text-center">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 dark:text-neutral-500 block">Invalid (&gt;30m)</span>
+                  <span className="text-2xl font-black text-rose-600 dark:text-rose-400">{invalidScansCount}</span>
                 </div>
               </div>
 
-              {/* Present / Absent Segmented Buttons */}
-              <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl shrink-0">
-                <button
-                  type="button"
-                  onClick={() => handleToggle(s.id, 'Present')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 ${
-                    isPresent
-                      ? 'bg-emerald-600 text-white shadow-xs'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  <span>Present</span>
-                </button>
+              {/* Scanned Student Stream Table */}
+              <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200 dark:border-neutral-800 overflow-hidden shadow-xs">
+                <div className="p-3 border-b border-slate-200 dark:border-neutral-800 flex items-center justify-between text-xs font-bold text-slate-800 dark:text-white">
+                  <span>Live Incoming Scans ({liveScanLogs.length})</span>
+                  <span className="text-[11px] text-slate-400 dark:text-neutral-500 font-normal">Real-time GPS validation</span>
+                </div>
 
-                <button
-                  type="button"
-                  onClick={() => handleToggle(s.id, 'Absent')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 ${
-                    !isPresent
-                      ? 'bg-rose-600 text-white shadow-xs'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  <XCircle className="w-3.5 h-3.5" />
-                  <span>Absent</span>
-                </button>
+                <div className="divide-y divide-slate-100 dark:divide-neutral-800 max-h-72 overflow-y-auto">
+                  {liveScanLogs.length === 0 ? (
+                    <div className="p-8 text-center text-xs text-slate-400 dark:text-neutral-500 space-y-1">
+                      <QrCode className="w-8 h-8 text-slate-300 dark:text-neutral-700 mx-auto" />
+                      <p className="font-semibold">Waiting for student classroom scans...</p>
+                      <p className="text-[11px]">Scans within 30m of Room C-101 will appear here in real time.</p>
+                    </div>
+                  ) : (
+                    liveScanLogs.map(log => (
+                      <div key={log.id} className="p-3 flex items-center justify-between gap-3 text-xs">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-[10px] font-bold text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-1.5 py-0.5 rounded">
+                              {log.studentRoll}
+                            </span>
+                            <span className="font-extrabold text-slate-900 dark:text-white truncate">
+                              {log.studentName}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-slate-500 dark:text-neutral-400 mt-0.5">
+                            Dist: <strong className="text-slate-800 dark:text-neutral-200">{log.distanceMeters.toFixed(1)}m</strong> • Accuracy: ±{log.accuracyMeters.toFixed(1)}m • {log.timestamp}
+                          </p>
+                          {log.reason && (
+                            <p className="text-[10px] text-rose-600 dark:text-rose-400 font-medium mt-0.5">
+                              {log.reason}
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                          {log.status === 'verified' && (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 flex items-center gap-1">
+                              <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                              {log.manualOverride ? 'Overridden' : 'Present'}
+                            </span>
+                          )}
+
+                          {log.status === 'flagged' && (
+                            <div className="flex items-center gap-1.5">
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 flex items-center gap-1">
+                                <AlertTriangle className="w-3 h-3 text-amber-600" />
+                                Flagged
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => handleApproveFlagged(log.studentId)}
+                                className="px-2 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] shadow-xs transition"
+                              >
+                                Approve
+                              </button>
+                            </div>
+                          )}
+
+                          {log.status === 'invalid' && (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 dark:bg-rose-950/50 text-rose-800 dark:text-rose-300 flex items-center gap-1">
+                              <XCircle className="w-3 h-3 text-rose-600" />
+                              Rejected
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
             </div>
-          );
-        })}
-      </div>
+          </div>
+        </div>
+      )}
+
+      {/* MANUAL REGISTER VIEW */}
+      {activeTab === 'manual' && (
+        <div className="space-y-2">
+          {displayStudents.map((s, idx) => {
+            const isPresent = (attendanceMap[s.id] || 'Present') === 'Present';
+            return (
+              <div
+                key={s.id}
+                className={`p-3 sm:p-3.5 rounded-2xl border transition flex items-center justify-between gap-3 ${
+                  isPresent
+                    ? 'bg-white dark:bg-neutral-900 border-slate-200 dark:border-neutral-800'
+                    : 'bg-rose-50/50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-900/60'
+                }`}
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <span className="w-6 text-center text-xs font-mono font-bold text-slate-400 dark:text-neutral-500">
+                    {idx + 1}
+                  </span>
+
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-xs font-black text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-1.5 py-0.5 rounded">
+                        {s.roll_no}
+                      </span>
+                      <h4 className="font-extrabold text-sm text-slate-900 dark:text-white truncate">
+                        {s.name}
+                      </h4>
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-neutral-400 font-medium">
+                      {s.branch} • Sec {s.section}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Present / Absent Segmented Buttons */}
+                <div className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-neutral-800 rounded-xl shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => handleToggle(s.id, 'Present')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 ${
+                      isPresent
+                        ? 'bg-emerald-600 text-white shadow-xs'
+                        : 'text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white'
+                    }`}
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Present</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleToggle(s.id, 'Absent')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 ${
+                      !isPresent
+                        ? 'bg-rose-600 text-white shadow-xs'
+                        : 'text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white'
+                    }`}
+                  >
+                    <XCircle className="w-3.5 h-3.5" />
+                    <span>Absent</span>
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };

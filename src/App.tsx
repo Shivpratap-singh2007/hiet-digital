@@ -43,12 +43,19 @@ const MainLayout: React.FC = () => {
   const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
   const isDev = Boolean(import.meta.env.DEV);
 
-  // Synchronize URL paths under /app/* with currentTab
+  // Synchronize URL paths under /app/* with currentTab (Section 12)
   React.useEffect(() => {
     if (typeof window === 'undefined') return;
     const path = window.location.pathname;
     if (path.startsWith('/app/')) {
-      const seg = path.replace('/app/', '').split('/')[0];
+      const parts = path.replace('/app/', '').split('/').filter(Boolean);
+      const rolePrefixes = ['student', 'faculty', 'teacher', 'hod', 'admin', 'principal', 'security', 'md', 'warden', 'library', 'lab', 'it'];
+      
+      let targetSeg = parts[0] || 'dashboard';
+      if (rolePrefixes.includes(targetSeg.toLowerCase())) {
+        targetSeg = parts[1] || 'dashboard';
+      }
+
       const tabMap: Record<string, NavTab> = {
         'dashboard': 'dashboard',
         'attendance': 'attendance',
@@ -56,7 +63,9 @@ const MainLayout: React.FC = () => {
         'syllabus': 'syllabus',
         'pyqs': 'pyqs',
         'assignments': 'assignments',
+        'submissions': 'submissions',
         'results': 'cgpa',
+        'marks': 'sessional_results',
         'sessional-marks': 'sessional_results',
         'leave': 'leaves',
         'complaints': 'complaints',
@@ -70,25 +79,34 @@ const MainLayout: React.FC = () => {
         'smart-board': 'smartboard',
         'students': 'students_mgmt',
         'faculty': 'teachers_mgmt',
+        'subject-allocation': 'academic_catalog',
         'academic-catalog': 'academic_catalog',
         'departments': 'department',
+        'performance': 'cgpa',
         'syllabus-progress': 'syllabus_progress',
+        'approvals': 'leaves',
+        'operations': 'gate_pass',
+        'gate-hostel': 'gate_pass',
         'no-dues': 'no_dues',
         'events': 'events',
         'maintenance': 'maintenance',
         'lost-found': 'lost_found',
         'import': 'import_data',
+        'content': 'notices',
         'reports': 'reports',
         'analytics': 'principal_analytics',
         'audit-log': 'audit_log',
         'scan': 'gate_scanner',
+        'gate-passes': 'gate_pass',
+        'hostel-outpasses': 'hostel_outpass',
         'entry-exit-logs': 'reconciliation',
         'security-alerts': 'fines',
+        'alerts': 'fines',
         'notifications': 'notices',
         'settings': 'settings'
       };
-      if (tabMap[seg]) {
-        setCurrentTab(tabMap[seg]);
+      if (tabMap[targetSeg]) {
+        setCurrentTab(tabMap[targetSeg]);
       }
     }
   }, []);
