@@ -82,6 +82,8 @@ export type NavTab =
   | 'events'
   | 'lost_found'
   | 'maintenance'
+  | 'campus_zones'
+  | 'campus_operations'
   | 'settings';
 
 interface Props {

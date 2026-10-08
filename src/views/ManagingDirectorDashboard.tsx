@@ -37,6 +37,7 @@ import { NoticesView } from '../components/common/NoticesView';
 import { SmartBoardTeachingView } from '../components/smartboard/SmartBoardTeachingView';
 import { CampusPresenceView } from '../components/presence/CampusPresenceView';
 import { SettingsView } from '../components/common/SettingsView';
+import { SmartCampusOperationsView } from '../components/operations/SmartCampusOperationsView';
 
 interface Props {
   currentTab: NavTab;
@@ -86,6 +87,7 @@ export const ManagingDirectorDashboard: React.FC<Props> = ({ currentTab, onNavig
   if (currentTab === 'campus_presence') return <CampusPresenceView roleMode="principal" />;
   if (currentTab === 'settings') return <SettingsView />;
   if (currentTab === 'profile') return <SettingsView initialTab="profile" />;
+  if (currentTab === 'campus_operations') return <SmartCampusOperationsView roleMode="md" onNavigateTab={onNavigateTab} />;
 
   return (
     <div className="space-y-6 font-sans">

@@ -25,6 +25,7 @@ import { LostAndFoundView } from '../components/common/LostAndFoundView';
 import { MaintenanceGrievanceView } from '../components/common/MaintenanceGrievanceView';
 import { CampusPresenceView } from '../components/presence/CampusPresenceView';
 import { AdminFinesManagementView } from '../components/fines/AdminFinesManagementView';
+import { SmartCampusOperationsView } from '../components/operations/SmartCampusOperationsView';
 import { dataStore } from '../lib/mockData';
 
 interface Props {
@@ -51,6 +52,7 @@ export const SecurityDashboard: React.FC<Props> = ({ currentTab, onNavigateTab }
   if (currentTab === 'fines' as any) return <AdminFinesManagementView />;
   if (currentTab === 'lost_found' as any) return <LostAndFoundView />;
   if (currentTab === 'maintenance' as any) return <MaintenanceGrievanceView />;
+  if (currentTab === 'campus_operations') return <SmartCampusOperationsView roleMode="security" onNavigateTab={onNavigateTab} />;
 
   return (
     <div className="space-y-6 animate-fade-in font-sans">

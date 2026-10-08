@@ -1,0 +1,10 @@
+# HIET Digital Campus - Edge Occupancy Pilot Requirements
+# Raspberry Pi 4 / 5 / Jetson Nano / Mini PC compatible
+
+opencv-python-headless>=4.8.0
+numpy>=1.24.0
+requests>=2.31.0
+python-dotenv>=1.0.0
+# Optional: ONNX runtime or ultralytics for local inference
+# onnxruntime>=1.16.0
+# ultralytics>=8.0.0

@@ -59,6 +59,7 @@ import { HostelOutpassView } from '../components/student/HostelOutpassView';
 import { StudentManagementView } from '../components/admin/StudentManagementView';
 import { TeacherManagementView } from '../components/admin/TeacherManagementView';
 import { SyllabusProgressTrackerView } from '../components/student/SyllabusProgressTrackerView';
+import { SmartCampusOperationsView } from '../components/operations/SmartCampusOperationsView';
 import { PageHeader } from '../components/common/PageHeader';
 import { StatCard } from '../components/common/StatCard';
 
@@ -265,6 +266,7 @@ export const HodDashboard: React.FC<Props> = ({ currentTab = 'dashboard', onNavi
   if (currentTab === 'maintenance' as any) return <MaintenanceGrievanceView />;
   if (currentTab === 'no_dues' as any) return <NoDuesHallTicketView />;
   if (currentTab === 'hostel_outpass' as any) return <HostelOutpassView />;
+  if (currentTab === 'campus_operations') return <SmartCampusOperationsView roleMode="hod" onNavigateTab={onNavigateTab} />;
 
   // Modal Component for Managing Student Achievements
   const renderAchievementModal = () => {

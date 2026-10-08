@@ -740,13 +740,41 @@ export interface SmartBoardLesson {
 // =============================================================================
 // CAMPUS PRESENCE & LOCATION (Sections 48-51)
 // =============================================================================
+export type CampusZoneType =
+  | 'gate'
+  | 'building'
+  | 'floor'
+  | 'classroom'
+  | 'lab'
+  | 'library'
+  | 'canteen'
+  | 'hostel'
+  | 'sports'
+  | 'parking'
+  | 'other';
+
 export interface CampusZone {
-  id: string;
-  code: string;
-  name: string;
-  description: string;
-  detection_method: 'Gate Checkpoint' | 'Wi-Fi AP Zone' | 'RFID/NFC Scanner' | 'BLE Beacon';
-  active_students_count: number;
+  id?: string;
+  zone_id?: string;
+  code?: string;
+  zone_code?: string;
+  name?: string;
+  zone_name?: string;
+  description?: string;
+  detection_method?: 'Gate Checkpoint' | 'Wi-Fi AP Zone' | 'RFID/NFC Scanner' | 'BLE Beacon' | string;
+  active_students_count?: number;
+  building_id?: string | null;
+  floor_id?: string | null;
+  zone_type?: CampusZoneType;
+  room_code?: string | null;
+  capacity?: number | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  is_active?: boolean;
+  created_at?: string;
+  updated_at?: string;
+  building_name?: string;
+  floor_name?: string;
 }
 
 export interface CampusPresenceRecord {
@@ -1019,6 +1047,230 @@ export interface AiInteraction {
   model_name?: string;
   status: 'completed' | 'failed' | 'blocked';
   created_at: string;
+}
+
+// =============================================================================
+// AI CAMPUS PHASE 2 TYPES
+// =============================================================================
+export interface CampusBuilding {
+  building_id: string;
+  building_code: string;
+  building_name: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface CampusFloor {
+  floor_id: string;
+  building_id: string;
+  floor_number: number;
+  floor_name: string;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+  building_name?: string;
+}
+
+
+export interface ZoneQrToken {
+  zone_qr_id: string;
+  zone_id: string;
+  public_token: string;
+  is_dynamic: boolean;
+  expires_at?: string | null;
+  is_active: boolean;
+  created_by_user_id?: string | null;
+  created_at?: string;
+  updated_at?: string;
+  zone_code?: string;
+  zone_name?: string;
+}
+
+export interface BleBeacon {
+  beacon_id: string;
+  zone_id: string;
+  beacon_code: string;
+  uuid_value?: string | null;
+  major_value?: number | null;
+  minor_value?: number | null;
+  tx_power?: number | null;
+  installed_at?: string | null;
+  battery_status?: string | null;
+  is_active: boolean;
+  calibration_notes?: string | null;
+  created_at?: string;
+  updated_at?: string;
+  zone_code?: string;
+  zone_name?: string;
+}
+
+export type PresenceEventType = 
+  | 'zone_checkin' 
+  | 'zone_checkout' 
+  | 'qr_scan' 
+  | 'ble_detected' 
+  | 'manual_correction';
+
+export type PresenceDetectionMethod = 
+  | 'dynamic_qr' 
+  | 'static_zone_qr' 
+  | 'ble' 
+  | 'gps' 
+  | 'wifi' 
+  | 'wifi_rtt' 
+  | 'uwb' 
+  | 'manual';
+
+export interface PresenceEvent {
+  presence_event_id: string;
+  student_id?: string | null;
+  user_id: string;
+  zone_id?: string | null;
+  beacon_id?: string | null;
+  event_type: PresenceEventType;
+  detection_method: PresenceDetectionMethod;
+  latitude?: number | null;
+  longitude?: number | null;
+  location_accuracy_meters?: number | null;
+  rssi?: number | null;
+  confidence_score: number;
+  privacy_consent: boolean;
+  metadata?: Record<string, unknown>;
+  detected_at: string;
+  expires_at?: string | null;
+  created_at?: string;
+  zone_name?: string;
+  zone_code?: string;
+  building_name?: string;
+  floor_name?: string;
+  student_name?: string;
+  roll_no?: string;
+}
+
+export type OccupancyDeviceType = 'raspberry_pi' | 'mini_pc' | 'jetson' | 'camera_gateway';
+export type CrowdLevel = 'low' | 'medium' | 'high' | 'critical';
+
+export interface OccupancyDevice {
+  device_id: string;
+  device_code: string;
+  zone_id: string;
+  device_name: string;
+  device_type: OccupancyDeviceType;
+  api_key_hash: string;
+  model_name?: string | null;
+  capacity?: number | null;
+  is_active: boolean;
+  last_heartbeat_at?: string | null;
+  created_at?: string;
+  updated_at?: string;
+  zone_code?: string;
+  zone_name?: string;
+}
+
+export interface OccupancyEvent {
+  occupancy_event_id: string;
+  device_id: string;
+  zone_id: string;
+  person_count: number;
+  capacity?: number | null;
+  occupancy_percentage?: number | null;
+  crowd_level: CrowdLevel;
+  model_confidence?: number | null;
+  model_version?: string | null;
+  event_timestamp: string;
+  created_at?: string;
+  zone_name?: string;
+  zone_code?: string;
+  device_name?: string;
+}
+
+export interface WasteBinDevice {
+  waste_device_id: string;
+  device_code: string;
+  zone_id?: string | null;
+  device_name: string;
+  is_active: boolean;
+  created_at?: string;
+  zone_name?: string;
+}
+
+export interface WasteBinEvent {
+  waste_event_id: string;
+  waste_device_id: string;
+  waste_category?: 'plastic' | 'paper' | 'metal' | 'organic' | 'e_waste' | 'mixed' | 'unknown' | null;
+  fill_level_percentage?: number | null;
+  model_confidence?: number | null;
+  event_timestamp: string;
+  created_at?: string;
+  device_name?: string;
+  zone_name?: string;
+}
+
+export type KnowledgeSourceType =
+  | 'syllabus'
+  | 'pyq'
+  | 'notice'
+  | 'policy'
+  | 'calendar'
+  | 'handbook'
+  | 'faq';
+
+export type KnowledgeVisibilityScope = 'public' | 'institution' | 'department' | 'subject';
+
+export interface KnowledgeDocument {
+  document_id: string;
+  title: string;
+  source_type: KnowledgeSourceType;
+  source_id?: string | null;
+  department_id?: string | null;
+  visibility_scope: KnowledgeVisibilityScope;
+  subject_id?: string | null;
+  file_path?: string | null;
+  is_published: boolean;
+  created_by_user_id?: string | null;
+  created_at?: string;
+  updated_at?: string;
+  department_name?: string;
+  subject_name?: string;
+}
+
+export interface KnowledgeChunk {
+  chunk_id: string;
+  document_id: string;
+  chunk_index: number;
+  content: string;
+  embedding?: number[] | null;
+  token_count?: number | null;
+  created_at?: string;
+}
+
+export interface KnowledgeSearchResult {
+  answer: string;
+  sources: Array<{
+    title: string;
+    sourceType: KnowledgeSourceType;
+    pageOrChunk?: string;
+    actionUrl?: string;
+    relevanceScore?: number;
+    snippet?: string;
+  }>;
+}
+
+export interface ZoneVerificationResult {
+  success: boolean;
+  message?: string;
+  presence_event_id?: string;
+  zone_id?: string;
+  zone_code?: string;
+  zone_name?: string;
+  building_name?: string;
+  floor_name?: string;
+  room_code?: string | null;
+  confidence_score?: number;
+  detected_at?: string;
 }
 
 

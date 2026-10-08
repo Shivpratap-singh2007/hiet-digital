@@ -63,6 +63,8 @@ import { EventsCertificatesView } from '../components/common/EventsCertificatesV
 import { LostAndFoundView } from '../components/common/LostAndFoundView';
 import { MaintenanceGrievanceView } from '../components/common/MaintenanceGrievanceView';
 import { SyllabusProgressTrackerView } from '../components/student/SyllabusProgressTrackerView';
+import { CampusZonesManagementView } from '../components/admin/CampusZonesManagementView';
+import { SmartCampusOperationsView } from '../components/operations/SmartCampusOperationsView';
 
 interface Props {
   currentTab: NavTab;
@@ -147,6 +149,8 @@ export const PrincipalDashboard: React.FC<Props> = ({ currentTab, onNavigateTab 
   if (currentTab === 'events' as any) return <EventsCertificatesView />;
   if (currentTab === 'lost_found' as any) return <LostAndFoundView />;
   if (currentTab === 'maintenance' as any) return <MaintenanceGrievanceView />;
+  if (currentTab === 'campus_zones') return <CampusZonesManagementView />;
+  if (currentTab === 'campus_operations') return <SmartCampusOperationsView roleMode="principal" onNavigateTab={onNavigateTab} />;
 
   // Default Principal Dashboard Overview (Section 6)
   return (
