@@ -23,7 +23,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { dataStore } from '../lib/mockData';
 import { apiService } from '../lib/supabase';
-import { calculateAttendanceStats } from '../lib/utils';
+import { calculateAttendanceStats, formatDate, formatIndiaDateTime } from '../lib/utils';
 import { calculateAttendanceRisk } from '../lib/attendanceRisk';
 import { NavTab } from '../components/common/Sidebar';
 import { TimetableSlot, LeaveRequest } from '../types';
@@ -381,9 +381,15 @@ export const StudentDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
                 )}
               </div>
               <h4 className="text-sm font-extrabold text-slate-900 dark:text-white">
-                {latestLeave.start_date} to {latestLeave.end_date} ({latestLeave.total_days || 1} {(latestLeave.total_days || 1) === 1 ? 'day' : 'days'})
+                {formatDate(latestLeave.start_date)} to {formatDate(latestLeave.end_date)} ({latestLeave.total_days || 1} {(latestLeave.total_days || 1) === 1 ? 'day' : 'days'})
               </h4>
-              <p className="text-xs text-slate-600 dark:text-neutral-300 mt-0.5 leading-relaxed truncate">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-slate-500 dark:text-neutral-400 mt-1">
+                <span>Applied: <strong className="font-semibold text-slate-700 dark:text-neutral-200">{formatIndiaDateTime(latestLeave.submitted_at ?? latestLeave.created_at)}</strong></span>
+                {latestLeave.updated_at && (
+                  <span>Last updated: <strong className="font-semibold text-slate-700 dark:text-neutral-200">{formatIndiaDateTime(latestLeave.updated_at)}</strong></span>
+                )}
+              </div>
+              <p className="text-xs text-slate-600 dark:text-neutral-300 mt-1 leading-relaxed truncate">
                 {latestLeave.remarks ? `Endorsement: ${latestLeave.remarks}` : latestLeave.reason}
               </p>
             </div>

@@ -17,6 +17,7 @@ import { useAuth } from '../../context/AuthContext';
 import { dataStore } from '../../lib/mockData';
 import { apiService } from '../../lib/supabase';
 import { Notification } from '../../types';
+import { formatIndiaDateTime } from '../../lib/utils';
 import { NavTab } from './Sidebar';
 
 interface Props {
@@ -243,7 +244,7 @@ export const NotificationsModal: React.FC<Props> = ({ isOpen, onClose, onNavigat
                         {n.title}
                       </h4>
                       <span className="text-[10px] text-slate-400 dark:text-[#a3a3a3] font-medium shrink-0">
-                        {n.time || n.created_at?.slice(0, 10) || 'Today'}
+                        {n.created_at ? formatIndiaDateTime(n.created_at) : (n.time || 'Today')}
                       </span>
                     </div>
 

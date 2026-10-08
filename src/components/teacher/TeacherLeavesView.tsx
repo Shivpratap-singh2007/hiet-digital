@@ -16,7 +16,7 @@ import { dataStore } from '../../lib/mockData';
 import { useAuth } from '../../context/AuthContext';
 import { apiService } from '../../lib/supabase';
 import { LeaveRequest } from '../../types';
-import { formatDate } from '../../lib/utils';
+import { formatDate, formatIndiaDateTime } from '../../lib/utils';
 
 export const TeacherLeavesView: React.FC = () => {
   const { user } = useAuth();
@@ -226,6 +226,7 @@ export const TeacherLeavesView: React.FC = () => {
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-50 dark:bg-slate-900 text-slate-500 uppercase tracking-wider font-semibold border-b border-slate-200 dark:border-slate-700">
                 <tr>
+                  <th className="px-4 py-3">Applied On</th>
                   <th className="px-4 py-3">Student</th>
                   <th className="px-4 py-3">Duration</th>
                   <th className="px-4 py-3">Reason & Document</th>
@@ -236,12 +237,15 @@ export const TeacherLeavesView: React.FC = () => {
               <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
                 {filteredLeaves.map(l => (
                   <tr key={l.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-750 transition">
+                    <td className="px-4 py-3 text-slate-600 dark:text-slate-300 whitespace-nowrap font-medium">
+                      {formatIndiaDateTime(l.submitted_at ?? l.created_at)}
+                    </td>
                     <td className="px-4 py-3">
                       <div className="font-bold text-slate-800 dark:text-slate-200">{l.student_name}</div>
                       <div className="font-mono text-[11px] text-blue-700 dark:text-blue-400">
                         Roll: {l.student_roll || '210101'} • {l.student_branch || 'CSE'} (Sem {l.student_semester || 1}{l.student_section ? `-${l.student_section}` : ''})
                       </div>
-                      <span className="text-[10px] text-slate-400 block mt-0.5">Applied: {formatDate(l.created_at)}</span>
+                      <span className="text-[10px] text-slate-400 block mt-0.5">Applied: {formatIndiaDateTime(l.submitted_at ?? l.created_at)}</span>
                     </td>
                     <td className="px-4 py-3 font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap">
                       <div>{formatDate(l.start_date)} — {formatDate(l.end_date)}</div>
@@ -298,6 +302,28 @@ export const TeacherLeavesView: React.FC = () => {
             </p>
 
             <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-3.5 space-y-2 text-xs mb-4">
+              <div className="flex justify-between">
+                <span className="text-slate-400">Applied On:</span>
+                <span className="font-semibold text-slate-800 dark:text-slate-200">
+                  {formatIndiaDateTime(selectedLeave.submitted_at ?? selectedLeave.created_at)}
+                </span>
+              </div>
+              {selectedLeave.updated_at && (
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Last Updated:</span>
+                  <span className="font-medium text-slate-700 dark:text-slate-300">
+                    {formatIndiaDateTime(selectedLeave.updated_at)}
+                  </span>
+                </div>
+              )}
+              {(selectedLeave.final_decision_at || selectedLeave.approved_at) && (
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Final Decision:</span>
+                  <span className="font-medium text-slate-700 dark:text-slate-300">
+                    {formatIndiaDateTime(selectedLeave.final_decision_at || selectedLeave.approved_at)}
+                  </span>
+                </div>
+              )}
               <div className="flex justify-between">
                 <span className="text-slate-400">Student:</span>
                 <span className="font-bold text-slate-800 dark:text-slate-200">

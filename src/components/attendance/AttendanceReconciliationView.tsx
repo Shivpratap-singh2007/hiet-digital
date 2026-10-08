@@ -19,6 +19,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { dataStore } from '../../lib/mockData';
 import { AttendanceReconciliationRecord } from '../../types';
+import { formatIndiaTime } from '../../lib/utils';
 
 export const AttendanceReconciliationView: React.FC = () => {
   const { user, role } = useAuth();
@@ -85,8 +86,8 @@ export const AttendanceReconciliationView: React.FC = () => {
       branch: student.branch,
       semester: student.semester,
       date: reconciliationDate,
-      gate_entry_time: entryScan ? new Date(entryScan.scanned_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : undefined,
-      gate_exit_time: exitScan ? new Date(exitScan.scanned_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : undefined,
+      gate_entry_time: entryScan ? formatIndiaTime(entryScan.scanned_at) : undefined,
+      gate_exit_time: exitScan ? formatIndiaTime(exitScan.scanned_at) : undefined,
       gate_status: gateStatus,
       first_class_time: firstClassTime,
       class_attendance_status: classStatus,

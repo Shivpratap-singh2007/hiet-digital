@@ -1,34 +1,5 @@
 // HIET College Help Desk - General Utility Functions
-
-export function formatDate(dateString: string): string {
-  try {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return dateString;
-    return new Intl.DateTimeFormat('en-IN', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric'
-    }).format(date);
-  } catch (e) {
-    return dateString;
-  }
-}
-
-export function formatDateTime(dateString: string): string {
-  try {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return dateString;
-    return new Intl.DateTimeFormat('en-IN', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    }).format(date);
-  } catch (e) {
-    return dateString;
-  }
-}
+export { formatIndiaDateTime, formatIndiaDate, formatIndiaTime, formatDateTime, formatDate } from './dateTime';
 
 export function calculateAttendanceStats(records: { status: string }[]) {
   const total = records.length;

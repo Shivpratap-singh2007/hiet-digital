@@ -43,7 +43,7 @@ import {
   CampusPresenceRecord
 } from '../types';
 import { ValidationMasterContext, ValidatedRow, parseTimeToMinutes } from './importValidation';
-import { normalizeFacultyId, normalizeName } from './utils';
+import { normalizeFacultyId, normalizeName, formatIndiaDateTime } from './utils';
 
 const supabaseUrl = (typeof import.meta !== 'undefined' && import.meta.env) ? import.meta.env.VITE_SUPABASE_URL : undefined;
 const supabaseAnonKey = (typeof import.meta !== 'undefined' && import.meta.env) ? import.meta.env.VITE_SUPABASE_ANON_KEY : undefined;
@@ -518,6 +518,7 @@ export const apiService = {
       current_assignee_role_key: approver.roleKey,
       current_assignee_name: approver.name,
       submitted_by_user_id: studentUserId,
+      submitted_at: nowIso,
       created_at: nowIso,
       updated_at: nowIso
     };
@@ -728,7 +729,7 @@ export const apiService = {
       this.createNotification({
         recipient_user_id: studentTargetId,
         title: 'Leave Application Rejected',
-        message: `Your leave application from ${target.start_date} to ${target.end_date} was rejected by ${reviewerName}.${remarks ? ' Remarks: ' + remarks : ''}`,
+        message: `Your leave application was rejected on ${formatIndiaDateTime(nowIso)} by ${reviewerName}.${remarks ? ' Remarks: ' + remarks : ''}`,
         type: 'leave',
         related_record_id: leaveId,
         link_url: '/app/leave',
@@ -746,7 +747,7 @@ export const apiService = {
           this.createNotification({
             recipient_user_id: studentTargetId,
             title: 'Leave Application Approved',
-            message: `Your leave application from ${target.start_date} to ${target.end_date} has been approved by ${reviewerName}.`,
+            message: `Your leave application was approved on ${formatIndiaDateTime(nowIso)} by ${reviewerName}.`,
             type: 'leave',
             related_record_id: leaveId,
             link_url: '/app/leave',
@@ -768,7 +769,7 @@ export const apiService = {
             this.createNotification({
               recipient_user_id: studentTargetId,
               title: 'Leave Application Approved',
-              message: `Your leave application from ${target.start_date} to ${target.end_date} has been approved by ${reviewerName} (Faculty & HOD dual sanction).`,
+              message: `Your leave application was approved on ${formatIndiaDateTime(nowIso)} by ${reviewerName} (Faculty & HOD dual sanction).`,
               type: 'leave',
               related_record_id: leaveId,
               link_url: '/app/leave',
@@ -846,7 +847,7 @@ export const apiService = {
           this.createNotification({
             recipient_user_id: studentTargetId,
             title: 'Leave Application Approved',
-            message: `Your leave application from ${target.start_date} to ${target.end_date} has been approved by the HOD (${reviewerName}).`,
+            message: `Your leave application was approved on ${formatIndiaDateTime(nowIso)} by the HOD (${reviewerName}).`,
             type: 'leave',
             related_record_id: leaveId,
             link_url: '/app/leave',
@@ -861,7 +862,7 @@ export const apiService = {
         this.createNotification({
           recipient_user_id: studentTargetId,
           title: 'Leave Application Approved',
-          message: `Your leave application from ${target.start_date} to ${target.end_date} has been approved by the Principal (${reviewerName}).`,
+          message: `Your leave application was approved on ${formatIndiaDateTime(nowIso)} by the Principal (${reviewerName}).`,
           type: 'leave',
           related_record_id: leaveId,
           link_url: '/app/leave',
@@ -882,6 +883,8 @@ export const apiService = {
           current_assignee_name: nextAssigneeName || undefined,
           final_decision_by_user_id: nextStage === 'completed' ? (reviewerId || null) : null,
           final_decision_at: nextStage === 'completed' ? nowIso : null,
+          approved_at: nextStatus === 'approved' ? nowIso : l.approved_at,
+          submitted_at: l.submitted_at || l.created_at,
           approval_remarks: auditRemarks || l.approval_remarks,
           remarks: auditRemarks || l.remarks,
           reviewed_by: reviewerId || l.reviewed_by,

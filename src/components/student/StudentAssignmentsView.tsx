@@ -19,6 +19,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { apiService } from '../../lib/supabase';
 import { Assignment, AssignmentSubmission, Subject } from '../../types';
+import { formatIndiaDateTime } from '../../lib/utils';
 
 export const StudentAssignmentsView: React.FC = () => {
   const { user } = useAuth();
@@ -114,8 +115,7 @@ export const StudentAssignmentsView: React.FC = () => {
   };
 
   const formatDateTime = (iso: string) => {
-    const d = new Date(iso);
-    return `${d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} at ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    return formatIndiaDateTime(iso);
   };
 
   return (

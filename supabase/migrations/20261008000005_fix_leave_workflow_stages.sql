@@ -37,6 +37,8 @@ ALTER TABLE public.leave_requests
     ADD COLUMN IF NOT EXISTS current_assignee_user_id UUID REFERENCES public.users(id) ON DELETE SET NULL,
     ADD COLUMN IF NOT EXISTS current_assignee_role_key VARCHAR(50) DEFAULT 'class_incharge',
     ADD COLUMN IF NOT EXISTS submitted_by_user_id UUID REFERENCES public.users(id) ON DELETE SET NULL,
+    ADD COLUMN IF NOT EXISTS submitted_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    ADD COLUMN IF NOT EXISTS approved_at TIMESTAMPTZ,
     ADD COLUMN IF NOT EXISTS final_decision_by_user_id UUID REFERENCES public.users(id) ON DELETE SET NULL,
     ADD COLUMN IF NOT EXISTS final_decision_at TIMESTAMPTZ,
     ADD COLUMN IF NOT EXISTS approval_remarks TEXT;
@@ -283,6 +285,7 @@ BEGIN
             current_assignee_role_key = v_next_role_key,
             final_decision_by_user_id = CASE WHEN v_next_stage = 'completed' THEN v_user_id ELSE NULL END,
             final_decision_at = CASE WHEN v_next_stage = 'completed' THEN v_now ELSE NULL END,
+            approved_at = CASE WHEN v_next_status = 'approved' THEN v_now ELSE approved_at END,
             approval_remarks = v_audit_remark,
             updated_at = v_now
         WHERE id = p_leave_id;

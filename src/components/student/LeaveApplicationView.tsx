@@ -17,7 +17,7 @@ import { dataStore } from '../../lib/mockData';
 import { useAuth } from '../../context/AuthContext';
 import { apiService, calculateLeaveDays } from '../../lib/supabase';
 import { LeaveRequest, LeaveRequestHistory } from '../../types';
-import { formatDate } from '../../lib/utils';
+import { formatDate, formatIndiaDateTime } from '../../lib/utils';
 
 export const LeaveApplicationView: React.FC = () => {
   const { user } = useAuth();
@@ -221,7 +221,7 @@ export const LeaveApplicationView: React.FC = () => {
             >
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <span className="text-[10px] text-slate-400 block font-medium">Applied {formatDate(l.created_at)}</span>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Applied On: {formatIndiaDateTime(l.submitted_at ?? l.created_at)}</span>
                   <h4 className="font-bold text-xs text-slate-900 dark:text-white mt-0.5">
                     {formatDate(l.start_date)} — {formatDate(l.end_date)} ({l.total_days || 1} {l.total_days === 1 ? 'day' : 'days'})
                   </h4>
@@ -266,7 +266,9 @@ export const LeaveApplicationView: React.FC = () => {
             <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
               {leaves.map(l => (
                 <tr key={l.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-750 transition">
-                  <td className="px-4 py-3 text-slate-500">{formatDate(l.created_at)}</td>
+                  <td className="px-4 py-3 text-slate-600 dark:text-slate-300 whitespace-nowrap font-medium">
+                    {formatIndiaDateTime(l.submitted_at ?? l.created_at)}
+                  </td>
                   <td className="px-4 py-3 font-semibold text-slate-800 dark:text-slate-200 whitespace-nowrap">
                     <div>{formatDate(l.start_date)} — {formatDate(l.end_date)}</div>
                     <span className="text-[10px] text-slate-400 font-normal">
@@ -345,6 +347,30 @@ export const LeaveApplicationView: React.FC = () => {
               {getStatusBadge(selectedTimelineLeave.status)}
             </div>
 
+            {/* Audit Timestamps: Applied On, Last Updated, Final Decision */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 p-3 bg-slate-50/80 dark:bg-slate-800/40 rounded-xl border border-slate-100 dark:border-slate-800 text-xs">
+              <div>
+                <span className="text-[10px] uppercase font-bold text-slate-400 block">Applied On</span>
+                <span className="font-semibold text-slate-700 dark:text-slate-200">
+                  {formatIndiaDateTime(selectedTimelineLeave.submitted_at ?? selectedTimelineLeave.created_at)}
+                </span>
+              </div>
+              <div>
+                <span className="text-[10px] uppercase font-bold text-slate-400 block">Last Updated</span>
+                <span className="font-semibold text-slate-700 dark:text-slate-200">
+                  {formatIndiaDateTime(selectedTimelineLeave.updated_at || selectedTimelineLeave.submitted_at || selectedTimelineLeave.created_at)}
+                </span>
+              </div>
+              <div>
+                <span className="text-[10px] uppercase font-bold text-slate-400 block">Final Decision</span>
+                <span className="font-semibold text-slate-700 dark:text-slate-200">
+                  {selectedTimelineLeave.final_decision_at || selectedTimelineLeave.approved_at 
+                    ? formatIndiaDateTime(selectedTimelineLeave.final_decision_at || selectedTimelineLeave.approved_at) 
+                    : 'Pending'}
+                </span>
+              </div>
+            </div>
+
             {/* Stepper Steps */}
             <div className="space-y-3 py-2">
               {/* Step 1: Submission */}
@@ -355,7 +381,7 @@ export const LeaveApplicationView: React.FC = () => {
                 <div className="flex-1">
                   <h4 className="text-xs font-bold text-slate-900 dark:text-white">Student Submission</h4>
                   <p className="text-[11px] text-slate-500 mt-0.5">
-                    Application registered by {selectedTimelineLeave.student_name} on {formatDate(selectedTimelineLeave.created_at)}
+                    Application registered by {selectedTimelineLeave.student_name} on {formatIndiaDateTime(selectedTimelineLeave.submitted_at ?? selectedTimelineLeave.created_at)}
                   </p>
                 </div>
               </div>
@@ -444,7 +470,7 @@ export const LeaveApplicationView: React.FC = () => {
                         {h.remarks && <p className="text-[10px] text-slate-500 mt-0.5">{h.remarks}</p>}
                       </div>
                       <span className="text-[10px] text-slate-400 shrink-0 ml-2">
-                        {formatDate(h.created_at)}
+                        {formatIndiaDateTime(h.created_at)}
                       </span>
                     </div>
                   ))}

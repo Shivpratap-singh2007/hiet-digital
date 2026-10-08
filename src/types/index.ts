@@ -353,8 +353,10 @@ export interface LeaveRequest {
   current_assignee_role_key?: string | null;
   current_assignee_name?: string;
   submitted_by_user_id?: string;
+  submitted_at?: string;
   final_decision_by_user_id?: string | null;
   final_decision_at?: string | null;
+  approved_at?: string | null;
   approval_remarks?: string;
   reviewed_by?: string;
   reviewed_by_name?: string;

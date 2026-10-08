@@ -21,7 +21,7 @@ import { useAuth } from '../../context/AuthContext';
 import { apiService } from '../../lib/supabase';
 import { aiCampusService, ComplaintRoutingResult } from '../../lib/aiCampusService';
 import { Complaint } from '../../types';
-import { formatDate } from '../../lib/utils';
+import { formatDate, formatIndiaDateTime } from '../../lib/utils';
 
 export const ComplaintBoxView: React.FC = () => {
   const { user } = useAuth();
@@ -332,7 +332,7 @@ export const ComplaintBoxView: React.FC = () => {
 
             <div className="pt-4 mt-4 border-t border-slate-100 dark:border-slate-700/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-400">
               <div className="flex items-center gap-2">
-                <span>Lodge Date: {formatDate(comp.created_at)}</span>
+                <span>Lodge Date: {formatIndiaDateTime(comp.created_at)}</span>
                 <span>•</span>
                 <span>Ticket #{comp.id.slice(-6).toUpperCase()}</span>
               </div>
