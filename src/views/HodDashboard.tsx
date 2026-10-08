@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Users, 
   Briefcase, 
@@ -33,7 +33,7 @@ import { CalendarView } from '../components/common/CalendarView';
 import { CampusGalleryView } from '../components/common/CampusGalleryView';
 import { calculateAttendanceStats } from '../lib/utils';
 import { calculateAttendanceRisk } from '../lib/attendanceRisk';
-import { StudentMaster, TeacherMaster, Subject, AttendanceRecord, Notice, Achievement } from '../types';
+import { StudentMaster, TeacherMaster, Subject, AttendanceRecord, Notice, Achievement, LeaveRequest } from '../types';
 import { DepartmentStructureView } from '../components/hod/DepartmentStructureView';
 import { HodReportsView } from '../components/hod/HodReportsView';
 import { DigitalGatePassView } from '../components/student/DigitalGatePassView';
@@ -81,6 +81,33 @@ export const HodDashboard: React.FC<Props> = ({ currentTab = 'dashboard', onNavi
   const [studentSearch, setStudentSearch] = useState('');
   const [selectedSemester, setSelectedSemester] = useState<number | 'all'>('all');
   const [issuedWarningIds, setIssuedWarningIds] = useState<string[]>([]);
+
+  // Live Leave Synchronization for HOD
+  const [liveLeaves, setLiveLeaves] = useState<LeaveRequest[]>(() => dataStore.getLeaves());
+  useEffect(() => {
+    let isMounted = true;
+    async function loadHodLeaves() {
+      try {
+        const list = await apiService.getLeaves();
+        if (isMounted && list) setLiveLeaves(list);
+      } catch (e) {
+        console.warn('HOD leave sync error:', e);
+      }
+    }
+    loadHodLeaves();
+
+    const handleSync = () => {
+      setLiveLeaves(dataStore.getLeaves());
+      loadHodLeaves();
+    };
+    window.addEventListener('storage', handleSync);
+    window.addEventListener('hiet-leave-updated', handleSync);
+    return () => {
+      isMounted = false;
+      window.removeEventListener('storage', handleSync);
+      window.removeEventListener('hiet-leave-updated', handleSync);
+    };
+  }, []);
 
   // Achievements State for HOD Student Management
   const [selectedStudentForAchievements, setSelectedStudentForAchievements] = useState<StudentMaster | null>(null);
@@ -173,8 +200,18 @@ export const HodDashboard: React.FC<Props> = ({ currentTab = 'dashboard', onNavi
   const deptSessionals = dataStore.getSessionalResults().filter(r => deptStudents.some(s => s.id === r.student_id || s.roll_no === r.student_roll));
   const deptComplaints = dataStore.getComplaints().filter(c => deptStudents.some(s => s.id === c.student_id || s.roll_no === c.student_roll));
   const deptDoubts = dataStore.getDoubts().filter(d => deptTeachers.some(t => t.id === d.teacher_id));
-  const deptLeaves = dataStore.getLeaves().filter(l => deptStudents.some(s => s.id === l.student_id || s.roll_no === l.student_roll));
-  const pendingLeaves = deptLeaves.filter(l => l.status === 'Pending');
+  const deptLeaves = liveLeaves.filter(l => 
+    deptStudents.some(s => s.id === l.student_id || s.roll_no === l.student_roll) ||
+    !l.student_branch || l.student_branch === dept || (dept === 'CSE' && (l.student_branch === 'CSE' || l.student_branch === 'CSE AI & ML'))
+  );
+  const pendingLeaves = deptLeaves.filter(l => {
+    const s = (l.status || '').toLowerCase();
+    return s.startsWith('pending') || l.current_stage === 'hod';
+  });
+  const hodPendingCount = deptLeaves.filter(l => {
+    const s = (l.status || '').toLowerCase();
+    return s === 'pending_hod' || l.current_stage === 'hod';
+  }).length;
   const allDeptAchievements = dataStore.getAchievements().filter((a: Achievement) => 
     deptStudents.some(s => s.id === a.student_id || s.roll_no === a.student_roll)
   );
@@ -1260,7 +1297,9 @@ export const HodDashboard: React.FC<Props> = ({ currentTab = 'dashboard', onNavi
               <Clock className="w-4 h-4 text-amber-600" />
             </div>
             <div className="text-xl font-extrabold text-slate-900">{pendingLeaves.length}</div>
-            <div className="text-[11px] text-slate-500">Pending review</div>
+            <div className="text-[11px] text-slate-500">
+              {hodPendingCount > 0 ? `${hodPendingCount} awaiting HOD action` : 'Pending review'}
+            </div>
           </div>
         </div>
       </div>

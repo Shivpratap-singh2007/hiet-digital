@@ -74,7 +74,7 @@ export const ManagingDirectorDashboard: React.FC<Props> = ({ currentTab, onNavig
     : 85;
 
   const openComplaints = complaints.filter(c => c.status === 'Submitted' || c.status === 'Under Review').length;
-  const pendingLeaves = leaves.filter(l => l.status === 'Pending').length;
+  const pendingLeaves = leaves.filter(l => (l.status || '').toLowerCase().startsWith('pending')).length;
 
   // Subview Router for MD
   if (currentTab === 'principal_analytics') return <AdvancedAnalyticsView />;

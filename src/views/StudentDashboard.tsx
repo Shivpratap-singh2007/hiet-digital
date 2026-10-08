@@ -26,7 +26,7 @@ import { apiService } from '../lib/supabase';
 import { calculateAttendanceStats } from '../lib/utils';
 import { calculateAttendanceRisk } from '../lib/attendanceRisk';
 import { NavTab } from '../components/common/Sidebar';
-import { TimetableSlot } from '../types';
+import { TimetableSlot, LeaveRequest } from '../types';
 import { PageHeader } from '../components/common/PageHeader';
 import { StatCard } from '../components/common/StatCard';
 
@@ -94,6 +94,38 @@ export const StudentDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
     loadAssignments();
     return () => { isMounted = false; };
   }, [studentBranch, studentSemester]);
+
+  // Real-time Student Leave Tracking & Pending Request Counter
+  const [studentLeaves, setStudentLeaves] = useState<LeaveRequest[]>(() =>
+    dataStore.getLeaves().filter(l => l.student_id === studentId || l.submitted_by_user_id === user?.id)
+  );
+
+  useEffect(() => {
+    let isMounted = true;
+    async function loadStudentLeaves() {
+      try {
+        const data = await apiService.getLeaves(studentId);
+        if (isMounted && data) setStudentLeaves(data);
+      } catch (e) {
+        console.warn('Dashboard leave load error:', e);
+      }
+    }
+    loadStudentLeaves();
+
+    const handleSync = () => loadStudentLeaves();
+    window.addEventListener('storage', handleSync);
+    window.addEventListener('hiet-leave-updated', handleSync);
+    return () => {
+      isMounted = false;
+      window.removeEventListener('storage', handleSync);
+      window.removeEventListener('hiet-leave-updated', handleSync);
+    };
+  }, [studentId, user?.id]);
+
+  const pendingLeavesCount = studentLeaves.filter(l => 
+    (l.status || '').toLowerCase().startsWith('pending')
+  ).length;
+  const latestLeave = studentLeaves[0];
 
   // Real-time Dynamic Timetable & Active Class Detection
   const [liveTimetable, setLiveTimetable] = useState<TimetableSlot[]>(() => dataStore.getTimetable());
@@ -307,6 +339,64 @@ export const StudentDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
         );
       })()}
 
+      {/* 2b. Live Student Leave Status Intelligence Card */}
+      {latestLeave && (
+        <div className="p-4 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition shadow-xs">
+          <div className="flex items-start gap-3 min-w-0">
+            <div className={`p-2 rounded-xl shrink-0 mt-0.5 ${
+              (latestLeave.status || '').toLowerCase() === 'approved'
+                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60'
+                : (latestLeave.status || '').toLowerCase() === 'rejected'
+                ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/60'
+                : 'bg-amber-100 text-amber-700 dark:bg-amber-950/60'
+            }`}>
+              <Clock className="w-5 h-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2 mb-1">
+                <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-neutral-400">
+                  Leave Application Tracker
+                </span>
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
+                  (latestLeave.status || '').toLowerCase() === 'approved'
+                    ? 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300'
+                    : (latestLeave.status || '').toLowerCase() === 'rejected'
+                    ? 'bg-rose-50 text-rose-800 border-rose-200 dark:bg-rose-950/60 dark:text-rose-300'
+                    : (latestLeave.status || '').toLowerCase() === 'pending_hod'
+                    ? 'bg-indigo-50 text-indigo-800 border-indigo-200 dark:bg-indigo-950/60 dark:text-indigo-300'
+                    : (latestLeave.status || '').toLowerCase() === 'pending_principal'
+                    ? 'bg-purple-50 text-purple-800 border-purple-200 dark:bg-purple-950/60 dark:text-purple-300'
+                    : 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300'
+                }`}>
+                  {latestLeave.status === 'pending_faculty' ? 'Pending Faculty Approval' :
+                   latestLeave.status === 'pending_hod' ? 'Pending HOD Approval' :
+                   latestLeave.status === 'pending_principal' ? 'Pending Principal Approval' :
+                   latestLeave.status === 'approved' ? 'Approved' :
+                   latestLeave.status === 'rejected' ? 'Rejected' : latestLeave.status}
+                </span>
+                {pendingLeavesCount > 0 && (
+                  <span className="text-[10px] text-amber-600 font-semibold">
+                    ({pendingLeavesCount} pending in queue)
+                  </span>
+                )}
+              </div>
+              <h4 className="text-sm font-extrabold text-slate-900 dark:text-white">
+                {latestLeave.start_date} to {latestLeave.end_date} ({latestLeave.total_days || 1} {(latestLeave.total_days || 1) === 1 ? 'day' : 'days'})
+              </h4>
+              <p className="text-xs text-slate-600 dark:text-neutral-300 mt-0.5 leading-relaxed truncate">
+                {latestLeave.remarks ? `Endorsement: ${latestLeave.remarks}` : latestLeave.reason}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => onNavigateTab('leaves')}
+            className="px-4 py-2 bg-[#0f2942] hover:bg-[#0a1c2e] text-white rounded-xl text-xs font-bold transition text-center shrink-0 shadow-2xs whitespace-nowrap cursor-pointer"
+          >
+            Track Status Timeline
+          </button>
+        </div>
+      )}
 
       {/* 3. Top 4 Specific KPI Cards: Attendance, CGPA / SGPA, Current Semester, Pending Assignments */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -521,7 +611,7 @@ export const StudentDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           {[
-            { id: 'leaves', title: 'Leave', desc: 'Apply & approval status', icon: Clock },
+            { id: 'leaves', title: 'Leave', desc: pendingLeavesCount > 0 ? `${pendingLeavesCount} Pending Review` : 'Apply & approval status', icon: Clock },
             { id: 'complaints', title: 'Complaint Box', desc: 'Grievance redressal', icon: AlertCircle },
             { id: 'doubts', title: 'Doubt Box', desc: 'Direct faculty inquiry', icon: HelpCircle },
             { id: 'achievements', title: 'Achievements', desc: 'Verified laurels & awards', icon: Trophy },

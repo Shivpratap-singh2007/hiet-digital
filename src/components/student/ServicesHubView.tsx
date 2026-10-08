@@ -29,7 +29,7 @@ export const ServicesHubView: React.FC<Props> = ({ onNavigate }) => {
   const studentRoll = user?.studentMaster?.roll_no || 'CSE001';
   const studentId = user?.student_id || 'std-cse-001';
 
-  const myLeaves = dataStore.getLeaves().filter(l => l.student_id === studentId || l.student_roll === studentRoll);
+  const myLeaves = dataStore.getLeaves().filter(l => l.student_id === studentId || l.student_roll === studentRoll || l.submitted_by_user_id === user?.id);
   const myComplaints = dataStore.getComplaints().filter(c => c.student_id === studentId);
   const myDoubts = dataStore.getDoubts().filter(d => d.student_id === studentId);
   const myAchievements = dataStore.getAchievements().filter(a => a.student_id === studentId);

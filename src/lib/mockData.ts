@@ -14,6 +14,8 @@ import {
   SyllabusItem, 
   PYQItem, 
   LeaveRequest, 
+  LeaveRequestHistory,
+  LeaveWorkflowConfig,
   Complaint, 
   Doubt, 
   CalendarEvent, 
@@ -1424,40 +1426,303 @@ export const INITIAL_PYQS: PYQItem[] = [
 ];
 
 // =============================================================================
-// 11. ONLINE LEAVE REQUESTS
+// 11. ONLINE LEAVE REQUESTS (Multi-Stage Workflow: Faculty -> HOD -> Principal)
 // =============================================================================
+
+export const DEFAULT_LEAVE_CONFIG: LeaveWorkflowConfig = {
+  config_id: 'cfg-default-01',
+  short_leave_max_days: 2,
+  hod_required_after_days: 3,
+  principal_required_after_days: 7,
+  first_approver_role_key: 'class_incharge',
+  is_active: true
+};
+
 export const INITIAL_LEAVES: LeaveRequest[] = [
+  // Test 1 — Short Leave (1-2 days): Student Aditya Nanda -> Class In-Charge Mr. Rohit Mehta
   {
-    id: 'lv-01',
-    student_id: 'std-cse-001',
-    student_name: 'Aarav Sharma',
-    student_roll: 'CSE001',
+    id: 'lv-test-01',
+    leave_id: 'lv-test-01',
+    student_id: 'std-cse-2026-001',
+    student_name: 'Aditya Nanda',
+    student_roll: 'HIET-CSE-2026-001',
     student_branch: 'CSE',
-    student_semester: 6,
-    start_date: '2026-09-15',
-    end_date: '2026-09-17',
-    reason: 'Medical Leave - Severe viral fever diagnosed at Civil Hospital Shahpur.',
-    document_url: 'https://hiet.ac.in/documents/medical_cert_aarav.pdf',
-    status: 'Approved',
-    reviewed_by: 'tch-01',
-    reviewed_by_name: 'Dr. Rajesh Kumar',
-    remarks: 'Medical certificate verified. Granted 3 days leave without attendance penalty.',
-    created_at: '2026-09-14T09:00:00Z'
+    student_semester: 1,
+    student_section: 'A',
+    start_date: '2026-10-12',
+    end_date: '2026-10-13',
+    from_date: '2026-10-12',
+    to_date: '2026-10-13',
+    total_days: 2,
+    reason: 'Severe dental toothache and scheduled clinic root canal procedure.',
+    document_url: 'https://hiet.ac.in/documents/medical_dental_slip.pdf',
+    document_path: 'leaves/medical_dental_slip.pdf',
+    status: 'pending_faculty',
+    current_stage: 'faculty',
+    current_assignee_user_id: 'prof-tch-fac-cse-003',
+    current_assignee_role_key: 'class_incharge',
+    current_assignee_name: 'Mr. Rohit Mehta (Class In-Charge)',
+    submitted_by_user_id: 'prof-std-cse-2026-001',
+    created_at: '2026-10-07T09:30:00Z',
+    updated_at: '2026-10-07T09:30:00Z'
   },
+  // Test 2 — HOD Leave (3-6 days): Student Aarav Sharma -> Class In-Charge approved -> Pending with Dr. Anuj Sharma (HOD CSE)
   {
-    id: 'lv-02',
-    student_id: 'std-cse-001',
-    student_roll: 'CSE001',
+    id: 'lv-test-02',
+    leave_id: 'lv-test-02',
+    student_id: 'std-cse-2026-002',
     student_name: 'Aarav Sharma',
+    student_roll: 'HIET-CSE-2026-002',
     student_branch: 'CSE',
-    student_semester: 6,
-    start_date: '2026-10-08',
-    end_date: '2026-10-10',
+    student_semester: 1,
+    student_section: 'A',
+    start_date: '2026-10-14',
+    end_date: '2026-10-17',
+    from_date: '2026-10-14',
+    to_date: '2026-10-17',
+    total_days: 4,
     reason: 'Attending Smart India Hackathon Grand Finale representing HIET Shahpur team.',
     document_url: 'https://hiet.ac.in/documents/sih_invitation_letter.pdf',
-    status: 'Pending',
-    remarks: 'Under verification by HOD CSE.',
-    created_at: '2026-09-24T11:30:00Z'
+    document_path: 'leaves/sih_invitation_letter.pdf',
+    status: 'pending_hod',
+    current_stage: 'hod',
+    current_assignee_user_id: 'prof-tch-fac-cse-001',
+    current_assignee_role_key: 'hod',
+    current_assignee_name: 'Dr. Anuj Sharma (HOD CSE)',
+    submitted_by_user_id: 'prof-std-cse-2026-002',
+    reviewed_by: 'prof-tch-fac-cse-003',
+    reviewed_by_name: 'Mr. Rohit Mehta',
+    approval_remarks: 'Recommended by Class In-Charge. Forwarded to HOD for department clearance.',
+    remarks: 'Recommended by Class In-Charge. Forwarded to HOD for department clearance.',
+    created_at: '2026-10-06T11:00:00Z',
+    updated_at: '2026-10-06T14:20:00Z'
+  },
+  // Test 3 — Principal Leave (7+ days): Student Priya Verma -> Faculty + HOD approved -> Pending with Dr. Rajesh Kumar (Principal)
+  {
+    id: 'lv-test-03',
+    leave_id: 'lv-test-03',
+    student_id: 'std-cse-2026-003',
+    student_name: 'Priya Verma',
+    student_roll: 'HIET-CSE-2026-003',
+    student_branch: 'CSE',
+    student_semester: 1,
+    student_section: 'A',
+    start_date: '2026-10-15',
+    end_date: '2026-10-22',
+    from_date: '2026-10-15',
+    to_date: '2026-10-22',
+    total_days: 8,
+    reason: 'Hospitalization and post-operative surgical recovery period at Zonal Hospital.',
+    document_url: 'https://hiet.ac.in/documents/hospital_discharge_summary.pdf',
+    document_path: 'leaves/hospital_discharge_summary.pdf',
+    status: 'pending_principal',
+    current_stage: 'principal',
+    current_assignee_user_id: 'prof-principal-01',
+    current_assignee_role_key: 'principal',
+    current_assignee_name: 'Dr. Rajesh Kumar (Principal)',
+    submitted_by_user_id: 'prof-std-cse-2026-003',
+    reviewed_by: 'prof-tch-fac-cse-001',
+    reviewed_by_name: 'Dr. Anuj Sharma (HOD)',
+    approval_remarks: 'Recommended by Faculty & HOD CSE. Requires Principal sanction for > 7 days.',
+    remarks: 'Recommended by Faculty & HOD CSE. Requires Principal sanction for > 7 days.',
+    created_at: '2026-10-05T08:15:00Z',
+    updated_at: '2026-10-05T12:00:00Z'
+  },
+  // Historical Completed Leaves
+  {
+    id: 'lv-01',
+    leave_id: 'lv-01',
+    student_id: 'std-cse-2026-002',
+    student_name: 'Aarav Sharma',
+    student_roll: 'HIET-CSE-2026-002',
+    student_branch: 'CSE',
+    student_semester: 1,
+    student_section: 'A',
+    start_date: '2026-09-15',
+    end_date: '2026-09-16',
+    from_date: '2026-09-15',
+    to_date: '2026-09-16',
+    total_days: 2,
+    reason: 'Medical Leave - Severe viral fever diagnosed at Civil Hospital Shahpur.',
+    document_url: 'https://hiet.ac.in/documents/medical_cert_aarav.pdf',
+    document_path: 'leaves/medical_cert_aarav.pdf',
+    status: 'approved',
+    current_stage: 'completed',
+    current_assignee_user_id: null,
+    current_assignee_role_key: null,
+    submitted_by_user_id: 'prof-std-cse-2026-002',
+    final_decision_by_user_id: 'prof-tch-fac-cse-003',
+    final_decision_at: '2026-09-14T11:00:00Z',
+    reviewed_by: 'prof-tch-fac-cse-003',
+    reviewed_by_name: 'Mr. Rohit Mehta',
+    approval_remarks: 'Medical certificate verified. 2 days excused attendance granted.',
+    remarks: 'Medical certificate verified. 2 days excused attendance granted.',
+    created_at: '2026-09-14T09:00:00Z',
+    updated_at: '2026-09-14T11:00:00Z'
+  }
+];
+
+export const INITIAL_LEAVE_HISTORY: LeaveRequestHistory[] = [
+  // History for lv-test-01 (Aditya Nanda, pending_faculty)
+  {
+    history_id: 'lvh-01-1',
+    leave_id: 'lv-test-01',
+    action_key: 'created',
+    from_status: 'draft',
+    to_status: 'pending_faculty',
+    stage_role_key: 'student',
+    performed_by_user_id: 'prof-std-cse-2026-001',
+    performed_by_name: 'Aditya Nanda',
+    remarks: 'Leave request created by student.',
+    created_at: '2026-10-07T09:30:00Z'
+  },
+  {
+    history_id: 'lvh-01-2',
+    leave_id: 'lv-test-01',
+    action_key: 'submitted',
+    from_status: 'draft',
+    to_status: 'pending_faculty',
+    stage_role_key: 'student',
+    performed_by_user_id: 'prof-std-cse-2026-001',
+    performed_by_name: 'Aditya Nanda',
+    remarks: 'Leave application submitted for Class In-Charge review.',
+    created_at: '2026-10-07T09:30:01Z'
+  },
+  {
+    history_id: 'lvh-01-3',
+    leave_id: 'lv-test-01',
+    action_key: 'forwarded_to_faculty',
+    from_status: 'draft',
+    to_status: 'pending_faculty',
+    stage_role_key: 'class_incharge',
+    performed_by_user_id: 'prof-tch-fac-cse-003',
+    performed_by_name: 'Mr. Rohit Mehta',
+    remarks: 'Routed to Mr. Rohit Mehta (Class In-Charge, CSE Sem 1 Sec A).',
+    created_at: '2026-10-07T09:30:02Z'
+  },
+
+  // History for lv-test-02 (Aarav Sharma, pending_hod)
+  {
+    history_id: 'lvh-02-1',
+    leave_id: 'lv-test-02',
+    action_key: 'created',
+    from_status: 'draft',
+    to_status: 'pending_faculty',
+    stage_role_key: 'student',
+    performed_by_user_id: 'prof-std-cse-2026-002',
+    performed_by_name: 'Aarav Sharma',
+    remarks: 'Leave request created by student.',
+    created_at: '2026-10-06T11:00:00Z'
+  },
+  {
+    history_id: 'lvh-02-2',
+    leave_id: 'lv-test-02',
+    action_key: 'submitted',
+    from_status: 'draft',
+    to_status: 'pending_faculty',
+    stage_role_key: 'student',
+    performed_by_user_id: 'prof-std-cse-2026-002',
+    performed_by_name: 'Aarav Sharma',
+    remarks: 'Leave application submitted.',
+    created_at: '2026-10-06T11:00:01Z'
+  },
+  {
+    history_id: 'lvh-02-3',
+    leave_id: 'lv-test-02',
+    action_key: 'forwarded_to_faculty',
+    from_status: 'draft',
+    to_status: 'pending_faculty',
+    stage_role_key: 'class_incharge',
+    performed_by_user_id: 'prof-tch-fac-cse-003',
+    performed_by_name: 'Mr. Rohit Mehta',
+    remarks: 'Routed to Class In-Charge.',
+    created_at: '2026-10-06T11:00:02Z'
+  },
+  {
+    history_id: 'lvh-02-4',
+    leave_id: 'lv-test-02',
+    action_key: 'approved',
+    from_status: 'pending_faculty',
+    to_status: 'pending_hod',
+    stage_role_key: 'faculty',
+    performed_by_user_id: 'prof-tch-fac-cse-003',
+    performed_by_name: 'Mr. Rohit Mehta',
+    remarks: 'Recommended by Class In-Charge. Duration > 2 days requires HOD review.',
+    created_at: '2026-10-06T14:20:00Z'
+  },
+  {
+    history_id: 'lvh-02-5',
+    leave_id: 'lv-test-02',
+    action_key: 'forwarded_to_hod',
+    from_status: 'pending_faculty',
+    to_status: 'pending_hod',
+    stage_role_key: 'hod',
+    performed_by_user_id: 'prof-tch-fac-cse-001',
+    performed_by_name: 'Dr. Anuj Sharma',
+    remarks: 'Forwarded to Dr. Anuj Sharma (HOD CSE) for department approval.',
+    created_at: '2026-10-06T14:20:01Z'
+  },
+
+  // History for lv-test-03 (Priya Verma, pending_principal)
+  {
+    history_id: 'lvh-03-1',
+    leave_id: 'lv-test-03',
+    action_key: 'created',
+    from_status: 'draft',
+    to_status: 'pending_faculty',
+    stage_role_key: 'student',
+    performed_by_user_id: 'prof-std-cse-2026-003',
+    performed_by_name: 'Priya Verma',
+    remarks: 'Leave request created by student.',
+    created_at: '2026-10-05T08:15:00Z'
+  },
+  {
+    history_id: 'lvh-03-2',
+    leave_id: 'lv-test-03',
+    action_key: 'forwarded_to_faculty',
+    from_status: 'draft',
+    to_status: 'pending_faculty',
+    stage_role_key: 'class_incharge',
+    performed_by_user_id: 'prof-tch-fac-cse-003',
+    performed_by_name: 'Mr. Rohit Mehta',
+    remarks: 'Routed to Class In-Charge.',
+    created_at: '2026-10-05T08:15:02Z'
+  },
+  {
+    history_id: 'lvh-03-3',
+    leave_id: 'lv-test-03',
+    action_key: 'approved',
+    from_status: 'pending_faculty',
+    to_status: 'pending_hod',
+    stage_role_key: 'faculty',
+    performed_by_user_id: 'prof-tch-fac-cse-003',
+    performed_by_name: 'Mr. Rohit Mehta',
+    remarks: 'Faculty recommended.',
+    created_at: '2026-10-05T10:00:00Z'
+  },
+  {
+    history_id: 'lvh-03-4',
+    leave_id: 'lv-test-03',
+    action_key: 'approved',
+    from_status: 'pending_hod',
+    to_status: 'pending_principal',
+    stage_role_key: 'hod',
+    performed_by_user_id: 'prof-tch-fac-cse-001',
+    performed_by_name: 'Dr. Anuj Sharma',
+    remarks: 'HOD CSE approved. Duration (8 days) exceeds 7 days threshold; forwarded to Principal.',
+    created_at: '2026-10-05T12:00:00Z'
+  },
+  {
+    history_id: 'lvh-03-5',
+    leave_id: 'lv-test-03',
+    action_key: 'forwarded_to_principal',
+    from_status: 'pending_hod',
+    to_status: 'pending_principal',
+    stage_role_key: 'principal',
+    performed_by_user_id: 'prof-principal-01',
+    performed_by_name: 'Dr. Rajesh Kumar',
+    remarks: 'Forwarded to Principal for final institutional decision.',
+    created_at: '2026-10-05T12:00:01Z'
   }
 ];
 
@@ -2968,6 +3233,23 @@ class DataStore {
   }
   setLeaves(data: LeaveRequest[]): void {
     setLocalItem('leaves', data);
+  }
+
+  getLeaveHistory(leaveId?: string): LeaveRequestHistory[] {
+    const list = getLocalItem('leave_history', INITIAL_LEAVE_HISTORY);
+    return leaveId ? list.filter(h => h.leave_id === leaveId) : list;
+  }
+  setLeaveHistory(data: LeaveRequestHistory[]): void {
+    setLocalItem('leave_history', data);
+  }
+  addLeaveHistory(item: LeaveRequestHistory): void {
+    const list = this.getLeaveHistory();
+    this.setLeaveHistory([...list, item]);
+  }
+
+  getLeaveConfig(departmentId?: string): LeaveWorkflowConfig {
+    const configs = getLocalItem('leave_configs', [DEFAULT_LEAVE_CONFIG]);
+    return configs.find(c => c.department_id === departmentId) || configs[0] || DEFAULT_LEAVE_CONFIG;
   }
 
   getComplaints(): Complaint[] {

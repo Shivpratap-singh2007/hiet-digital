@@ -100,7 +100,7 @@ export const MobileAppView: React.FC<Props> = ({
   const deptSubjects = dataStore.getSubjects().filter(s => s.branch === dept);
   const mySubjects = dataStore.getSubjects().filter(s => s.teacher_id === teacherId || !s.teacher_id);
   const myDoubts = dataStore.getDoubts().filter(d => d.teacher_id === teacherId || !d.teacher_id);
-  const pendingLeaves = dataStore.getLeaves().filter(l => l.status === 'Pending');
+  const pendingLeaves = dataStore.getLeaves().filter(l => (l.status || '').toLowerCase().startsWith('pending'));
 
   const lowAttendanceStudents = deptStudents.filter(s => {
     const records = dataStore.getAttendance().filter(a => a.student_id === s.id);

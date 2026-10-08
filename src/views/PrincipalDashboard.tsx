@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Building, 
   Users, 
@@ -26,6 +26,8 @@ import {
   UserCheck
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { apiService } from '../lib/supabase';
+import { LeaveRequest } from '../types';
 import { dataStore } from '../lib/mockData';
 import { NavTab } from '../components/common/Sidebar';
 import { PageHeader } from '../components/common/PageHeader';
@@ -79,7 +81,33 @@ export const PrincipalDashboard: React.FC<Props> = ({ currentTab, onNavigateTab 
   const teachers = dataStore.getTeachersMaster();
   const hods = teachers.filter(t => t.is_hod || t.role === 'hod' || t.designation === 'HOD');
   const complaints = dataStore.getComplaints();
-  const leaves = dataStore.getLeaves();
+  // Live Leave Synchronization for Principal
+  const [leaves, setLeaves] = useState<LeaveRequest[]>(() => dataStore.getLeaves());
+  useEffect(() => {
+    let isMounted = true;
+    async function loadPrincipalLeaves() {
+      try {
+        const list = await apiService.getLeaves();
+        if (isMounted && list) setLeaves(list);
+      } catch (e) {
+        console.warn('Principal leave fetch error:', e);
+      }
+    }
+    loadPrincipalLeaves();
+
+    const handleSync = () => {
+      setLeaves(dataStore.getLeaves());
+      loadPrincipalLeaves();
+    };
+    window.addEventListener('storage', handleSync);
+    window.addEventListener('hiet-leave-updated', handleSync);
+    return () => {
+      isMounted = false;
+      window.removeEventListener('storage', handleSync);
+      window.removeEventListener('hiet-leave-updated', handleSync);
+    };
+  }, []);
+
   const achievements = dataStore.getAchievements();
   const attendance = dataStore.getAttendance();
   const sessionals = dataStore.getSessionalResults();
@@ -98,7 +126,8 @@ export const PrincipalDashboard: React.FC<Props> = ({ currentTab, onNavigateTab 
   ];
 
   // Calculated Real Metrics
-  const pendingLeaves = leaves.filter(l => l.status === 'Pending').length;
+  const pendingLeaves = leaves.filter(l => (l.status || '').toLowerCase().startsWith('pending')).length;
+  const principalQueueCount = leaves.filter(l => (l.status || '').toLowerCase() === 'pending_principal' || l.current_stage === 'principal').length;
   const openComplaints = complaints.filter(c => c.status === 'Submitted' || c.status === 'Under Review').length;
   const pendingAchievements = achievements.filter(a => a.verification_status === 'Pending').length;
   const totalPendingApprovals = pendingLeaves + openComplaints + pendingAchievements;
@@ -348,7 +377,9 @@ export const PrincipalDashboard: React.FC<Props> = ({ currentTab, onNavigateTab 
               <Clock className="w-4 h-4 text-amber-600" />
             </div>
             <div className="text-xl font-extrabold text-slate-900">{pendingLeaves} Pending</div>
-            <div className="text-[11px] text-slate-500">From students & faculty</div>
+            <div className="text-[11px] text-slate-500">
+              {principalQueueCount > 0 ? `${principalQueueCount} awaiting Principal` : 'From students & faculty'}
+            </div>
           </div>
 
           <div 

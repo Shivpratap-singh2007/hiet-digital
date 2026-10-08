@@ -9,6 +9,10 @@ import {
   Profile, 
   AttendanceRecord, 
   LeaveRequest, 
+  LeaveStatus,
+  LeaveStage,
+  LeaveRequestHistory,
+  LeaveWorkflowConfig,
   Complaint, 
   Doubt, 
   DoubtMessage, 
@@ -54,6 +58,56 @@ export const isSupabaseConfigured = Boolean(
 export const supabase = isSupabaseConfigured 
   ? createClient(supabaseUrl, supabaseAnonKey)
   : null;
+
+// Helper: Calculate inclusive leave days (to_date - from_date + 1)
+export function calculateLeaveDays(startDate: string, endDate: string): number {
+  if (!startDate || !endDate) return 1;
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  const diffTime = end.getTime() - start.getTime();
+  const diffDays = Math.round(diffTime / (1000 * 3600 * 24)) + 1;
+  return Math.max(1, isNaN(diffDays) ? 1 : diffDays);
+}
+
+// Helper: Resolve approver for student section & department
+export function resolveLeaveApprover(studentBranch?: string, studentSemester?: number, studentSection?: string) {
+  const teachers = dataStore.getTeachersMaster();
+  // 1. Look for Class In-Charge matching section
+  const incharge = teachers.find(t => 
+    t.is_class_incharge && 
+    t.class_incharge_details?.branch === (studentBranch || 'CSE') &&
+    (!studentSemester || t.class_incharge_details?.semester === studentSemester) &&
+    (!studentSection || t.class_incharge_details?.section === studentSection)
+  ) || teachers.find(t => t.is_class_incharge && t.class_incharge_details?.branch === (studentBranch || 'CSE'));
+
+  if (incharge) {
+    return {
+      userId: incharge.faculty_id === 'HIET-FAC-CSE-003' ? 'prof-tch-fac-cse-003' : (incharge.id || 'prof-tch-fac-cse-003'),
+      roleKey: 'class_incharge',
+      name: `${incharge.full_name || incharge.name} (Class In-Charge)`
+    };
+  }
+
+  // 2. Fallback to active HOD for student department
+  const hod = teachers.find(t => 
+    (t.is_hod || t.role === 'hod' || t.designation?.toLowerCase().includes('head') || t.designation?.toLowerCase().includes('hod')) &&
+    (t.department === (studentBranch || 'CSE') || studentBranch === 'CSE')
+  );
+
+  if (hod) {
+    return {
+      userId: hod.faculty_id === 'HIET-FAC-CSE-001' ? 'prof-tch-fac-cse-001' : (hod.id || 'prof-tch-fac-cse-001'),
+      roleKey: 'hod',
+      name: `${hod.full_name || hod.name} (HOD CSE)`
+    };
+  }
+
+  return {
+    userId: 'prof-tch-fac-cse-003',
+    roleKey: 'class_incharge',
+    name: 'Mr. Rohit Mehta (Class In-Charge)'
+  };
+}
 
 // =============================================================================
 // UNIFIED DATA SERVICE (Supabase + Smart Fallback Layer)
@@ -417,102 +471,495 @@ export const apiService = {
     return true;
   },
 
-  // 4. Create Leave Request
-  async submitLeaveRequest(req: Omit<LeaveRequest, 'id' | 'created_at' | 'status'>): Promise<LeaveRequest> {
+  calculateLeaveDays,
+  resolveLeaveApprover,
+
+  // 4. Create Leave Request (Multi-Stage Workflow: Faculty -> HOD -> Principal)
+  async submitLeaveRequest(req: {
+    student_id: string;
+    student_name?: string;
+    student_roll?: string;
+    student_branch?: string;
+    student_semester?: number;
+    student_section?: string;
+    start_date: string;
+    end_date: string;
+    reason: string;
+    document_url?: string;
+    submitted_by_user_id?: string;
+  }): Promise<LeaveRequest> {
+    const totalDays = calculateLeaveDays(req.start_date, req.end_date);
+    const approver = resolveLeaveApprover(req.student_branch, req.student_semester, req.student_section);
+    const studentUserId = req.submitted_by_user_id || (req.student_id.startsWith('prof-') ? req.student_id : `prof-${req.student_id}`);
+    const leaveId = `leave-${Date.now()}`;
+    const nowIso = new Date().toISOString();
+
     const newLeave: LeaveRequest = {
-      ...req,
-      id: `leave-${Date.now()}`,
-      created_at: new Date().toISOString(),
-      status: 'Pending'
+      id: leaveId,
+      leave_id: leaveId,
+      student_id: req.student_id,
+      department_id: req.student_branch || 'CSE',
+      student_name: req.student_name,
+      student_roll: req.student_roll,
+      student_branch: req.student_branch,
+      student_semester: req.student_semester,
+      student_section: req.student_section || 'A',
+      start_date: req.start_date,
+      end_date: req.end_date,
+      from_date: req.start_date,
+      to_date: req.end_date,
+      total_days: totalDays,
+      reason: req.reason,
+      document_url: req.document_url,
+      document_path: req.document_url,
+      status: 'pending_faculty',
+      current_stage: 'faculty',
+      current_assignee_user_id: approver.userId,
+      current_assignee_role_key: approver.roleKey,
+      current_assignee_name: approver.name,
+      submitted_by_user_id: studentUserId,
+      created_at: nowIso,
+      updated_at: nowIso
     };
 
     if (isSupabaseConfigured && supabase) {
-      const { data, error } = await supabase
-        .from('leave_requests')
-        .insert([newLeave])
-        .select()
-        .single();
-      if (!error && data) {
-        // Trigger alert for HOD
-        this.createNotification({
-          recipient_user_id: 'prof-tch-03',
-          title: 'New Student Leave Request',
-          message: `${req.student_name || 'Student'} (${req.student_roll || ''}) submitted leave for ${req.start_date} to ${req.end_date}.`,
-          type: 'leave',
-          related_record_id: data.id,
-          is_read: false
-        });
-        return data as LeaveRequest;
+      try {
+        const { data, error } = await supabase
+          .from('leave_requests')
+          .insert([newLeave])
+          .select()
+          .single();
+        if (!error && data) {
+          // Log initial history in Supabase
+          await supabase.from('leave_request_history').insert([
+            {
+              leave_id: data.id,
+              action_key: 'created',
+              from_status: 'draft',
+              to_status: 'pending_faculty',
+              stage_role_key: 'student',
+              performed_by_user_id: studentUserId,
+              remarks: 'Leave request created by student'
+            },
+            {
+              leave_id: data.id,
+              action_key: 'submitted',
+              from_status: 'draft',
+              to_status: 'pending_faculty',
+              stage_role_key: 'student',
+              performed_by_user_id: studentUserId,
+              remarks: 'Leave application submitted for review'
+            },
+            {
+              leave_id: data.id,
+              action_key: 'forwarded_to_faculty',
+              from_status: 'draft',
+              to_status: 'pending_faculty',
+              stage_role_key: approver.roleKey,
+              performed_by_user_id: approver.userId,
+              remarks: `Routed to ${approver.name}`
+            }
+          ]);
+
+          // Notify Assignee
+          this.createNotification({
+            recipient_user_id: approver.userId,
+            title: 'New Student Leave Request',
+            message: `${req.student_name || 'Student'} (${req.student_roll || ''}) submitted leave for ${totalDays} days (${req.start_date} to ${req.end_date}).`,
+            type: 'leave',
+            related_record_id: data.id,
+            link_url: '/app/leave',
+            is_read: false
+          });
+
+          // Confirm to Student
+          this.createNotification({
+            recipient_user_id: studentUserId,
+            title: 'Leave Request Submitted',
+            message: `Leave request submitted successfully. Your application is currently pending with ${approver.name}.`,
+            type: 'leave',
+            related_record_id: data.id,
+            link_url: '/app/leave',
+            is_read: false
+          });
+
+          return data as LeaveRequest;
+        }
+      } catch (e) {
+        console.warn('Supabase submitLeaveRequest fallback:', e);
       }
     }
 
+    // Local / in-memory store
     const current = dataStore.getLeaves();
     dataStore.setLeaves([newLeave, ...current]);
 
-    // Local notification for HOD
+    // Add History Records
+    dataStore.addLeaveHistory({
+      history_id: `lvh-${Date.now()}-1`,
+      leave_id: leaveId,
+      action_key: 'created',
+      from_status: 'draft',
+      to_status: 'pending_faculty',
+      stage_role_key: 'student',
+      performed_by_user_id: studentUserId,
+      performed_by_name: req.student_name || 'Student',
+      remarks: 'Leave request created by student',
+      created_at: nowIso
+    });
+    dataStore.addLeaveHistory({
+      history_id: `lvh-${Date.now()}-2`,
+      leave_id: leaveId,
+      action_key: 'submitted',
+      from_status: 'draft',
+      to_status: 'pending_faculty',
+      stage_role_key: 'student',
+      performed_by_user_id: studentUserId,
+      performed_by_name: req.student_name || 'Student',
+      remarks: 'Leave application submitted for review',
+      created_at: nowIso
+    });
+    dataStore.addLeaveHistory({
+      history_id: `lvh-${Date.now()}-3`,
+      leave_id: leaveId,
+      action_key: 'forwarded_to_faculty',
+      from_status: 'draft',
+      to_status: 'pending_faculty',
+      stage_role_key: approver.roleKey,
+      performed_by_user_id: approver.userId,
+      performed_by_name: approver.name,
+      remarks: `Routed to ${approver.name}`,
+      created_at: nowIso
+    });
+
+    // Notify Assignee
     this.createNotification({
-      recipient_user_id: 'prof-tch-03',
+      recipient_user_id: approver.userId,
       title: 'New Student Leave Request',
-      message: `${req.student_name || 'Student'} (${req.student_roll || ''}) submitted leave for ${req.start_date} to ${req.end_date}.`,
+      message: `${req.student_name || 'Student'} (${req.student_roll || ''}) submitted leave for ${totalDays} days (${req.start_date} to ${req.end_date}).`,
       type: 'leave',
-      related_record_id: newLeave.id,
+      related_record_id: leaveId,
+      link_url: '/app/leave',
+      is_read: false
+    });
+
+    // Confirm to Student
+    this.createNotification({
+      recipient_user_id: studentUserId,
+      title: 'Leave Request Submitted',
+      message: `Leave request submitted successfully. Your application is currently pending with ${approver.name}.`,
+      type: 'leave',
+      related_record_id: leaveId,
+      link_url: '/app/leave',
       is_read: false
     });
 
     return newLeave;
   },
 
-  // 5. Update Leave Status (Teacher/HOD)
-  async updateLeaveStatus(leaveId: string, status: 'Approved' | 'Rejected', reviewerName: string, remarks?: string): Promise<boolean> {
+  // 5. Process Leave Action (Multi-Stage Approval: Faculty -> HOD -> Principal with Multi-Role Safeguard)
+  async processLeaveAction(params: {
+    leaveId: string;
+    action: 'approve' | 'reject';
+    reviewerId?: string;
+    reviewerName: string;
+    reviewerRole?: string;
+    remarks?: string;
+  }): Promise<{ success: boolean; status: LeaveStatus; stage: LeaveStage; message?: string }> {
+    const { leaveId, action, reviewerId, reviewerName, reviewerRole, remarks } = params;
+    const nowIso = new Date().toISOString();
+
     if (isSupabaseConfigured && supabase) {
-      const { error } = await supabase
-        .from('leave_requests')
-        .update({ status, remarks })
-        .eq('id', leaveId);
-      if (!error) {
-        // Find target student to notify
-        const target = dataStore.getLeaves().find(l => l.id === leaveId);
-        if (target) {
-          this.createNotification({
-            recipient_user_id: target.student_id,
-            title: `Leave Application ${status}`,
-            message: `Your leave request has been ${status.toLowerCase()} by ${reviewerName}.${remarks ? ' Note: ' + remarks : ''}`,
-            type: 'leave',
-            related_record_id: leaveId,
-            is_read: false
-          });
+      try {
+        const { data, error } = await supabase.rpc('process_leave_action_rpc', {
+          p_leave_id: leaveId,
+          p_action: action,
+          p_remarks: remarks || null
+        });
+        if (!error && data) {
+          return {
+            success: true,
+            status: data.status,
+            stage: data.stage,
+            message: `Leave request successfully ${action === 'approve' ? 'approved' : 'rejected'}.`
+          };
         }
-        return true;
+      } catch (e) {
+        console.warn('Supabase process_leave_action_rpc fallback:', e);
       }
     }
 
-    let targetStudentId = '';
-    const leaves = dataStore.getLeaves().map(l => {
-      if (l.id === leaveId) {
-        targetStudentId = l.student_id;
+    // In-memory fallback
+    const leaves = dataStore.getLeaves();
+    const target = leaves.find(l => l.id === leaveId || l.leave_id === leaveId);
+    if (!target) {
+      return { success: false, status: 'rejected', stage: 'completed', message: 'Leave request not found' };
+    }
+
+    const config = dataStore.getLeaveConfig(target.department_id);
+    const studentTargetId = target.submitted_by_user_id || 
+      (target.student_id.startsWith('prof-') ? target.student_id : `prof-${target.student_id}`);
+    
+    const hodUser = {
+      userId: 'prof-tch-fac-cse-001',
+      roleKey: 'hod',
+      name: 'Dr. Anuj Sharma (HOD CSE)'
+    };
+    const principalUser = {
+      userId: 'prof-principal-01',
+      roleKey: 'principal',
+      name: 'Dr. Rajesh Kumar (Principal)'
+    };
+
+    let nextStatus: LeaveStatus = 'approved';
+    let nextStage: LeaveStage = 'completed';
+    let nextAssigneeId: string | null = null;
+    let nextAssigneeRoleKey: string | null = null;
+    let nextAssigneeName: string | null = null;
+    let historyAction: any = 'approved';
+    let auditRemarks = remarks || '';
+
+    if (action === 'reject') {
+      nextStatus = 'rejected';
+      nextStage = 'completed';
+      historyAction = 'rejected';
+
+      // Notify Student
+      this.createNotification({
+        recipient_user_id: studentTargetId,
+        title: 'Leave Application Rejected',
+        message: `Your leave application from ${target.start_date} to ${target.end_date} was rejected by ${reviewerName}.${remarks ? ' Remarks: ' + remarks : ''}`,
+        type: 'leave',
+        related_record_id: leaveId,
+        link_url: '/app/leave',
+        is_read: false
+      });
+    } else {
+      // APPROVE ACTION
+      if (target.current_stage === 'faculty') {
+        if (target.total_days <= config.short_leave_max_days) {
+          // Short leave (1-2 days) finalized at Faculty stage
+          nextStatus = 'approved';
+          nextStage = 'completed';
+          historyAction = 'approved';
+
+          this.createNotification({
+            recipient_user_id: studentTargetId,
+            title: 'Leave Application Approved',
+            message: `Your leave application from ${target.start_date} to ${target.end_date} has been approved by ${reviewerName}.`,
+            type: 'leave',
+            related_record_id: leaveId,
+            link_url: '/app/leave',
+            is_read: false
+          });
+        } else {
+          // Requires HOD stage (3+ days)
+          // Multi-Role Safeguard (Option A): If Faculty is also HOD, skip duplicate review!
+          const isSameUserAsHod = reviewerId === hodUser.userId || 
+                                  reviewerRole === 'hod' || 
+                                  reviewerName.includes('Anuj');
+          
+          if (isSameUserAsHod) {
+            nextStatus = 'approved';
+            nextStage = 'completed';
+            historyAction = 'approved';
+            auditRemarks = (remarks ? `${remarks} ` : '') + '(Faculty and HOD role held by same user; duplicate HOD approval skipped.)';
+
+            this.createNotification({
+              recipient_user_id: studentTargetId,
+              title: 'Leave Application Approved',
+              message: `Your leave application from ${target.start_date} to ${target.end_date} has been approved by ${reviewerName} (Faculty & HOD dual sanction).`,
+              type: 'leave',
+              related_record_id: leaveId,
+              link_url: '/app/leave',
+              is_read: false
+            });
+          } else {
+            // Forward to HOD
+            nextStatus = 'pending_hod';
+            nextStage = 'hod';
+            nextAssigneeId = hodUser.userId;
+            nextAssigneeRoleKey = hodUser.roleKey;
+            nextAssigneeName = hodUser.name;
+            historyAction = 'forwarded_to_hod';
+
+            // Notify HOD
+            this.createNotification({
+              recipient_user_id: hodUser.userId,
+              title: 'New Leave Application Requires HOD Approval',
+              message: `${target.student_name || 'Student'} has a leave request requiring your department approval. Duration: ${target.total_days} days (${target.start_date} to ${target.end_date}).`,
+              type: 'leave',
+              related_record_id: leaveId,
+              link_url: '/app/approvals',
+              is_read: false
+            });
+
+            // Notify Student of forwarded state
+            this.createNotification({
+              recipient_user_id: studentTargetId,
+              title: 'Leave Application Forwarded to HOD',
+              message: 'Your leave application has been recommended by faculty and forwarded to the HOD for final review.',
+              type: 'leave',
+              related_record_id: leaveId,
+              link_url: '/app/leave',
+              is_read: false
+            });
+          }
+        }
+      } else if (target.current_stage === 'hod') {
+        if (target.total_days >= config.principal_required_after_days) {
+          // Long leave (7+ days): Forward to Principal
+          nextStatus = 'pending_principal';
+          nextStage = 'principal';
+          nextAssigneeId = principalUser.userId;
+          nextAssigneeRoleKey = principalUser.roleKey;
+          nextAssigneeName = principalUser.name;
+          historyAction = 'forwarded_to_principal';
+
+          // Notify Principal
+          this.createNotification({
+            recipient_user_id: principalUser.userId,
+            title: 'Long Leave Request Requires Principal Approval',
+            message: `${target.student_name || 'Student'} has a leave request exceeding 7 days (${target.total_days} days) requiring institutional approval.`,
+            type: 'leave',
+            related_record_id: leaveId,
+            link_url: '/app/leave',
+            is_read: false
+          });
+
+          // Notify Student
+          this.createNotification({
+            recipient_user_id: studentTargetId,
+            title: 'Leave Application Forwarded to Principal',
+            message: 'Your leave application has been forwarded to the Principal for institutional approval.',
+            type: 'leave',
+            related_record_id: leaveId,
+            link_url: '/app/leave',
+            is_read: false
+          });
+        } else {
+          // HOD Final decision (3-6 days)
+          nextStatus = 'approved';
+          nextStage = 'completed';
+          historyAction = 'approved';
+
+          this.createNotification({
+            recipient_user_id: studentTargetId,
+            title: 'Leave Application Approved',
+            message: `Your leave application from ${target.start_date} to ${target.end_date} has been approved by the HOD (${reviewerName}).`,
+            type: 'leave',
+            related_record_id: leaveId,
+            link_url: '/app/leave',
+            is_read: false
+          });
+        }
+      } else if (target.current_stage === 'principal') {
+        nextStatus = 'approved';
+        nextStage = 'completed';
+        historyAction = 'approved';
+
+        this.createNotification({
+          recipient_user_id: studentTargetId,
+          title: 'Leave Application Approved',
+          message: `Your leave application from ${target.start_date} to ${target.end_date} has been approved by the Principal (${reviewerName}).`,
+          type: 'leave',
+          related_record_id: leaveId,
+          link_url: '/app/leave',
+          is_read: false
+        });
+      }
+    }
+
+    // Update in dataStore
+    const updatedLeaves = leaves.map(l => {
+      if (l.id === leaveId || l.leave_id === leaveId) {
         return {
           ...l,
-          status,
-          remarks: remarks || l.remarks,
-          reviewed_by_name: reviewerName
+          status: nextStatus,
+          current_stage: nextStage,
+          current_assignee_user_id: nextAssigneeId,
+          current_assignee_role_key: nextAssigneeRoleKey,
+          current_assignee_name: nextAssigneeName || undefined,
+          final_decision_by_user_id: nextStage === 'completed' ? (reviewerId || null) : null,
+          final_decision_at: nextStage === 'completed' ? nowIso : null,
+          approval_remarks: auditRemarks || l.approval_remarks,
+          remarks: auditRemarks || l.remarks,
+          reviewed_by: reviewerId || l.reviewed_by,
+          reviewed_by_name: reviewerName,
+          updated_at: nowIso
         };
       }
       return l;
     });
-    dataStore.setLeaves(leaves);
+    dataStore.setLeaves(updatedLeaves);
 
-    if (targetStudentId) {
-      this.createNotification({
-        recipient_user_id: targetStudentId,
-        title: `Leave Application ${status}`,
-        message: `Your leave request has been ${status.toLowerCase()} by ${reviewerName}.${remarks ? ' Note: ' + remarks : ''}`,
-        type: 'leave',
-        related_record_id: leaveId,
-        is_read: false
-      });
+    // Record History
+    dataStore.addLeaveHistory({
+      history_id: `lvh-${Date.now()}`,
+      leave_id: leaveId,
+      action_key: historyAction,
+      from_status: target.status,
+      to_status: nextStatus,
+      stage_role_key: target.current_stage,
+      performed_by_user_id: reviewerId,
+      performed_by_name: reviewerName,
+      remarks: auditRemarks,
+      created_at: nowIso
+    });
+
+    return {
+      success: true,
+      status: nextStatus,
+      stage: nextStage,
+      message: `Leave request ${action === 'approve' ? 'approved' : 'rejected'} successfully.`
+    };
+  },
+
+  // Backward compatibility wrapper
+  async updateLeaveStatus(leaveId: string, status: 'Approved' | 'Rejected', reviewerName: string, remarks?: string): Promise<boolean> {
+    const action = status.toLowerCase() === 'approved' ? 'approve' : 'reject';
+    const res = await this.processLeaveAction({
+      leaveId,
+      action,
+      reviewerName,
+      remarks
+    });
+    return res.success;
+  },
+
+  // Fetch Leave History
+  async getLeaveHistory(leaveId: string): Promise<LeaveRequestHistory[]> {
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('leave_request_history')
+          .select('*')
+          .eq('leave_id', leaveId)
+          .order('created_at', { ascending: true });
+        if (!error && data) return data as LeaveRequestHistory[];
+      } catch (e) {
+        console.warn('Supabase getLeaveHistory error:', e);
+      }
     }
+    return dataStore.getLeaveHistory(leaveId);
+  },
 
-    return true;
+  // Fetch Leave Workflow Config
+  async getLeaveConfig(departmentId?: string): Promise<LeaveWorkflowConfig> {
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('leave_workflow_config')
+          .select('*')
+          .eq('is_active', true)
+          .limit(1)
+          .single();
+        if (!error && data) return data as LeaveWorkflowConfig;
+      } catch (e) {
+        console.warn('Supabase getLeaveConfig error:', e);
+      }
+    }
+    return dataStore.getLeaveConfig(departmentId);
   },
 
   // 6. Submit Complaint (Grievance Box)
@@ -1032,12 +1479,31 @@ export const apiService = {
     return filtered;
   },
 
-  // 18b. Leave Requests Queries (Supports Student Scope & Pagination)
-  async getLeaves(studentId?: string, pagination?: { page?: number; pageSize?: number }): Promise<LeaveRequest[]> {
+  // 18b. Leave Requests Queries (Supports Stage, Assignee, Department Scope & Pagination)
+  async getLeaves(
+    filter?: {
+      studentId?: string;
+      stage?: LeaveStage;
+      status?: LeaveStatus;
+      assigneeUserId?: string;
+      department?: string;
+    } | string,
+    pagination?: { page?: number; pageSize?: number }
+  ): Promise<LeaveRequest[]> {
+    const studentId = typeof filter === 'string' ? filter : filter?.studentId;
+    const stage = typeof filter === 'object' ? filter?.stage : undefined;
+    const status = typeof filter === 'object' ? filter?.status : undefined;
+    const assigneeUserId = typeof filter === 'object' ? filter?.assigneeUserId : undefined;
+    const department = typeof filter === 'object' ? filter?.department : undefined;
+
     if (isSupabaseConfigured && supabase) {
       try {
         let query = supabase.from('leave_requests').select('*').order('created_at', { ascending: false });
-        if (studentId) query = query.eq('student_id', studentId);
+        if (studentId) query = query.or(`student_id.eq.${studentId},submitted_by_user_id.eq.${studentId}`);
+        if (stage) query = query.eq('current_stage', stage);
+        if (status) query = query.eq('status', status);
+        if (assigneeUserId) query = query.eq('current_assignee_user_id', assigneeUserId);
+        if (department) query = query.or(`student_branch.eq.${department},department_id.eq.${department}`);
         if (pagination?.pageSize) {
           const page = Math.max(1, pagination.page || 1);
           const from = (page - 1) * pagination.pageSize;
@@ -1049,8 +1515,25 @@ export const apiService = {
         console.warn('Supabase getLeaves error:', e);
       }
     }
+
     const all = dataStore.getLeaves();
-    const filtered = studentId ? all.filter(l => l.student_id === studentId) : all;
+    let filtered = all;
+    if (studentId) {
+      filtered = filtered.filter(l => l.student_id === studentId || l.submitted_by_user_id === studentId);
+    }
+    if (stage) {
+      filtered = filtered.filter(l => l.current_stage === stage);
+    }
+    if (status) {
+      filtered = filtered.filter(l => l.status.toLowerCase() === status.toLowerCase());
+    }
+    if (assigneeUserId) {
+      filtered = filtered.filter(l => l.current_assignee_user_id === assigneeUserId);
+    }
+    if (department) {
+      filtered = filtered.filter(l => l.student_branch === department || l.department_id === department);
+    }
+
     if (pagination?.pageSize) {
       const page = Math.max(1, pagination.page || 1);
       const from = (page - 1) * pagination.pageSize;

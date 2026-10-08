@@ -314,22 +314,87 @@ export interface AssignmentSubmission {
   assignment?: Assignment;
 }
 
+export type LeaveStatus = 
+  | 'draft'
+  | 'pending_faculty'
+  | 'pending_hod'
+  | 'pending_principal'
+  | 'approved'
+  | 'rejected'
+  | 'cancelled'
+  | 'Pending'
+  | 'Approved'
+  | 'Rejected'
+  | 'Cancelled';
+
+export type LeaveStage = 'draft' | 'faculty' | 'hod' | 'principal' | 'completed';
+
 export interface LeaveRequest {
   id: string;
+  leave_id?: string;
   student_id: string;
+  department_id?: string;
   student_name?: string;
   student_roll?: string;
   student_branch?: string;
   student_semester?: number;
+  student_section?: string;
   start_date: string;
   end_date: string;
+  from_date?: string;
+  to_date?: string;
+  total_days: number;
   reason: string;
   document_url?: string;
-  status: 'Pending' | 'Approved' | 'Rejected';
+  document_path?: string;
+  status: LeaveStatus;
+  current_stage: LeaveStage;
+  current_assignee_user_id?: string | null;
+  current_assignee_role_key?: string | null;
+  current_assignee_name?: string;
+  submitted_by_user_id?: string;
+  final_decision_by_user_id?: string | null;
+  final_decision_at?: string | null;
+  approval_remarks?: string;
   reviewed_by?: string;
   reviewed_by_name?: string;
   remarks?: string;
   created_at: string;
+  updated_at?: string;
+}
+
+export interface LeaveRequestHistory {
+  history_id: string;
+  leave_id: string;
+  action_key: 
+    | 'created'
+    | 'submitted'
+    | 'forwarded_to_faculty'
+    | 'forwarded_to_hod'
+    | 'forwarded_to_principal'
+    | 'approved'
+    | 'rejected'
+    | 'cancelled'
+    | 'commented';
+  from_status?: string;
+  to_status?: string;
+  stage_role_key?: string;
+  performed_by_user_id?: string;
+  performed_by_name?: string;
+  remarks?: string;
+  created_at: string;
+}
+
+export interface LeaveWorkflowConfig {
+  config_id: string;
+  department_id?: string;
+  short_leave_max_days: number;
+  hod_required_after_days: number;
+  principal_required_after_days: number;
+  first_approver_role_key: string;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Complaint {

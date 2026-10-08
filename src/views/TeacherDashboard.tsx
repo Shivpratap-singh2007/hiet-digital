@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   CalendarCheck, 
   Clock, 
@@ -27,6 +27,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { dataStore } from '../lib/mockData';
+import { apiService } from '../lib/supabase';
+import { LeaveRequest } from '../types';
 import { NavTab } from '../components/common/Sidebar';
 import { PageHeader } from '../components/common/PageHeader';
 import { StatCard } from '../components/common/StatCard';
@@ -65,9 +67,42 @@ export const TeacherDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
   // Toggle between General Faculty Mode and designated Class In-Charge mode
   const [activeConsoleMode, setActiveConsoleMode] = useState<'faculty' | 'class_incharge'>('faculty');
 
+  // Live Leave Synchronization for Faculty / Class In-Charge
+  const [liveLeaves, setLiveLeaves] = useState<LeaveRequest[]>(() => dataStore.getLeaves());
+  useEffect(() => {
+    let isMounted = true;
+    async function loadFacultyLeaves() {
+      try {
+        const list = await apiService.getLeaves();
+        if (isMounted && list) setLiveLeaves(list);
+      } catch (e) {
+        console.warn('Faculty leave sync error:', e);
+      }
+    }
+    loadFacultyLeaves();
+
+    const handleSync = () => {
+      setLiveLeaves(dataStore.getLeaves());
+      loadFacultyLeaves();
+    };
+    window.addEventListener('storage', handleSync);
+    window.addEventListener('hiet-leave-updated', handleSync);
+    return () => {
+      isMounted = false;
+      window.removeEventListener('storage', handleSync);
+      window.removeEventListener('hiet-leave-updated', handleSync);
+    };
+  }, []);
+
   // Real Database Records
   const myDoubts = dataStore.getDoubts().filter(d => d.teacher_id === teacherId || !d.teacher_id);
-  const pendingLeaves = dataStore.getLeaves().filter(l => l.status === 'Pending');
+  const pendingLeaves = liveLeaves.filter(l => {
+    const s = (l.status || '').toLowerCase();
+    const isAssigned = l.current_assignee_user_id === user?.id || 
+                       l.current_assignee_user_id === 'prof-tch-fac-cse-003' ||
+                       !l.current_assignee_user_id;
+    return (s === 'pending_faculty' || s === 'pending') && isAssigned;
+  });
   const pendingAchievements = dataStore.getAchievements().filter(a => a.verification_status === 'Pending');
   const mySubjects = dataStore.getSubjects().filter(s => s.teacher_id === teacherId || !s.teacher_id);
   const notices = dataStore.getNotices();
@@ -97,8 +132,8 @@ export const TeacherDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
     return (p / sAtt.length) < 0.75;
   });
 
-  const classLeaves = dataStore.getLeaves().filter(l => classStudents.some(s => s.id === l.student_id || s.roll_no === l.student_roll));
-  const classPendingLeaves = classLeaves.filter(l => l.status === 'Pending').length;
+  const classLeaves = liveLeaves.filter(l => classStudents.some(s => s.id === l.student_id || s.roll_no === l.student_roll));
+  const classPendingLeaves = classLeaves.filter(l => (l.status || '').toLowerCase().startsWith('pending')).length;
 
   // Real Today's Class Schedule Lookup
   const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
