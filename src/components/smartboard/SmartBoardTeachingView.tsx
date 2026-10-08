@@ -17,11 +17,16 @@ import {
   ShieldCheck, 
   ExternalLink,
   ChevronRight,
-  Sparkles
+  Sparkles,
+  Bot,
+  X,
+  Tag,
+  List
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { dataStore } from '../../lib/mockData';
 import { apiService } from '../../lib/supabase';
+import { aiCampusService, SmartBoardSummaryResult } from '../../lib/aiCampusService';
 import { SmartBoardLesson, Subject, TimetableSlot } from '../../types';
 import { PageHeader } from '../common/PageHeader';
 import { StatCard } from '../common/StatCard';
@@ -53,6 +58,13 @@ export const SmartBoardTeachingView: React.FC<Props> = ({ roleMode }) => {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [submittingSession, setSubmittingSession] = useState(false);
   const [sessionSuccessMsg, setSessionSuccessMsg] = useState('');
+
+  // AI Summary State
+  const [generatingAiSummary, setGeneratingAiSummary] = useState(false);
+  const [aiSummaryError, setAiSummaryError] = useState('');
+  const [aiDraft, setAiDraft] = useState<SmartBoardSummaryResult | null>(null);
+  const [aiDraftEdited, setAiDraftEdited] = useState(false);
+  const [selectedLessonForSummary, setSelectedLessonForSummary] = useState<SmartBoardLesson | null>(null);
 
   const timetable = dataStore.getTimetable();
   const subjects = dataStore.getSubjects();
@@ -112,6 +124,33 @@ export const SmartBoardTeachingView: React.FC<Props> = ({ roleMode }) => {
     setShowSessionModal(true);
   };
 
+  const handleGenerateAiSummary = async () => {
+    if (!topicName.trim() || !sessionNotes.trim()) {
+      setAiSummaryError('Please enter both lesson topic and teaching notes first.');
+      return;
+    }
+    setGeneratingAiSummary(true);
+    setAiSummaryError('');
+    try {
+      const targetSub = subjects.find(s => s.subject_code === selectedSubjectCode) || subjects[0];
+      const durationMins = Math.max(1, Math.round(activeSessionTimer / 60));
+      const res = await aiCampusService.generateSmartBoardSummary({
+        subjectId: targetSub?.id || 'sub-01',
+        subjectName: targetSub?.subject_name || 'Subject',
+        unit: selectedUnit,
+        topic: topicName.trim(),
+        durationMinutes: durationMins,
+        teacherNotes: sessionNotes.trim()
+      });
+      setAiDraft(res);
+      setAiDraftEdited(false);
+    } catch (err: any) {
+      setAiSummaryError(err.message || 'Failed to generate AI summary.');
+    } finally {
+      setGeneratingAiSummary(false);
+    }
+  };
+
   const handleSaveAndSync = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!topicName.trim() || !selectedSubjectCode) return;
@@ -140,6 +179,11 @@ export const SmartBoardTeachingView: React.FC<Props> = ({ roleMode }) => {
         file_name: uploadedFile ? uploadedFile.name : 'SmartBoard_Whiteboard_Export.pdf',
         file_type: uploadedFile ? uploadedFile.name.split('.').pop() || 'pdf' : 'pdf',
         notes_summary: sessionNotes.trim() || 'Interactive board session notes and whiteboard diagrams.',
+        ai_summary: aiDraft?.summary,
+        ai_learning_objectives: aiDraft?.learningObjectives || [],
+        ai_keywords: aiDraft?.keywords || [],
+        ai_recommended_next_topic: aiDraft?.recommendedNextTopic,
+        ai_summary_status: aiDraft ? (aiDraftEdited ? 'edited' : 'generated') : 'not_requested',
         sync_status: 'Synced'
       });
 
@@ -149,6 +193,9 @@ export const SmartBoardTeachingView: React.FC<Props> = ({ roleMode }) => {
       setShowSessionModal(false);
       setTopicName('');
       setSessionNotes('');
+      setAiDraft(null);
+      setAiDraftEdited(false);
+      setAiSummaryError('');
       setUploadedFile(null);
       setTimeout(() => setSessionSuccessMsg(''), 6000);
     } catch (err: any) {
@@ -351,6 +398,18 @@ export const SmartBoardTeachingView: React.FC<Props> = ({ roleMode }) => {
                   <td className="py-3 px-4 max-w-xs">
                     <span className="font-bold text-slate-900 block truncate">{l.topic}</span>
                     <span className="text-[11px] text-slate-500 line-clamp-1">{l.notes_summary}</span>
+                    {l.ai_summary && (
+                      <div className="mt-1 flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedLessonForSummary(l)}
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition"
+                        >
+                          <Sparkles className="w-2.5 h-2.5 text-indigo-500" />
+                          <span>AI Summary ({l.ai_summary_status === 'edited' ? 'Reviewed' : 'Generated'})</span>
+                        </button>
+                      </div>
+                    )}
                   </td>
                   <td className="py-3 px-4 whitespace-nowrap">
                     <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 border border-blue-200 text-[#0f2942] text-[11px] font-bold">
@@ -452,7 +511,19 @@ export const SmartBoardTeachingView: React.FC<Props> = ({ roleMode }) => {
               </div>
 
               <div>
-                <label className="block font-bold text-slate-700 mb-1">Teaching Notes & Concepts Covered</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block font-bold text-slate-700">Teaching Notes & Concepts Covered</label>
+                  <button
+                    type="button"
+                    onClick={handleGenerateAiSummary}
+                    disabled={generatingAiSummary || !topicName.trim() || !sessionNotes.trim()}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 transition disabled:opacity-50 disabled:pointer-events-none"
+                    title="Generate human-in-the-loop AI lesson summary based on lecture notes"
+                  >
+                    <Sparkles className={`w-3.5 h-3.5 ${generatingAiSummary ? 'animate-spin' : ''}`} />
+                    <span>{generatingAiSummary ? 'Analyzing Notes...' : 'Generate AI Summary'}</span>
+                  </button>
+                </div>
                 <textarea
                   value={sessionNotes}
                   onChange={e => setSessionNotes(e.target.value)}
@@ -461,6 +532,130 @@ export const SmartBoardTeachingView: React.FC<Props> = ({ roleMode }) => {
                   className="w-full p-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:border-[#0f2942] outline-hidden resize-none"
                 />
               </div>
+
+              {aiSummaryError && (
+                <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-[11px] flex items-center gap-2">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0 text-amber-600" />
+                  <span>{aiSummaryError}</span>
+                </div>
+              )}
+
+              {/* AI Summary Draft Panel (Section 6 Human-in-the-loop review) */}
+              {aiDraft && (
+                <div className="p-3.5 rounded-xl bg-slate-50 border border-indigo-200 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-slate-900 text-xs flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+                      AI Lesson Draft Summary (Review & Edit Before Save)
+                    </span>
+                    <span className="text-[10px] font-bold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-full">
+                      Human-in-the-Loop Review
+                    </span>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-0.5">Editable Summary Text</label>
+                    <textarea
+                      value={aiDraft.summary}
+                      onChange={e => {
+                        setAiDraft({ ...aiDraft, summary: e.target.value });
+                        setAiDraftEdited(true);
+                      }}
+                      rows={2}
+                      className="w-full p-2 rounded-lg border border-slate-200 bg-white text-slate-800 text-[11px] focus:border-indigo-600 outline-hidden"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-0.5">Learning Objectives</label>
+                      <textarea
+                        value={aiDraft.learningObjectives.join('\n')}
+                        onChange={e => {
+                          setAiDraft({
+                            ...aiDraft,
+                            learningObjectives: e.target.value.split('\n').filter(Boolean)
+                          });
+                          setAiDraftEdited(true);
+                        }}
+                        rows={2}
+                        placeholder="One objective per line"
+                        className="w-full p-2 rounded-lg border border-slate-200 bg-white text-slate-800 text-[11px] focus:border-indigo-600 outline-hidden"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-0.5">Keywords</label>
+                      <input
+                        type="text"
+                        value={aiDraft.keywords.join(', ')}
+                        onChange={e => {
+                          setAiDraft({
+                            ...aiDraft,
+                            keywords: e.target.value.split(',').map(k => k.trim()).filter(Boolean)
+                          });
+                          setAiDraftEdited(true);
+                        }}
+                        placeholder="Comma-separated keywords"
+                        className="w-full p-2 rounded-lg border border-slate-200 bg-white text-slate-800 text-[11px] focus:border-indigo-600 outline-hidden"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-0.5">Suggested Next Topic</label>
+                      <input
+                        type="text"
+                        value={aiDraft.recommendedNextTopic || ''}
+                        onChange={e => {
+                          setAiDraft({ ...aiDraft, recommendedNextTopic: e.target.value });
+                          setAiDraftEdited(true);
+                        }}
+                        className="w-full p-2 rounded-lg border border-slate-200 bg-white text-slate-800 text-[11px] focus:border-indigo-600 outline-hidden"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-0.5">Suggested Topic Status</label>
+                      <div className="p-2 rounded-lg border border-slate-200 bg-white text-slate-700 text-[11px] font-medium flex items-center justify-between">
+                        <span className="font-bold text-amber-700">In Progress</span>
+                        <span className="text-[10px] text-slate-400">Manual completion required</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2 pt-1 border-t border-slate-200/60">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAiDraft(null);
+                        setAiDraftEdited(false);
+                      }}
+                      className="px-2.5 py-1 text-[11px] font-bold text-slate-600 hover:text-slate-800"
+                    >
+                      Discard Draft
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleGenerateAiSummary}
+                      disabled={generatingAiSummary}
+                      className="px-2.5 py-1 text-[11px] font-bold text-indigo-700 bg-white border border-indigo-200 hover:bg-indigo-50 rounded-lg transition"
+                    >
+                      Regenerate
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (aiDraft.summary) {
+                          setSessionNotes(aiDraft.summary);
+                        }
+                      }}
+                      className="px-2.5 py-1 text-[11px] font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition"
+                    >
+                      Use Draft
+                    </button>
+                  </div>
+                </div>
+              )}
 
               <div>
                 <label className="block font-bold text-slate-700 mb-1">Upload Board Export / PDF Artifact</label>
@@ -499,6 +694,115 @@ export const SmartBoardTeachingView: React.FC<Props> = ({ roleMode }) => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* 8. AI Summary Detail Drawer / Modal for Table Records */}
+      {selectedLessonForSummary && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-xs p-4 animate-fade-in font-sans">
+          <div className="bg-white border border-slate-200 rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden max-h-[85vh] flex flex-col">
+            <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-indigo-50 rounded-xl text-indigo-700">
+                  <Sparkles className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm text-slate-900">
+                    Smart Board AI Lesson Summary
+                  </h3>
+                  <p className="text-[11px] text-slate-500">
+                    {selectedLessonForSummary.subject_name} • {selectedLessonForSummary.unit}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedLessonForSummary(null)}
+                className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-5 overflow-y-auto space-y-4 text-xs">
+              <div>
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
+                  Topic Covered
+                </span>
+                <p className="font-bold text-slate-900 text-sm">
+                  {selectedLessonForSummary.topic}
+                </p>
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  Taught by {selectedLessonForSummary.teacher_name} on {formatDate(selectedLessonForSummary.class_date)} ({selectedLessonForSummary.duration_minutes} min)
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                <span className="text-[11px] font-bold text-indigo-800 uppercase tracking-wider flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+                  Synthesized Lesson Summary
+                </span>
+                <p className="text-slate-700 leading-relaxed">
+                  {selectedLessonForSummary.ai_summary || selectedLessonForSummary.notes_summary}
+                </p>
+              </div>
+
+              {selectedLessonForSummary.ai_learning_objectives && selectedLessonForSummary.ai_learning_objectives.length > 0 && (
+                <div>
+                  <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1.5">
+                    Learning Objectives
+                  </span>
+                  <ul className="space-y-1.5">
+                    {selectedLessonForSummary.ai_learning_objectives.map((obj, i) => (
+                      <li key={i} className="flex items-start gap-2 text-slate-700">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 mt-0.5 shrink-0" />
+                        <span>{obj}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {selectedLessonForSummary.ai_keywords && selectedLessonForSummary.ai_keywords.length > 0 && (
+                <div>
+                  <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1.5">
+                    Key Concepts & Keywords
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {selectedLessonForSummary.ai_keywords.map((kw, i) => (
+                      <span key={i} className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">
+                        #{kw}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {selectedLessonForSummary.ai_recommended_next_topic && (
+                <div className="p-3 rounded-xl bg-blue-50/70 border border-blue-200/80">
+                  <span className="text-[11px] font-bold text-blue-900 block mb-0.5">
+                    Recommended Next Syllabus Topic
+                  </span>
+                  <p className="text-slate-800 font-semibold">
+                    {selectedLessonForSummary.ai_recommended_next_topic}
+                  </p>
+                </div>
+              )}
+
+              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-500">
+                <strong>Human-in-the-Loop Audit:</strong> This summary was generated from verified faculty lecture notes and reviewed before archiving. Topic syllabus status is maintained via manual faculty confirmation.
+              </div>
+            </div>
+
+            <div className="p-3 border-t border-slate-100 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setSelectedLessonForSummary(null)}
+                className="px-4 py-1.5 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}

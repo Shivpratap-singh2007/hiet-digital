@@ -9,7 +9,8 @@ import {
   Briefcase, 
   GraduationCap,
   Check,
-  ChevronDown
+  ChevronDown,
+  Sparkles
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { ThemeToggle } from '../../context/ThemeContext';
@@ -20,13 +21,15 @@ interface Props {
   onOpenNotifications?: () => void;
   onOpenProfile?: () => void;
   onOpenLogin?: () => void;
+  onOpenAiAssistant?: () => void;
 }
 
 export const Navbar: React.FC<Props> = ({
   onToggleSidebar,
   onOpenNotifications,
   onOpenProfile,
-  onOpenLogin
+  onOpenLogin,
+  onOpenAiAssistant
 }) => {
   const { user, logout, role, workspaceRoles, switchWorkspace, activeWorkspaceRole } = useAuth();
   const [logoError, setLogoError] = useState(false);
@@ -149,6 +152,17 @@ export const Navbar: React.FC<Props> = ({
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           {/* Top-Right Theme Toggle for all users (Section 8) */}
           <ThemeToggle />
+
+          {/* AI Campus Assistant Header Trigger (Phase 1) */}
+          <button
+            type="button"
+            onClick={onOpenAiAssistant}
+            className="w-9 h-9 rounded-xl text-slate-600 dark:text-[#d4d4d4] hover:text-[#0f2942] dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1a1a1a] flex items-center justify-center relative transition cursor-pointer group"
+            title="HIET Campus AI Assistant"
+            aria-label="HIET Campus AI Assistant"
+          >
+            <Sparkles className="w-4 h-4 text-amber-500 group-hover:scale-110 transition-transform" />
+          </button>
 
           {user ? (
             <>

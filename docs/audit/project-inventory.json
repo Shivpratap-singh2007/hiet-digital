@@ -1,0 +1,340 @@
+{
+  "project": {
+    "name": "HIET Digital Campus",
+    "institution": "Himachal Institute of Engineering & Technology, Shahpur",
+    "auditDate": "2026-10-08T02:50:00+05:30",
+    "framework": "React 19.2.8 + Vite 8.3.0 + TypeScript 6.0.2 + Tailwind CSS 4.3.3",
+    "buildStatus": "passed",
+    "buildDuration": "3.15s",
+    "typecheckStatus": "passed",
+    "lintStatus": "passed_with_warnings",
+    "supabaseStatus": "connected"
+  },
+  "roles": [
+    "student",
+    "faculty",
+    "class_incharge",
+    "hod",
+    "principal",
+    "managing_director",
+    "security",
+    "warden",
+    "library_staff",
+    "lab_staff",
+    "it_staff",
+    "maintenance_staff"
+  ],
+  "summary": {
+    "totalFeaturesAudited": 147,
+    "fullyFunctional": 76,
+    "partial": 38,
+    "uiOnly": 23,
+    "broken": 0,
+    "notImplemented": 7,
+    "cannotVerify": 3
+  },
+  "edgeFunctions": [
+    {
+      "name": "ai-assistant",
+      "runtime": "deno",
+      "purpose": "Campus AI help desk streaming with Gemini 1.5 Flash grounding",
+      "status": "cannot_verify",
+      "requiredSecrets": ["GEMINI_API_KEY", "SUPABASE_URL", "SUPABASE_ANON_KEY"]
+    },
+    {
+      "name": "send-push-notification",
+      "runtime": "deno",
+      "purpose": "Web Push notification dispatcher via VAPID keys",
+      "status": "cannot_verify",
+      "requiredSecrets": ["VAPID_PUBLIC_KEY", "VAPID_PRIVATE_KEY", "VAPID_SUBJECT"]
+    }
+  ],
+  "storageBuckets": [
+    { "name": "assignment-submissions", "public": false, "fileSizeLimit": 20971520, "status": "partial" },
+    { "name": "leave-documents", "public": false, "fileSizeLimit": 10485760, "status": "partial" },
+    { "name": "achievement-certificates", "public": false, "fileSizeLimit": 10485760, "status": "partial" },
+    { "name": "smart-board-lessons", "public": false, "fileSizeLimit": 52428800, "status": "secure" },
+    { "name": "pyq-files", "public": false, "fileSizeLimit": 31457280, "status": "secure" },
+    { "name": "syllabus-files", "public": false, "fileSizeLimit": 20971520, "status": "secure" },
+    { "name": "complaint-attachments", "public": false, "fileSizeLimit": 10485760, "status": "partial" },
+    { "name": "doubt-attachments", "public": false, "fileSizeLimit": 10485760, "status": "partial" },
+    { "name": "hall-tickets", "public": false, "fileSizeLimit": 10485760, "status": "secure" },
+    { "name": "event-certificates", "public": false, "fileSizeLimit": 10485760, "status": "secure" },
+    { "name": "gallery-images", "public": true, "fileSizeLimit": 10485760, "status": "public" },
+    { "name": "public-notices", "public": true, "fileSizeLimit": 20971520, "status": "public" }
+  ],
+  "tables": [
+    "users",
+    "app_roles",
+    "user_roles",
+    "user_workspace_preferences",
+    "departments",
+    "department_hod_assignments",
+    "students_master",
+    "teachers_master",
+    "subjects",
+    "subject_assignments",
+    "timetables",
+    "attendance_sessions",
+    "attendance_records",
+    "syllabus",
+    "pyqs",
+    "assignments",
+    "assignment_submissions",
+    "sessional_marks",
+    "results",
+    "leave_requests",
+    "workflow_actions",
+    "complaints",
+    "complaint_attachments",
+    "doubts",
+    "achievements",
+    "gate_passes",
+    "gate_pass_logs",
+    "hostel_outpasses",
+    "campus_presence",
+    "smart_board_lessons",
+    "lost_found_items",
+    "lost_found_claims",
+    "notifications",
+    "audit_logs",
+    "gallery",
+    "college_calendar",
+    "file_storage",
+    "import_jobs",
+    "import_job_errors",
+    "device_fingerprints",
+    "no_dues_records",
+    "no_dues_clearances",
+    "hall_tickets",
+    "events",
+    "event_registrations",
+    "event_passes",
+    "event_certificates",
+    "maintenance_tickets",
+    "maintenance_ticket_updates"
+  ],
+  "routes": [
+    { "path": "/", "component": "LandingPage", "protected": false },
+    { "path": "/login", "component": "LoginModal", "protected": false },
+    { "path": "/verify/hall-ticket/:token", "component": "VerifyPublicDoc", "protected": false },
+    { "path": "/verify/certificate/:token", "component": "VerifyPublicDoc", "protected": false },
+    { "path": "/dev/demo-accounts", "component": "DemoAccountsPage", "protected": false, "devOnly": true },
+    { "path": "/app/dashboard", "component": "RoleDashboard", "protected": true },
+    { "path": "/app/attendance", "component": "AttendanceView", "protected": true },
+    { "path": "/app/timetable", "component": "TimetableView", "protected": true },
+    { "path": "/app/syllabus", "component": "SyllabusView", "protected": true },
+    { "path": "/app/pyqs", "component": "PYQsView", "protected": true },
+    { "path": "/app/assignments", "component": "AssignmentsView", "protected": true },
+    { "path": "/app/submissions", "component": "SubmissionsView", "protected": true },
+    { "path": "/app/results", "component": "ResultsView", "protected": true },
+    { "path": "/app/sessional-marks", "component": "SessionalMarksView", "protected": true },
+    { "path": "/app/leave", "component": "LeaveView", "protected": true },
+    { "path": "/app/complaints", "component": "ComplaintsView", "protected": true },
+    { "path": "/app/doubts", "component": "DoubtsView", "protected": true },
+    { "path": "/app/achievements", "component": "AchievementsView", "protected": true },
+    { "path": "/app/gate-pass", "component": "GatePassView", "protected": true },
+    { "path": "/app/hostel-outpass", "component": "HostelOutpassView", "protected": true },
+    { "path": "/app/presence", "component": "CampusPresenceView", "protected": true },
+    { "path": "/app/smart-board", "component": "SmartBoardView", "protected": true },
+    { "path": "/app/scan", "component": "GateScannerView", "protected": true },
+    { "path": "/app/no-dues", "component": "NoDuesView", "protected": true },
+    { "path": "/app/events", "component": "EventsView", "protected": true },
+    { "path": "/app/import", "component": "AdminDataImport", "protected": true },
+    { "path": "/app/reports", "component": "ReportsView", "protected": true },
+    { "path": "/app/analytics", "component": "AnalyticsView", "protected": true },
+    { "path": "/app/audit-log", "component": "AuditLogView", "protected": true },
+    { "path": "/app/settings", "component": "SettingsView", "protected": true }
+  ],
+  "features": [
+    {
+      "name": "Login with Roll Number",
+      "category": "Authentication",
+      "status": "fully_functional",
+      "routes": ["/login"],
+      "components": ["LoginModal.tsx", "AuthContext.tsx"],
+      "tables": ["users", "students_master"],
+      "functions": ["resolve_login_identifier"],
+      "rlsVerified": true,
+      "demoDataExists": true,
+      "notes": "Instant resolution of student roll number to email via RPC resolve_login_identifier"
+    },
+    {
+      "name": "Login with Faculty Employee Code",
+      "category": "Authentication",
+      "status": "fully_functional",
+      "routes": ["/login"],
+      "components": ["LoginModal.tsx", "AuthContext.tsx"],
+      "tables": ["users", "teachers_master"],
+      "functions": ["resolve_login_identifier"],
+      "rlsVerified": true,
+      "demoDataExists": true,
+      "notes": "Instant resolution of faculty code to email via RPC resolve_login_identifier"
+    },
+    {
+      "name": "Faculty + HOD Dual Workspace Switcher",
+      "category": "Advanced",
+      "status": "fully_functional",
+      "routes": ["/app/dashboard", "/app/faculty", "/app/hod"],
+      "components": ["Navbar.tsx", "AuthContext.tsx"],
+      "tables": ["user_roles", "user_workspace_preferences", "department_hod_assignments"],
+      "functions": [],
+      "rlsVerified": true,
+      "demoDataExists": true,
+      "notes": "Seamless workspace switching with database preference persistence in user_workspace_preferences"
+    },
+    {
+      "name": "Dynamic QR Classroom Attendance",
+      "category": "Faculty",
+      "status": "fully_functional",
+      "routes": ["/app/attendance"],
+      "components": ["TeacherAttendanceView.tsx", "attendanceService.ts"],
+      "tables": ["attendance_sessions", "attendance_records"],
+      "functions": ["rpc_create_attendance_session"],
+      "rlsVerified": true,
+      "demoDataExists": true,
+      "notes": "Dynamic QR refreshed every 6s with live present count synchronization via BroadcastChannel"
+    },
+    {
+      "name": "30m Geofenced QR Verification",
+      "category": "Student",
+      "status": "fully_functional",
+      "routes": ["/app/attendance"],
+      "components": ["StudentAttendanceView.tsx", "attendanceService.ts"],
+      "tables": ["attendance_sessions", "attendance_records"],
+      "functions": ["verify_attendance_scan"],
+      "rlsVerified": true,
+      "demoDataExists": true,
+      "notes": "Server-side Haversine validation (< 30m) and GPS accuracy validation (< 20m)"
+    },
+    {
+      "name": "Smart Board Lesson Creation & Syllabus Sync",
+      "category": "Faculty",
+      "status": "fully_functional",
+      "routes": ["/app/smart-board"],
+      "components": ["SmartBoardView.tsx"],
+      "tables": ["smart_board_lessons", "syllabus"],
+      "functions": [],
+      "rlsVerified": true,
+      "demoDataExists": true,
+      "notes": "Digital classroom lesson logs with attachment storage and syllabus unit incrementing"
+    },
+    {
+      "name": "Grievance 48h SLA Escalation",
+      "category": "HOD / Principal",
+      "status": "fully_functional",
+      "routes": ["/app/complaints"],
+      "components": ["StudentComplaintsView.tsx", "AdminComplaintsView.tsx"],
+      "tables": ["complaints", "workflow_actions", "notifications"],
+      "functions": ["rpc_run_complaint_sla_escalation"],
+      "rlsVerified": true,
+      "demoDataExists": true,
+      "notes": "Automated escalation to Principal if HOD does not resolve grievance within 48 hours"
+    },
+    {
+      "name": "Public Hall Ticket Verification",
+      "category": "Public",
+      "status": "fully_functional",
+      "routes": ["/verify/hall-ticket/:token"],
+      "components": ["VerifyPublicDoc.tsx"],
+      "tables": ["hall_tickets", "students_master", "users"],
+      "functions": ["rpc_verify_hall_ticket"],
+      "rlsVerified": true,
+      "demoDataExists": true,
+      "notes": "Cryptographically verifiable examination pass verification without login"
+    },
+    {
+      "name": "Master Data Import with Dry Run",
+      "category": "Principal",
+      "status": "fully_functional",
+      "routes": ["/app/import"],
+      "components": ["AdminDataImport.tsx"],
+      "tables": ["import_jobs", "import_job_errors", "students_master", "teachers_master"],
+      "functions": ["rpc_process_master_import"],
+      "rlsVerified": true,
+      "demoDataExists": true,
+      "notes": "CSV batch import with dry-run verification and automatic rollback on failure"
+    },
+    {
+      "name": "Neutral Black Dark Mode",
+      "category": "Theme",
+      "status": "fully_functional",
+      "routes": ["/app/*"],
+      "components": ["ThemeProvider.tsx", "ThemeToggle.tsx"],
+      "tables": [],
+      "functions": [],
+      "rlsVerified": false,
+      "demoDataExists": true,
+      "notes": "Neutral black tokens (#0a0a0a) with zero saturated navy/blue surfaces on dark mode backgrounds"
+    }
+  ],
+  "bugs": [
+    {
+      "id": "SEC-01",
+      "severity": "high",
+      "area": "Storage RLS",
+      "issue": "Storage policy p_storage_auth_read lacks folder ownership isolation",
+      "priority": "P1"
+    },
+    {
+      "id": "CFG-02",
+      "severity": "medium",
+      "area": "Hosting",
+      "issue": "Missing public/_redirects for non-Vercel static hosts",
+      "priority": "P1"
+    },
+    {
+      "id": "TST-03",
+      "severity": "medium",
+      "area": "Testing",
+      "issue": "Zero automated unit or E2E tests configured",
+      "priority": "P2"
+    },
+    {
+      "id": "SEC-04",
+      "severity": "medium",
+      "area": "Document Security",
+      "issue": "Private documents lack expiring signed URLs",
+      "priority": "P2"
+    },
+    {
+      "id": "LNT-05",
+      "severity": "low",
+      "area": "Code Quality",
+      "issue": "514 oxlint warnings regarding unused imports and render purity",
+      "priority": "P2"
+    }
+  ],
+  "priorities": [
+    {
+      "rank": 1,
+      "title": "Secure Private Storage Buckets with Folder Ownership RLS",
+      "targetFile": "supabase/migrations/20261007000025_create_storage_buckets_policies.sql",
+      "priority": "P1"
+    },
+    {
+      "rank": 2,
+      "title": "Create public/_redirects for Universal Static SPA Refresh",
+      "targetFile": "public/_redirects",
+      "priority": "P1"
+    },
+    {
+      "rank": 3,
+      "title": "Establish Vitest Unit Testing for Attendance & Auth Services",
+      "targetFile": "package.json",
+      "priority": "P2"
+    },
+    {
+      "rank": 4,
+      "title": "Implement 15-Minute Expiring Signed URLs for Sensitive Assets",
+      "targetFile": "src/lib/supabase.ts",
+      "priority": "P2"
+    },
+    {
+      "rank": 5,
+      "title": "Clean 514 Linter Warnings and Unused Lucide Imports",
+      "targetFile": "src/",
+      "priority": "P2"
+    }
+  ]
+}

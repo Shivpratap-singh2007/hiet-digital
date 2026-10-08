@@ -19,6 +19,7 @@ import {
 import { dataStore } from '../../lib/mockData';
 import { useAuth } from '../../context/AuthContext';
 import { apiService } from '../../lib/supabase';
+import { aiCampusService, ComplaintRoutingResult } from '../../lib/aiCampusService';
 import { Complaint } from '../../types';
 import { formatDate } from '../../lib/utils';
 
@@ -39,6 +40,12 @@ export const ComplaintBoxView: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [escalatingId, setEscalatingId] = useState<string | null>(null);
 
+  // AI Routing Suggestion State
+  const [suggestingRouting, setSuggestingRouting] = useState(false);
+  const [routingSuggestion, setRoutingSuggestion] = useState<ComplaintRoutingResult | null>(null);
+  const [suggestionConfirmed, setSuggestionConfirmed] = useState(false);
+  const [suggestionError, setSuggestionError] = useState('');
+
   const categories: Complaint['category'][] = [
     'Academic', 
     'Hostel', 
@@ -50,6 +57,52 @@ export const ComplaintBoxView: React.FC = () => {
     'Faculty/Staff',
     'Other'
   ];
+
+  const handleSuggestWithAi = async () => {
+    if (description.trim().length < 20) {
+      setSuggestionError('Please provide at least 20 characters in the description for accurate AI categorization.');
+      return;
+    }
+    setSuggestingRouting(true);
+    setSuggestionError('');
+    try {
+      const res = await aiCampusService.suggestComplaintRouting({
+        description: description.trim(),
+        title: title.trim() || undefined
+      });
+      setRoutingSuggestion(res);
+    } catch (err: any) {
+      setSuggestionError(err.message || 'Could not fetch AI routing suggestion.');
+    } finally {
+      setSuggestingRouting(false);
+    }
+  };
+
+  const handleApplySuggestion = () => {
+    if (!routingSuggestion) return;
+    const catMap: Record<string, Complaint['category']> = {
+      academic: 'Academic',
+      classroom: 'Infrastructure',
+      lab: 'Infrastructure',
+      infrastructure: 'Infrastructure',
+      hostel: 'Hostel',
+      it: 'Other',
+      other: 'Other'
+    };
+    const mappedCategory = catMap[routingSuggestion.category.toLowerCase()] || 'Infrastructure';
+    setCategory(mappedCategory);
+
+    const prioMap: Record<string, Complaint['priority']> = {
+      low: 'Low',
+      normal: 'Medium',
+      high: 'High',
+      urgent: 'Urgent'
+    };
+    const mappedPriority = prioMap[routingSuggestion.priority.toLowerCase()] || 'Medium';
+    setPriority(mappedPriority);
+
+    setSuggestionConfirmed(true);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,7 +125,14 @@ export const ComplaintBoxView: React.FC = () => {
       priority,
       title,
       description,
-      attachment_url: attachmentUrl || undefined
+      attachment_url: attachmentUrl || undefined,
+      ai_suggested_category: routingSuggestion?.category,
+      ai_suggested_assignee_role: routingSuggestion?.assigneeRole,
+      ai_suggested_priority: routingSuggestion?.priority,
+      ai_confidence: routingSuggestion?.confidence,
+      ai_routing_reason: routingSuggestion?.reason,
+      ai_suggestion_confirmed: suggestionConfirmed,
+      ai_suggestion_reviewed_by: user?.id
     });
 
     setComplaints(prev => [newComp, ...prev]);
@@ -81,6 +141,9 @@ export const ComplaintBoxView: React.FC = () => {
     setTitle('');
     setDescription('');
     setAttachmentUrl('');
+    setRoutingSuggestion(null);
+    setSuggestionConfirmed(false);
+    setSuggestionError('');
   };
 
   const handleEscalateToMD = async (complaintId: string) => {
@@ -206,6 +269,11 @@ export const ComplaintBoxView: React.FC = () => {
                   {comp.is_anonymous && (
                     <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 flex items-center gap-1">
                       <Lock className="w-2.5 h-2.5" /> Anonymous
+                    </span>
+                  )}
+                  {comp.ai_suggested_category && comp.ai_suggestion_confirmed && (
+                    <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-800 flex items-center gap-1">
+                      <Sparkles className="w-2.5 h-2.5 text-indigo-500" /> AI Routed
                     </span>
                   )}
                 </div>
@@ -347,9 +415,23 @@ export const ComplaintBoxView: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold uppercase text-slate-700 dark:text-slate-300 mb-1">
-                  Detailed Description
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-semibold uppercase text-slate-700 dark:text-slate-300">
+                    Detailed Description
+                  </label>
+                  {description.trim().length >= 20 && !routingSuggestion && (
+                    <button
+                      type="button"
+                      onClick={handleSuggestWithAi}
+                      disabled={suggestingRouting}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-[11px] font-bold bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:border-indigo-800 dark:text-indigo-300 transition disabled:opacity-50"
+                      title="AI suggests grievance category, priority and staff routing"
+                    >
+                      <Sparkles className={`w-3 h-3 ${suggestingRouting ? 'animate-spin' : ''}`} />
+                      <span>{suggestingRouting ? 'Analyzing...' : 'Suggest with AI'}</span>
+                    </button>
+                  )}
+                </div>
                 <textarea
                   rows={3}
                   value={description}
@@ -359,6 +441,68 @@ export const ComplaintBoxView: React.FC = () => {
                   className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200"
                 />
               </div>
+
+              {suggestionError && (
+                <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-200 text-[11px] flex items-center gap-2">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0 text-amber-600" />
+                  <span>{suggestionError}</span>
+                </div>
+              )}
+
+              {/* AI Suggested Routing Card (Section 7) */}
+              {routingSuggestion && (
+                <div className="p-3.5 rounded-xl bg-indigo-50/80 dark:bg-slate-800/90 border border-indigo-200 dark:border-indigo-900/60 text-xs space-y-2.5 animate-fade-in">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-indigo-950 dark:text-indigo-300 flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                      AI Suggested Routing
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-800">
+                      {routingSuggestion.confidence}% Confidence
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px]">
+                    <div className="p-2 rounded-lg bg-white/70 dark:bg-slate-900/60 border border-indigo-100 dark:border-slate-700">
+                      <span className="text-slate-500 block text-[10px]">Category</span>
+                      <span className="font-bold text-slate-800 dark:text-slate-200 capitalize">{routingSuggestion.category}</span>
+                    </div>
+                    <div className="p-2 rounded-lg bg-white/70 dark:bg-slate-900/60 border border-indigo-100 dark:border-slate-700">
+                      <span className="text-slate-500 block text-[10px]">Initial Assignee</span>
+                      <span className="font-bold text-slate-800 dark:text-slate-200 capitalize">{routingSuggestion.assigneeRole.replace('_', ' ')}</span>
+                    </div>
+                    <div className="p-2 rounded-lg bg-white/70 dark:bg-slate-900/60 border border-indigo-100 dark:border-slate-700">
+                      <span className="text-slate-500 block text-[10px]">Priority</span>
+                      <span className="font-bold text-slate-800 dark:text-slate-200 capitalize">{routingSuggestion.priority}</span>
+                    </div>
+                  </div>
+
+                  <div className="text-[11px] text-slate-700 dark:text-slate-300 leading-relaxed bg-white/60 dark:bg-slate-900/60 p-2 rounded-lg border border-indigo-100 dark:border-slate-700">
+                    <strong>Reason:</strong> {routingSuggestion.reason}
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2 pt-1 border-t border-indigo-100 dark:border-slate-700">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setRoutingSuggestion(null);
+                        setSuggestionConfirmed(false);
+                      }}
+                      className="px-2.5 py-1 text-[11px] font-bold text-slate-600 hover:text-slate-800 dark:text-slate-400"
+                    >
+                      Edit Manually
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleApplySuggestion}
+                      className="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-[11px] font-bold transition flex items-center gap-1"
+                    >
+                      <CheckCircle2 className="w-3 h-3" />
+                      <span>{suggestionConfirmed ? 'Suggestion Applied' : 'Use Suggestion'}</span>
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Anonymous Submission Toggle */}
               <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700">

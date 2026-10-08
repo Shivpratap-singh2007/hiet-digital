@@ -14,13 +14,16 @@ import {
   Radio, 
   PlayCircle,
   Camera,
-  RotateCcw
+  RotateCcw,
+  Sparkles,
+  ShieldAlert
 } from 'lucide-react';
 import { Html5Qrcode } from 'html5-qrcode';
 import { dataStore } from '../../lib/mockData';
 import { apiService } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
 import { calculateAttendanceStats } from '../../lib/utils';
+import { calculateAttendanceRisk } from '../../lib/attendanceRisk';
 import { AttendanceRecord } from '../../types';
 import { 
   attendanceService, 
@@ -689,45 +692,125 @@ export const AttendanceView: React.FC = () => {
       </div>
 
       {/* Subject-wise Cards Breakdown */}
+      {/* Phase 1: Attendance Risk Intelligence Section */}
+      {(() => {
+        // Evaluate risk across courses
+        const atRiskCourses = subjectStats
+          .map(stat => ({
+            ...stat,
+            risk: calculateAttendanceRisk(stat.present, stat.total, 75)
+          }))
+          .filter(stat => stat.risk.riskLevel !== 'low');
+
+        const primaryRisk = atRiskCourses.length > 0 ? atRiskCourses[0] : null;
+
+        if (!primaryRisk) return null;
+
+        const getBadgeStyle = (level: string) => {
+          switch (level) {
+            case 'low': return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800';
+            case 'medium': return 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200 dark:border-amber-800';
+            case 'high':
+            case 'critical':
+            default: return 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 border-rose-200 dark:border-rose-800';
+          }
+        };
+
+        return (
+          <div className="p-4 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl shadow-xs space-y-3">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-neutral-800 pb-2.5">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300">
+                  <Sparkles className="w-4 h-4" />
+                </div>
+                <h3 className="font-extrabold text-xs uppercase tracking-wider text-slate-900 dark:text-white">
+                  Attendance Insight
+                </h3>
+              </div>
+              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${getBadgeStyle(primaryRisk.risk.riskLevel)}`}>
+                {primaryRisk.risk.percentage.toFixed(2)}% — {primaryRisk.risk.riskLevel.toUpperCase()} RISK
+              </span>
+            </div>
+
+            <div className="space-y-1">
+              <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                {primaryRisk.subject.subject_name} ({primaryRisk.subject.subject_code})
+              </h4>
+              <p className="text-xs text-slate-600 dark:text-neutral-300 leading-relaxed">
+                {primaryRisk.risk.recommendation}
+              </p>
+              {primaryRisk.risk.classesNeededForTarget > 0 && (
+                <div className="pt-1 flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-neutral-300">
+                  <span>Continuous classes required to reach 75%:</span>
+                  <span className="font-mono font-black text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/50 px-2 py-0.5 rounded">
+                    {primaryRisk.risk.classesNeededForTarget} Lectures
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Subject-wise Cards Breakdown */}
       <div>
         <h3 className="text-base font-bold text-slate-800 dark:text-white mb-3">Course-wise Attendance Breakdown</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {subjectStats.map(({ subject, total, present, absent, percentage, isWarning }) => (
-            <div 
-              key={subject.id} 
-              className={`bg-white dark:bg-neutral-900 border rounded-2xl p-4 shadow-xs transition hover:shadow-md ${
-                isWarning ? 'border-amber-300 dark:border-amber-800/80 bg-amber-50/20' : 'border-slate-200 dark:border-neutral-800'
-              }`}
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <span className="font-mono text-[11px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-2 py-0.5 rounded">
-                    {subject.subject_code}
-                  </span>
-                  <h4 className="font-bold text-sm text-slate-900 dark:text-white mt-1 truncate">
-                    {subject.subject_name}
-                  </h4>
+          {subjectStats.map(({ subject, total, present, absent, percentage, isWarning }) => {
+            const risk = calculateAttendanceRisk(present, total, 75);
+            return (
+              <div 
+                key={subject.id} 
+                className={`bg-white dark:bg-neutral-900 border rounded-2xl p-4 shadow-xs transition hover:shadow-md ${
+                  isWarning ? 'border-amber-300 dark:border-amber-800/80 bg-amber-50/20' : 'border-slate-200 dark:border-neutral-800'
+                }`}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <span className="font-mono text-[11px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-2 py-0.5 rounded">
+                      {subject.subject_code}
+                    </span>
+                    <h4 className="font-bold text-sm text-slate-900 dark:text-white mt-1 truncate">
+                      {subject.subject_name}
+                    </h4>
+                  </div>
+                  <div className="text-right">
+                    <span className={`text-lg font-extrabold block ${percentage >= 75 ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
+                      {percentage}%
+                    </span>
+                    <span className={`text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded ${
+                      risk.riskLevel === 'low' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300' :
+                      risk.riskLevel === 'medium' ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300' :
+                      'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300'
+                    }`}>
+                      {risk.riskLevel}
+                    </span>
+                  </div>
                 </div>
-                <span className={`text-lg font-extrabold ${percentage >= 75 ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
-                  {percentage}%
-                </span>
-              </div>
 
-              {/* Mini progress bar */}
-              <div className="w-full h-1.5 bg-slate-100 dark:bg-neutral-800 rounded-full mt-3 overflow-hidden">
-                <div 
-                  className={`h-full rounded-full ${percentage >= 75 ? 'bg-emerald-500' : 'bg-amber-500'}`}
-                  style={{ width: `${Math.min(100, percentage)}%` }}
-                />
-              </div>
+                {/* Mini progress bar */}
+                <div className="w-full h-1.5 bg-slate-100 dark:bg-neutral-800 rounded-full mt-3 overflow-hidden">
+                  <div 
+                    className={`h-full rounded-full ${percentage >= 75 ? 'bg-emerald-500' : 'bg-amber-500'}`}
+                    style={{ width: `${Math.min(100, percentage)}%` }}
+                  />
+                </div>
 
-              <div className="flex items-center justify-between text-xs text-slate-500 dark:text-neutral-400 mt-3 pt-2 border-t border-slate-100 dark:border-neutral-800">
-                <span>Present: <strong className="text-emerald-600 dark:text-emerald-400">{present}</strong></span>
-                <span>Absent: <strong className="text-rose-600 dark:text-rose-400">{absent}</strong></span>
-                <span>Total: <strong className="text-slate-700 dark:text-neutral-200">{total}</strong></span>
+                {/* Risk Guidance */}
+                {risk.riskLevel !== 'low' && (
+                  <p className="text-[11px] text-amber-700 dark:text-amber-300 font-medium mt-2 leading-tight">
+                    {risk.classesNeededForTarget > 0 ? `Need next ${risk.classesNeededForTarget} classes to reach 75%` : risk.recommendation}
+                  </p>
+                )}
+
+                <div className="flex items-center justify-between text-xs text-slate-500 dark:text-neutral-400 mt-3 pt-2 border-t border-slate-100 dark:border-neutral-800">
+                  <span>Present: <strong className="text-emerald-600 dark:text-emerald-400">{present}</strong></span>
+                  <span>Absent: <strong className="text-rose-600 dark:text-rose-400">{absent}</strong></span>
+                  <span>Total: <strong className="text-slate-700 dark:text-neutral-200">{total}</strong></span>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 

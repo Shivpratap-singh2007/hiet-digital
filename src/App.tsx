@@ -20,6 +20,7 @@ import { PrincipalDashboard } from './views/PrincipalDashboard';
 import { SecurityDashboard } from './views/SecurityDashboard';
 import { CampusGalleryModal } from './components/common/CampusGalleryModal';
 import { NotificationsModal } from './components/common/NotificationsModal';
+import { CampusAiAssistantModal } from './components/ai/CampusAiAssistantModal';
 import { VerifyPublicDoc } from './components/common/VerifyPublicDoc';
 import { DemoAccountsPage } from './pages/dev/DemoAccountsPage';
 
@@ -27,6 +28,7 @@ const MainLayout: React.FC = () => {
   const { user, role, mustChangePassword } = useAuth();
   const [currentTab, setCurrentTab] = useState<NavTab>('dashboard');
   const [showNotificationsModal, setShowNotificationsModal] = useState(false);
+  const [showAiAssistantModal, setShowAiAssistantModal] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   // Auth Modals state (auto-open if URL is /login)
@@ -240,10 +242,17 @@ const MainLayout: React.FC = () => {
         onOpenNotifications={() => setShowNotificationsModal(true)}
         onOpenProfile={() => handleTabChange('profile')}
         onOpenLogin={handleOpenLogin}
+        onOpenAiAssistant={() => setShowAiAssistantModal(true)}
       />
 
       {/* Global Modals */}
       {mustChangePassword && <ChangePasswordModal />}
+
+      <CampusAiAssistantModal
+        isOpen={showAiAssistantModal}
+        onClose={() => setShowAiAssistantModal(false)}
+        onNavigateTab={handleTabChange}
+      />
 
       <NotificationsModal
         isOpen={showNotificationsModal}

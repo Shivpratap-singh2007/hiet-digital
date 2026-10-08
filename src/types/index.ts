@@ -356,6 +356,14 @@ export interface Complaint {
   md_notes?: string;
   created_at: string;
   updated_at: string;
+  // AI Campus Phase 1 fields
+  ai_suggested_category?: string;
+  ai_suggested_assignee_role?: string;
+  ai_suggested_priority?: string;
+  ai_confidence?: number;
+  ai_routing_reason?: string;
+  ai_suggestion_confirmed?: boolean;
+  ai_suggestion_reviewed_by?: string;
 }
 
 export interface Doubt {
@@ -721,6 +729,12 @@ export interface SmartBoardLesson {
   notes_summary?: string;
   sync_status: SmartBoardSyncStatus;
   created_at: string;
+  // AI Campus Phase 1 fields
+  ai_summary?: string;
+  ai_learning_objectives?: string[];
+  ai_keywords?: string[];
+  ai_recommended_next_topic?: string;
+  ai_summary_status?: 'not_requested' | 'pending' | 'generated' | 'failed' | 'edited';
 }
 
 // =============================================================================
@@ -963,6 +977,47 @@ export interface MaintenanceUpdate {
   previous_status: string;
   new_status: string;
   notes: string;
+  created_at: string;
+}
+
+// =============================================================================
+// AI CAMPUS PHASE 1 TYPES
+// =============================================================================
+export type AttendanceRiskLevel = 'low' | 'medium' | 'high' | 'critical';
+
+export interface AttendanceRiskAssessment {
+  assessment_id: string;
+  student_id: string;
+  subject_id: string;
+  academic_year: string;
+  conducted_classes: number;
+  attended_classes: number;
+  attendance_percentage: number;
+  estimated_remaining_classes?: number;
+  minimum_required_percentage: number;
+  risk_level: AttendanceRiskLevel;
+  classes_needed_for_target: number;
+  recommendation: string;
+  calculated_at: string;
+  calculated_by: string;
+  // Joined fields
+  subject_name?: string;
+  subject_code?: string;
+  student_name?: string;
+  student_roll?: string;
+}
+
+export interface AiInteraction {
+  interaction_id: string;
+  user_id: string;
+  feature_type: 'campus_assistant' | 'attendance_risk' | 'smart_board_summary' | 'complaint_routing';
+  prompt_text?: string;
+  context_summary: Record<string, unknown>;
+  response_text?: string;
+  structured_response: Record<string, unknown>;
+  model_provider?: string;
+  model_name?: string;
+  status: 'completed' | 'failed' | 'blocked';
   created_at: string;
 }
 

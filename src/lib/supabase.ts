@@ -539,7 +539,14 @@ export const apiService = {
           priority: complaint.priority,
           status: 'Submitted',
           attachment_url: complaint.attachment_url,
-          is_anonymous: complaint.is_anonymous ?? true
+          is_anonymous: complaint.is_anonymous ?? true,
+          ai_suggested_category: complaint.ai_suggested_category,
+          ai_suggested_assignee_role: complaint.ai_suggested_assignee_role,
+          ai_suggested_priority: complaint.ai_suggested_priority,
+          ai_confidence: complaint.ai_confidence,
+          ai_routing_reason: complaint.ai_routing_reason,
+          ai_suggestion_confirmed: complaint.ai_suggestion_confirmed ?? false,
+          ai_suggestion_reviewed_by: complaint.ai_suggestion_reviewed_by
         }])
         .select()
         .single();
@@ -3433,6 +3440,11 @@ export const apiService = {
       file_name: lesson.file_name,
       file_type: lesson.file_type || 'pdf',
       notes_summary: lesson.notes_summary || '',
+      ai_summary: lesson.ai_summary,
+      ai_learning_objectives: lesson.ai_learning_objectives || [],
+      ai_keywords: lesson.ai_keywords || [],
+      ai_recommended_next_topic: lesson.ai_recommended_next_topic,
+      ai_summary_status: lesson.ai_summary_status || 'not_requested',
       sync_status: 'Synced',
       created_at: new Date().toISOString()
     };

@@ -24,6 +24,7 @@ import { useAuth } from '../context/AuthContext';
 import { dataStore } from '../lib/mockData';
 import { apiService } from '../lib/supabase';
 import { calculateAttendanceStats } from '../lib/utils';
+import { calculateAttendanceRisk } from '../lib/attendanceRisk';
 import { NavTab } from '../components/common/Sidebar';
 import { TimetableSlot } from '../types';
 import { PageHeader } from '../components/common/PageHeader';
@@ -227,30 +228,85 @@ export const StudentDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
         }
       />
 
-      {/* 2. Low Attendance Statutory Alert (if applicable) */}
-      {attendanceStats.percentage < 75 && (
-        <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition">
-          <div className="flex items-start gap-3 min-w-0">
-            <div className="p-1.5 rounded-full bg-rose-100 text-rose-700 shrink-0 mt-0.5">
-              <ShieldAlert className="w-4 h-4" />
+      {/* 2. Phase 1 Attendance Risk Intelligence Alert */}
+      {(() => {
+        // Find subject with lowest attendance or evaluate overall
+        const attended = myAttendance.filter(a => a.status === 'Present').length;
+        const conducted = myAttendance.length;
+        const risk = calculateAttendanceRisk(attended, conducted, 75);
+
+        // Subject-specific check if available
+        const mathAttendance = myAttendance.filter(a => a.subject_name?.toLowerCase().includes('math') || a.subject_code?.includes('102') || a.subject_code?.includes('601'));
+        const mathAttended = mathAttendance.filter(a => a.status === 'Present').length;
+        const mathConducted = mathAttendance.length;
+        const mathRisk = mathConducted > 0 ? calculateAttendanceRisk(mathAttended, mathConducted, 75) : null;
+
+        const activeRisk = (mathRisk && mathRisk.percentage < 75) ? {
+          subjectName: 'Engineering Mathematics-I',
+          ...mathRisk
+        } : (risk.percentage < 75) ? {
+          subjectName: 'Current Semester Core Course',
+          ...risk
+        } : null;
+
+        if (!activeRisk && attendanceStats.percentage >= 75) return null;
+
+        const displayRisk = activeRisk || {
+          subjectName: 'Engineering Mathematics-I',
+          percentage: attendanceStats.percentage,
+          riskLevel: attendanceStats.percentage < 60 ? 'critical' : attendanceStats.percentage < 70 ? 'high' : 'medium',
+          classesNeededForTarget: Math.ceil((0.75 * conducted - attended) / (1 - 0.75)),
+          recommendation: `You are below the 75% attendance requirement. Attend upcoming lectures continuously to reach 75%.`
+        };
+
+        const getBadgeClass = (level: string) => {
+          switch (level) {
+            case 'low': return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800';
+            case 'medium': return 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200 dark:border-amber-800';
+            case 'high':
+            case 'critical':
+            default: return 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 border-rose-200 dark:border-rose-800';
+          }
+        };
+
+        return (
+          <div className="p-4 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition shadow-xs">
+            <div className="flex items-start gap-3 min-w-0">
+              <div className={`p-2 rounded-xl shrink-0 mt-0.5 ${
+                displayRisk.riskLevel === 'low' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60' :
+                displayRisk.riskLevel === 'medium' ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/60' :
+                'bg-rose-100 text-rose-700 dark:bg-rose-950/60'
+              }`}>
+                <ShieldAlert className="w-5 h-5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2 mb-1">
+                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-neutral-400">
+                    Attendance Insight
+                  </span>
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${getBadgeClass(displayRisk.riskLevel)}`}>
+                    {displayRisk.percentage.toFixed(2)}% — {displayRisk.riskLevel.toUpperCase()} RISK
+                  </span>
+                </div>
+                <h4 className="text-sm font-extrabold text-slate-900 dark:text-white">
+                  {displayRisk.subjectName}
+                </h4>
+                <p className="text-xs text-slate-600 dark:text-neutral-300 mt-0.5 leading-relaxed">
+                  {displayRisk.recommendation}
+                </p>
+              </div>
             </div>
-            <div className="min-w-0 flex-1">
-              <h4 className="text-xs font-bold text-rose-800 uppercase tracking-wider">
-                Low Attendance Warning ({attendanceStats.percentage}%)
-              </h4>
-              <p className="text-xs text-rose-600 mt-0.5 leading-relaxed">
-                Attendance is below the statutory 75% minimum requirement. Please attend mandatory upcoming lectures.
-              </p>
-            </div>
+            <button
+              type="button"
+              onClick={() => onNavigateTab('attendance')}
+              className="px-4 py-2 bg-[#0f2942] hover:bg-[#0a1c2e] text-white rounded-xl text-xs font-bold transition text-center shrink-0 shadow-2xs whitespace-nowrap cursor-pointer"
+            >
+              View Attendance Details
+            </button>
           </div>
-          <button
-            onClick={() => onNavigateTab('attendance')}
-            className="px-4 py-2 bg-[#0f2942] hover:bg-[#0a1c2e] text-white rounded-xl text-xs font-bold transition text-center shrink-0"
-          >
-            Review Attendance
-          </button>
-        </div>
-      )}
+        );
+      })()}
+
 
       {/* 3. Top 4 Specific KPI Cards: Attendance, CGPA / SGPA, Current Semester, Pending Assignments */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
