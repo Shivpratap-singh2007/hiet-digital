@@ -23,6 +23,7 @@ import { NotificationsModal } from './components/common/NotificationsModal';
 import { CampusAiAssistantModal } from './components/ai/CampusAiAssistantModal';
 import { VerifyPublicDoc } from './components/common/VerifyPublicDoc';
 import { DemoAccountsPage } from './pages/dev/DemoAccountsPage';
+import { AiCampusView } from './pages/ai/AiCampusView';
 
 const MainLayout: React.FC = () => {
   const { user, role, mustChangePassword } = useAuth();
@@ -58,8 +59,36 @@ const MainLayout: React.FC = () => {
         targetSeg = parts[1] || 'dashboard';
       }
 
+      if (parts[0] === 'ai') {
+        const aiSubRoute = parts[1];
+        if (!aiSubRoute) {
+          setCurrentTab('ai_campus');
+          return;
+        }
+        const aiSubMap: Record<string, NavTab> = {
+          'attendance-insights': 'ai_attendance_insights',
+          'smart-board-summary': 'ai_smart_board_summary',
+          'complaint-routing': 'ai_complaint_routing',
+          'campus-assistant': 'ai_campus_assistant',
+          'zone-presence': 'ai_zone_presence',
+          'ble-zone-pilot': 'ai_ble_zone_pilot',
+          'knowledge-search': 'ai_knowledge_search',
+          'occupancy-analytics': 'ai_occupancy_analytics',
+          'smart-waste': 'ai_smart_waste'
+        };
+        if (aiSubMap[aiSubRoute]) {
+          setCurrentTab(aiSubMap[aiSubRoute]);
+          return;
+        }
+        setCurrentTab('ai_campus');
+        return;
+      }
+
       const tabMap: Record<string, NavTab> = {
         'dashboard': 'dashboard',
+        'ai': 'ai_campus',
+        'campus-zones': 'campus_zones',
+        'campus-operations': 'campus_operations',
         'attendance': 'attendance',
         'timetable': 'timetable',
         'syllabus': 'syllabus',
@@ -152,9 +181,26 @@ const MainLayout: React.FC = () => {
   const handleTabChange = (tab: NavTab) => {
     setCurrentTab(tab);
     setIsMobileSidebarOpen(false);
+    if (typeof window !== 'undefined') {
+      if (tab === 'ai_campus') {
+        window.history.pushState(null, '', '/app/ai');
+      } else if (tab.startsWith('ai_')) {
+        const subRoute = tab.replace('ai_', '').replace(/_/g, '-');
+        window.history.pushState(null, '', `/app/ai/${subRoute}`);
+      }
+    }
   };
 
   const renderDashboard = () => {
+    if (currentTab === 'ai_campus' || currentTab.startsWith('ai_')) {
+      return (
+        <AiCampusView
+          currentTab={currentTab}
+          onNavigateTab={handleTabChange}
+        />
+      );
+    }
+
     switch (effectiveRole) {
       case 'managing_director':
       case 'md':

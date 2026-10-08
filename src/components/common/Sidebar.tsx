@@ -84,6 +84,16 @@ export type NavTab =
   | 'maintenance'
   | 'campus_zones'
   | 'campus_operations'
+  | 'ai_campus'
+  | 'ai_attendance_insights'
+  | 'ai_smart_board_summary'
+  | 'ai_complaint_routing'
+  | 'ai_campus_assistant'
+  | 'ai_zone_presence'
+  | 'ai_ble_zone_pilot'
+  | 'ai_knowledge_search'
+  | 'ai_occupancy_analytics'
+  | 'ai_smart_waste'
   | 'settings';
 
 interface Props {

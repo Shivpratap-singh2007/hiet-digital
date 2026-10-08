@@ -33,6 +33,7 @@ import {
   Wrench,
   UploadCloud,
   CheckCircle2,
+  Sparkles,
   LucideIcon
 } from 'lucide-react';
 import { UserRole } from '../types';
@@ -72,6 +73,7 @@ const STUDENT_NAV: NavItemConfig[] = [
   { id: 'calendar', label: 'Calendar', href: '/app/calendar', icon: CalendarDays, roles: ['student'], enabled: true },
   { id: 'gallery', label: 'Gallery', href: '/app/gallery', icon: Layers, roles: ['student'], enabled: true },
   { id: 'notices', label: 'Notifications', href: '/app/notifications', icon: Bell, roles: ['student'], enabled: true },
+  { id: 'ai_campus', label: 'AI Campus', href: '/app/ai', icon: Sparkles, roles: ['student'], enabled: true },
   { id: 'settings', label: 'Settings', href: '/app/settings', icon: Settings, roles: ['student'], enabled: true }
 ];
 
@@ -89,6 +91,7 @@ const FACULTY_NAV: NavItemConfig[] = [
   { id: 'achievements', label: 'Achievements', href: '/app/achievements', icon: Trophy, roles: ['faculty', 'teacher'], enabled: true },
   { id: 'smartboard', label: 'Smart Board Lessons', href: '/app/smart-board', icon: MonitorPlay, roles: ['faculty', 'teacher'], enabled: true },
   { id: 'notices', label: 'Notifications', href: '/app/notifications', icon: Bell, roles: ['faculty', 'teacher'], enabled: true },
+  { id: 'ai_campus', label: 'AI Campus', href: '/app/ai', icon: Sparkles, roles: ['faculty', 'teacher'], enabled: true },
   { id: 'settings', label: 'Settings', href: '/app/settings', icon: Settings, roles: ['faculty', 'teacher'], enabled: true }
 ];
 
@@ -110,6 +113,7 @@ const HOD_NAV: NavItemConfig[] = [
   { id: 'campus_operations', label: 'Campus Operations', href: '/app/hod/campus-operations', icon: LineChart, roles: ['hod'], enabled: true },
   { id: 'principal_analytics', label: 'Analytics', href: '/app/analytics', icon: LineChart, roles: ['hod'], enabled: true },
   { id: 'notices', label: 'Notifications', href: '/app/notifications', icon: Bell, roles: ['hod'], enabled: true },
+  { id: 'ai_campus', label: 'AI Campus', href: '/app/ai', icon: Sparkles, roles: ['hod'], enabled: true },
   { id: 'settings', label: 'Settings', href: '/app/settings', icon: Settings, roles: ['hod'], enabled: true }
 ];
 
@@ -137,6 +141,7 @@ const PRINCIPAL_NAV: NavItemConfig[] = [
   { id: 'notices', label: 'Content', href: '/app/content', icon: Bell, roles: ['principal', 'admin'], enabled: true },
   { id: 'principal_analytics', label: 'Analytics', href: '/app/analytics', icon: LineChart, roles: ['principal', 'admin'], enabled: true },
   { id: 'audit_log', label: 'Audit Log', href: '/app/audit-log', icon: ShieldCheck, roles: ['principal', 'admin'], enabled: true },
+  { id: 'ai_campus', label: 'AI Campus', href: '/app/ai', icon: Sparkles, roles: ['principal', 'admin'], enabled: true },
   { id: 'settings', label: 'Settings', href: '/app/settings', icon: Settings, roles: ['principal', 'admin'], enabled: true }
 ];
 
@@ -149,6 +154,7 @@ const SECURITY_NAV: NavItemConfig[] = [
   { id: 'campus_presence', label: 'Campus Presence', href: '/app/presence', icon: MapPin, roles: ['security', 'security_guard'], enabled: true },
   { id: 'campus_operations', label: 'Zone Operations', href: '/app/security/campus-operations', icon: LineChart, roles: ['security', 'security_guard'], enabled: true },
   { id: 'fines', label: 'Security Alerts', href: '/app/security-alerts', icon: ShieldAlert, roles: ['security', 'security_guard'], enabled: true },
+  { id: 'ai_campus', label: 'AI Campus', href: '/app/ai', icon: Sparkles, roles: ['security', 'security_guard'], enabled: true },
   { id: 'settings', label: 'Settings', href: '/app/settings', icon: Settings, roles: ['security', 'security_guard'], enabled: true }
 ];
 
@@ -195,6 +201,7 @@ const MD_NAV: NavItemConfig[] = [
   { id: 'campus_operations', label: 'Campus Operations', href: '/app/md/campus-operations', icon: LineChart, roles: ['managing_director', 'md'], enabled: true },
   { id: 'audit_log', label: 'Audit Log', href: '/app/audit-log', icon: ShieldCheck, roles: ['managing_director', 'md'], enabled: true },
   { id: 'notices', label: 'Notifications', href: '/app/notifications', icon: Bell, roles: ['managing_director', 'md'], enabled: true },
+  { id: 'ai_campus', label: 'AI Campus', href: '/app/ai', icon: Sparkles, roles: ['managing_director', 'md'], enabled: true },
   { id: 'settings', label: 'Settings', href: '/app/settings', icon: Settings, roles: ['managing_director', 'md'], enabled: true }
 ];
 
