@@ -5,6 +5,9 @@ export interface RowValidationError {
   rowNumber: number;
   column: string;
   message: string;
+  invalidValue?: string;
+  reason?: string;
+  suggestedCorrection?: string;
 }
 
 export interface ValidatedRow {
@@ -29,13 +32,14 @@ export interface ValidationSummary {
 
 export interface ValidationMasterContext {
   studentsMap: Map<string, any>; // roll_no (uppercase) -> student
-  facultyMap: Map<string, any>;  // faculty_id (uppercase) -> faculty
+  facultyMap: Map<string, any>;  // employee_code / faculty_id (uppercase) -> faculty
   departmentsSet: Set<string>;  // department codes (uppercase)
   branchesSet: Set<string>;     // branch codes (uppercase)
   subjectsMap: Map<string, any>; // subject_code (uppercase) -> subject
   timetableSlots: Array<{
     id?: string;
-    branch: string;
+    branch?: string;
+    department?: string;
     semester: number;
     section: string;
     day: string;
@@ -46,10 +50,36 @@ export interface ValidationMasterContext {
     subjectCode: string;
     facultyId: string;
     room?: string;
+    roomCode?: string;
   }>;
   attendanceSet: Set<string>; // roll_no + '|' + subject_code + '|' + date
   teacherSubjectSet: Set<string>; // faculty_id + '|' + subject_code + '|' + semester + '|' + section
   gradesSet: Set<string>; // roll_no + '|' + subject_code + '|' + semester
+  classInchargeSet?: Set<string>; // dept + '|' + sem + '|' + sec + '|' + academic_year
+  hodAssignmentsSet?: Set<string>; // dept + '|' + employee_code
+  userEmailsSet?: Set<string>; // existing emails
+}
+
+/**
+ * Creates a structured error object adhering to:
+ * Row number, Column, Invalid value, Reason, Suggested correction
+ */
+export function createRowError(
+  rowNumber: number,
+  column: string,
+  message: string,
+  invalidValue: any,
+  reason: string,
+  suggestedCorrection: string
+): RowValidationError {
+  return {
+    rowNumber,
+    column,
+    message,
+    invalidValue: invalidValue === undefined || invalidValue === null ? '' : String(invalidValue),
+    reason: reason || message,
+    suggestedCorrection
+  };
 }
 
 /**
@@ -91,20 +121,29 @@ export function formatMinutesToTime(minutes: number): string {
   return `${String(displayH).padStart(2, '0')}:${String(m).padStart(2, '0')} ${ampm}`;
 }
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const ACADEMIC_YEAR_REGEX = /^\d{4}-\d{4}$/;
+
 /**
- * Main validator for a batch of raw records for any of the 11 modules
+ * Main validator for a batch of raw records across all 16 modules
  */
 export function validateImportBatch(
   entityType: ImportEntityType,
   rawRows: Record<string, any>[],
   ctx: ValidationMasterContext
 ): ValidationSummary {
-  const config = IMPORT_MODULE_CONFIGS[entityType];
+  const config = IMPORT_MODULE_CONFIGS[entityType] || {
+    id: entityType,
+    requiredHeaders: []
+  };
   const validatedRows: ValidatedRow[] = [];
   const allErrors: RowValidationError[] = [];
 
   // Track intra-file uniqueness keys
   const intraFileKeys = new Set<string>();
+  const intraFileEmails = new Set<string>();
+  const intraFileTimetableFaculty: Array<{ day: string; fid: string; start: number; end: number; row: number }> = [];
+  const intraFileTimetableRoom: Array<{ day: string; room: string; start: number; end: number; row: number }> = [];
 
   rawRows.forEach((raw, idx) => {
     const rowNumber = idx + 2; // 1-based accounting for header row
@@ -121,15 +160,35 @@ export function validateImportBatch(
       cleanData[cleanKey] = val;
     });
 
-    // Check required fields
-    config.requiredHeaders.forEach(reqKey => {
+    // Alias mapping for backward compatibility and diverse naming
+    if (cleanData.roll_number && !cleanData.roll_no) cleanData.roll_no = cleanData.roll_number;
+    if (cleanData.name && !cleanData.full_name) cleanData.full_name = cleanData.name;
+    if (cleanData.faculty_id && !cleanData.employee_code) cleanData.employee_code = cleanData.faculty_id;
+    if (cleanData.employee_code && !cleanData.faculty_id) cleanData.faculty_id = cleanData.employee_code;
+    if (cleanData.department && !cleanData.department_code) cleanData.department_code = cleanData.department;
+    if (cleanData.dept && !cleanData.department_code) cleanData.department_code = cleanData.dept;
+    if (cleanData.day && !cleanData.day_of_week) cleanData.day_of_week = cleanData.day;
+    if (cleanData.day_of_week && !cleanData.day) cleanData.day = cleanData.day_of_week;
+    if (cleanData.room && !cleanData.room_code) cleanData.room_code = cleanData.room;
+    if (cleanData.room_number && !cleanData.room_code) cleanData.room_code = cleanData.room_number;
+    if (cleanData.marks_obtained !== undefined && cleanData.obtained_marks === undefined) {
+      cleanData.obtained_marks = cleanData.marks_obtained;
+    }
+
+    // Check required fields based on config
+    (config.requiredHeaders || []).forEach(reqKey => {
       const val = cleanData[reqKey];
       if (val === undefined || val === null || val === '') {
-        rowErrors.push({
-          rowNumber,
-          column: reqKey,
-          message: `Missing required field "${reqKey}"`
-        });
+        rowErrors.push(
+          createRowError(
+            rowNumber,
+            reqKey,
+            `Missing required field "${reqKey}"`,
+            val,
+            `The column "${reqKey}" is required for ${entityType} import but was empty.`,
+            `Provide a valid value for "${reqKey}" in row ${rowNumber}.`
+          )
+        );
       }
     });
 
@@ -141,166 +200,283 @@ export function validateImportBatch(
       case 'students': {
         const roll = String(cleanData.roll_no || '').trim().toUpperCase();
         if (roll) {
-          // Check intra-file duplicate
           if (intraFileKeys.has(roll)) {
-            rowErrors.push({
-              rowNumber,
-              column: 'roll_no',
-              message: `Duplicate roll_no "${roll}" found in uploaded file`
-            });
+            rowErrors.push(
+              createRowError(
+                rowNumber,
+                'roll_no',
+                `Duplicate roll_no "${roll}" found in uploaded file`,
+                roll,
+                `The roll number "${roll}" appears multiple times in the uploaded CSV/XLSX.`,
+                `Ensure each student has a unique roll number.`
+              )
+            );
           } else {
             intraFileKeys.add(roll);
           }
 
-          // Check DB duplicate
           if (ctx.studentsMap.has(roll)) {
             isDuplicate = true;
             duplicateReason = `Student with roll number "${roll}" already exists in students master.`;
           }
         }
 
-        // Email validation
-        if (cleanData.email && (!String(cleanData.email).includes('@') || !String(cleanData.email).includes('.'))) {
-          rowErrors.push({
-            rowNumber,
-            column: 'email',
-            message: `Invalid email address format "${cleanData.email}"`
-          });
+        // Full Name check
+        if (!cleanData.full_name && !cleanData.name) {
+          rowErrors.push(
+            createRowError(
+              rowNumber,
+              'full_name',
+              'Student full_name is required',
+              cleanData.full_name,
+              'Student record must contain a non-empty full name.',
+              'Provide student name (e.g., "Aarav Sharma").'
+            )
+          );
+        }
+
+        // Department check
+        const dept = String(cleanData.department_code || cleanData.department || cleanData.branch || '').trim().toUpperCase();
+        if (dept && ctx.departmentsSet.size > 0 && !ctx.departmentsSet.has(dept) && !ctx.branchesSet.has(dept)) {
+          rowErrors.push(
+            createRowError(
+              rowNumber,
+              'department_code',
+              `Unknown department/branch code "${dept}"`,
+              dept,
+              `Department code "${dept}" is not registered in the system.`,
+              `Use one of the existing departments: ${Array.from(ctx.departmentsSet).join(', ') || 'CSE, ECE, ME, CE'}`
+            )
+          );
         }
 
         // Semester validation (Must be integer 1-8)
         const sem = Number(cleanData.semester);
-        if (isNaN(sem) || !Number.isInteger(sem) || sem < 1 || sem > 8) {
-          rowErrors.push({
-            rowNumber,
-            column: 'semester',
-            message: `Invalid semester "${cleanData.semester}". Must be a number between 1 and 8.`
-          });
-        } else {
-          cleanData.semester = sem;
+        if (cleanData.semester !== undefined && cleanData.semester !== '') {
+          if (isNaN(sem) || !Number.isInteger(sem) || sem < 1 || sem > 8) {
+            rowErrors.push(
+              createRowError(
+                rowNumber,
+                'semester',
+                `Invalid semester "${cleanData.semester}"`,
+                cleanData.semester,
+                'Semester must be an integer between 1 and 8.',
+                'Specify a valid semester number from 1 to 8.'
+              )
+            );
+          } else {
+            cleanData.semester = sem;
+          }
         }
 
-        // Department validation
-        const dept = String(cleanData.department || '').trim().toUpperCase();
-        if (dept && ctx.departmentsSet.size > 0 && !ctx.departmentsSet.has(dept)) {
-          rowErrors.push({
-            rowNumber,
-            column: 'department',
-            message: `Unknown department "${cleanData.department}". Department must exist in college records.`
-          });
-        }
-
-        // Branch validation
-        const br = String(cleanData.branch || '').trim().toUpperCase();
-        if (br && ctx.branchesSet.size > 0 && !ctx.branchesSet.has(br)) {
-          rowErrors.push({
-            rowNumber,
-            column: 'branch',
-            message: `Unknown branch "${cleanData.branch}". Branch must exist in college records.`
-          });
-        }
-
-        // Status validation
-        if (cleanData.status) {
-          const validStatuses = ['active', 'disabled', 'graduated', 'suspended'];
-          if (!validStatuses.includes(String(cleanData.status).toLowerCase())) {
-            rowErrors.push({
-              rowNumber,
-              column: 'status',
-              message: `Invalid status "${cleanData.status}". Allowed values: ${validStatuses.join(', ')}`
-            });
+        // Section validation
+        if (cleanData.section) {
+          const sec = String(cleanData.section).trim().toUpperCase();
+          if (sec.length > 5) {
+            rowErrors.push(
+              createRowError(
+                rowNumber,
+                'section',
+                `Invalid section code "${cleanData.section}"`,
+                cleanData.section,
+                'Section code should typically be a short code like A, B, C, or 1, 2.',
+                'Use short section identifier like "A" or "B".'
+              )
+            );
+          } else {
+            cleanData.section = sec;
           }
         } else {
-          cleanData.status = 'active';
+          cleanData.section = 'A';
+        }
+
+        // Academic Year validation
+        if (cleanData.academic_year) {
+          const ay = String(cleanData.academic_year).trim();
+          if (!ACADEMIC_YEAR_REGEX.test(ay)) {
+            rowErrors.push(
+              createRowError(
+                rowNumber,
+                'academic_year',
+                `Invalid academic year format "${ay}"`,
+                ay,
+                'Academic year must follow the YYYY-YYYY format (e.g., 2026-2027).',
+                'Change format to "YYYY-YYYY" such as "2026-2027".'
+              )
+            );
+          }
+        }
+
+        // Email validation
+        if (cleanData.email) {
+          const em = String(cleanData.email).trim().toLowerCase();
+          if (!EMAIL_REGEX.test(em)) {
+            rowErrors.push(
+              createRowError(
+                rowNumber,
+                'email',
+                `Invalid email format "${cleanData.email}"`,
+                cleanData.email,
+                'Email does not match standard email pattern.',
+                'Provide valid email address e.g. student@hiet.org'
+              )
+            );
+          } else {
+            if (intraFileEmails.has(em)) {
+              rowErrors.push(
+                createRowError(
+                  rowNumber,
+                  'email',
+                  `Duplicate email "${em}" in uploaded file`,
+                  em,
+                  'Email address is assigned to multiple students in the same import file.',
+                  'Each student must have a distinct institutional or personal email.'
+                )
+              );
+            } else {
+              intraFileEmails.add(em);
+            }
+
+            if (ctx.userEmailsSet && ctx.userEmailsSet.has(em)) {
+              rowErrors.push(
+                createRowError(
+                  rowNumber,
+                  'email',
+                  `Email "${em}" already assigned to another user`,
+                  em,
+                  'An existing user in the database is already registered with this email address.',
+                  'Provide a unique email address or verify user record.'
+                )
+              );
+            }
+          }
         }
         break;
       }
 
       case 'faculty': {
-        const fid = String(cleanData.faculty_id || '').trim().toUpperCase();
-        if (fid) {
-          if (intraFileKeys.has(fid)) {
-            rowErrors.push({
-              rowNumber,
-              column: 'faculty_id',
-              message: `Duplicate faculty_id "${fid}" found in uploaded file`
-            });
+        const empCode = String(cleanData.employee_code || cleanData.faculty_id || '').trim().toUpperCase();
+        if (empCode) {
+          if (intraFileKeys.has(empCode)) {
+            rowErrors.push(
+              createRowError(
+                rowNumber,
+                'employee_code',
+                `Duplicate employee_code "${empCode}" found in uploaded file`,
+                empCode,
+                'Employee code must be unique per faculty member.',
+                'Assign unique employee code (e.g., "FAC-001").'
+              )
+            );
           } else {
-            intraFileKeys.add(fid);
+            intraFileKeys.add(empCode);
           }
 
-          if (ctx.facultyMap.has(fid)) {
+          if (ctx.facultyMap.has(empCode)) {
             isDuplicate = true;
-            duplicateReason = `Faculty member with ID "${fid}" already exists in faculty records.`;
+            duplicateReason = `Faculty member with code "${empCode}" already exists in faculty records.`;
           }
+        }
+
+        // Full Name check
+        if (!cleanData.full_name && !cleanData.name) {
+          rowErrors.push(
+            createRowError(
+              rowNumber,
+              'full_name',
+              'Faculty full_name is required',
+              cleanData.full_name,
+              'Faculty record must contain a non-empty name.',
+              'Provide full name e.g. "Dr. Ramesh Sharma".'
+            )
+          );
+        }
+
+        // Designation check
+        if (!cleanData.designation) {
+          rowErrors.push(
+            createRowError(
+              rowNumber,
+              'designation',
+              'Faculty designation is required',
+              cleanData.designation,
+              'Designation field is empty.',
+              'Provide designation such as "Assistant Professor", "Associate Professor", or "Professor".'
+            )
+          );
+        }
+
+        // Department check
+        const dept = String(cleanData.department_code || cleanData.department || '').trim().toUpperCase();
+        if (dept && ctx.departmentsSet.size > 0 && !ctx.departmentsSet.has(dept)) {
+          rowErrors.push(
+            createRowError(
+              rowNumber,
+              'department_code',
+              `Unknown department_code "${dept}"`,
+              dept,
+              `Department code "${dept}" does not exist in college department master.`,
+              `Import department master first or use one of: ${Array.from(ctx.departmentsSet).join(', ')}`
+            )
+          );
         }
 
         // Email validation
-        if (cleanData.email && (!String(cleanData.email).includes('@') || !String(cleanData.email).includes('.'))) {
-          rowErrors.push({
-            rowNumber,
-            column: 'email',
-            message: `Invalid email address format "${cleanData.email}"`
-          });
-        }
-
-        // Role restriction (SECURITY CRITICAL: Only teacher or hod allowed)
-        const role = String(cleanData.role || '').toLowerCase().trim();
-        if (role && !['teacher', 'hod'].includes(role)) {
-          rowErrors.push({
-            rowNumber,
-            column: 'role',
-            message: `Invalid faculty role "${cleanData.role}". Only "teacher" or "hod" roles may be imported via CSV. Admin/Principal roles cannot be created via import.`
-          });
-        } else {
-          cleanData.role = role || 'teacher';
-        }
-
-        // Department validation
-        const dept = String(cleanData.department || '').trim().toUpperCase();
-        if (dept && ctx.departmentsSet.size > 0 && !ctx.departmentsSet.has(dept)) {
-          rowErrors.push({
-            rowNumber,
-            column: 'department',
-            message: `Unknown department "${cleanData.department}". Department must exist in college records.`
-          });
-        }
-
-        // Status validation
-        if (cleanData.status) {
-          const validStatuses = ['active', 'inactive', 'disabled', 'on_leave', 'resigned'];
-          if (!validStatuses.includes(String(cleanData.status).toLowerCase())) {
-            rowErrors.push({
-              rowNumber,
-              column: 'status',
-              message: `Invalid status "${cleanData.status}". Allowed: ${validStatuses.join(', ')}`
-            });
+        if (cleanData.email) {
+          const em = String(cleanData.email).trim().toLowerCase();
+          if (!EMAIL_REGEX.test(em)) {
+            rowErrors.push(
+              createRowError(
+                rowNumber,
+                'email',
+                `Invalid email format "${cleanData.email}"`,
+                cleanData.email,
+                'Faculty email does not conform to standard format.',
+                'Provide valid email e.g. faculty@hiet.org'
+              )
+            );
+          } else {
+            if (intraFileEmails.has(em)) {
+              rowErrors.push(
+                createRowError(
+                  rowNumber,
+                  'email',
+                  `Duplicate email "${em}" in uploaded file`,
+                  em,
+                  'Multiple faculty rows share the same email address.',
+                  'Provide unique email address for each faculty member.'
+                )
+              );
+            } else {
+              intraFileEmails.add(em);
+            }
           }
-        } else {
-          cleanData.status = 'active';
         }
         break;
       }
 
+      case 'departments':
       case 'departments_branches': {
-        const dCode = String(cleanData.department_code || '').trim().toUpperCase();
-        const bCode = String(cleanData.branch_code || '').trim().toUpperCase();
-        const pairKey = `${dCode}|${bCode}`;
-
-        if (dCode && bCode) {
-          if (intraFileKeys.has(pairKey)) {
-            rowErrors.push({
-              rowNumber,
-              column: 'branch_code',
-              message: `Duplicate department/branch entry "${pairKey}" in uploaded file`
-            });
+        const dCode = String(cleanData.department_code || cleanData.code || '').trim().toUpperCase();
+        if (dCode) {
+          if (intraFileKeys.has(dCode)) {
+            rowErrors.push(
+              createRowError(
+                rowNumber,
+                'department_code',
+                `Duplicate department_code "${dCode}" in uploaded file`,
+                dCode,
+                'Department code must be unique.',
+                'Use distinct department code.'
+              )
+            );
           } else {
-            intraFileKeys.add(pairKey);
+            intraFileKeys.add(dCode);
           }
 
-          if (ctx.branchesSet.has(bCode)) {
+          if (ctx.departmentsSet.has(dCode)) {
             isDuplicate = true;
-            duplicateReason = `Branch code "${bCode}" already exists.`;
+            duplicateReason = `Department code "${dCode}" already exists.`;
           }
         }
         break;
@@ -310,11 +486,16 @@ export function validateImportBatch(
         const scode = String(cleanData.subject_code || '').trim().toUpperCase();
         if (scode) {
           if (intraFileKeys.has(scode)) {
-            rowErrors.push({
-              rowNumber,
-              column: 'subject_code',
-              message: `Duplicate subject_code "${scode}" found in uploaded file`
-            });
+            rowErrors.push(
+              createRowError(
+                rowNumber,
+                'subject_code',
+                `Duplicate subject_code "${scode}" found in uploaded file`,
+                scode,
+                'Subject code must be unique across the college.',
+                'Ensure distinct subject codes (e.g., CS-601).'
+              )
+            );
           } else {
             intraFileKeys.add(scode);
           }
@@ -325,14 +506,34 @@ export function validateImportBatch(
           }
         }
 
+        // Department check
+        const dept = String(cleanData.department_code || cleanData.department || cleanData.branch || '').trim().toUpperCase();
+        if (dept && ctx.departmentsSet.size > 0 && !ctx.departmentsSet.has(dept) && !ctx.branchesSet.has(dept)) {
+          rowErrors.push(
+            createRowError(
+              rowNumber,
+              'department_code',
+              `Unknown department code "${dept}"`,
+              dept,
+              'Department does not exist in master records.',
+              `Select an existing department: ${Array.from(ctx.departmentsSet).join(', ')}`
+            )
+          );
+        }
+
         // Semester
         const sem = Number(cleanData.semester);
         if (isNaN(sem) || !Number.isInteger(sem) || sem < 1 || sem > 8) {
-          rowErrors.push({
-            rowNumber,
-            column: 'semester',
-            message: `Invalid semester "${cleanData.semester}". Must be between 1 and 8.`
-          });
+          rowErrors.push(
+            createRowError(
+              rowNumber,
+              'semester',
+              `Invalid semester "${cleanData.semester}"`,
+              cleanData.semester,
+              'Semester must be an integer between 1 and 8.',
+              'Set semester between 1 and 8.'
+            )
+          );
         } else {
           cleanData.semester = sem;
         }
@@ -340,193 +541,723 @@ export function validateImportBatch(
         // Credits
         if (cleanData.credits !== undefined && cleanData.credits !== '') {
           const cr = Number(cleanData.credits);
-          if (isNaN(cr) || cr <= 0 || cr > 10) {
-            rowErrors.push({
-              rowNumber,
-              column: 'credits',
-              message: `Invalid credits "${cleanData.credits}". Must be a positive number.`
-            });
+          if (isNaN(cr) || cr <= 0 || cr > 12) {
+            rowErrors.push(
+              createRowError(
+                rowNumber,
+                'credits',
+                `Invalid credits "${cleanData.credits}"`,
+                cleanData.credits,
+                'Credits must be a positive number up to 12.',
+                'Set credits between 1.0 and 8.0.'
+              )
+            );
           } else {
             cleanData.credits = cr;
           }
         } else {
           cleanData.credits = 4.0;
         }
-
-        // Subject Type
-        if (cleanData.subject_type) {
-          const validTypes = ['theory', 'practical', 'elective', 'lab'];
-          if (!validTypes.includes(String(cleanData.subject_type).toLowerCase())) {
-            rowErrors.push({
-              rowNumber,
-              column: 'subject_type',
-              message: `Invalid subject_type "${cleanData.subject_type}". Expected: ${validTypes.join(', ')}`
-            });
-          }
-        }
-
-        // Teacher Foreign Key check
-        if (cleanData.teacher_faculty_id) {
-          const tfid = String(cleanData.teacher_faculty_id).trim().toUpperCase();
-          if (!ctx.facultyMap.has(tfid)) {
-            rowErrors.push({
-              rowNumber,
-              column: 'teacher_faculty_id',
-              message: `Assigned faculty ID "${cleanData.teacher_faculty_id}" does not exist in Faculty Master. Do not assign an unverified teacher.`
-            });
-          }
-        }
         break;
       }
 
       case 'teacher_subjects': {
-        const fid = String(cleanData.faculty_id || '').trim().toUpperCase();
+        const empCode = String(cleanData.employee_code || cleanData.faculty_id || '').trim().toUpperCase();
         const scode = String(cleanData.subject_code || '').trim().toUpperCase();
         const sem = Number(cleanData.semester);
         const sec = String(cleanData.section || 'A').trim().toUpperCase();
+        const ay = String(cleanData.academic_year || '').trim();
 
-        if (fid && !ctx.facultyMap.has(fid)) {
-          rowErrors.push({
-            rowNumber,
-            column: 'faculty_id',
-            message: `Faculty member "${cleanData.faculty_id}" does not exist in Faculty Master.`
-          });
+        if (empCode && !ctx.facultyMap.has(empCode)) {
+          rowErrors.push(
+            createRowError(
+              rowNumber,
+              'employee_code',
+              `Faculty "${empCode}" does not exist in Faculty Master`,
+              empCode,
+              'Cannot map an unverified employee code.',
+              'Import or register faculty member first.'
+            )
+          );
         }
 
         if (scode && !ctx.subjectsMap.has(scode)) {
-          rowErrors.push({
-            rowNumber,
-            column: 'subject_code',
-            message: `Subject code "${cleanData.subject_code}" does not exist in Subjects Master.`
-          });
+          rowErrors.push(
+            createRowError(
+              rowNumber,
+              'subject_code',
+              `Subject code "${scode}" does not exist in Subjects Master`,
+              scode,
+              'Subject is not present in subject catalog.',
+              'Import subject into catalog before mapping.'
+            )
+          );
+        }
+
+        // Department consistency check (Cross-department policy check)
+        const facultyObj = ctx.facultyMap.get(empCode);
+        const subjectObj = ctx.subjectsMap.get(scode);
+        if (facultyObj && subjectObj) {
+          const facDept = String(facultyObj.department || facultyObj.department_code || '').trim().toUpperCase();
+          const subDept = String(subjectObj.department || subjectObj.department_code || subjectObj.branch || '').trim().toUpperCase();
+          if (facDept && subDept && facDept !== subDept) {
+            // Note: cross-department assignment allowed with warning unless invalid
+            cleanData.is_cross_department = true;
+          }
         }
 
         if (isNaN(sem) || sem < 1 || sem > 8) {
-          rowErrors.push({
-            rowNumber,
-            column: 'semester',
-            message: `Invalid semester "${cleanData.semester}". Must be between 1 and 8.`
-          });
+          rowErrors.push(
+            createRowError(
+              rowNumber,
+              'semester',
+              `Invalid semester "${cleanData.semester}"`,
+              cleanData.semester,
+              'Semester must be between 1 and 8.',
+              'Enter semester 1-8.'
+            )
+          );
         } else {
           cleanData.semester = sem;
         }
 
-        const mapKey = `${fid}|${scode}|${sem}|${sec}`;
+        const mapKey = `${empCode}|${scode}|${sem}|${sec}|${ay}`;
         if (intraFileKeys.has(mapKey)) {
-          rowErrors.push({
-            rowNumber,
-            column: 'subject_code',
-            message: `Duplicate teacher-subject mapping entry found in uploaded file`
-          });
+          rowErrors.push(
+            createRowError(
+              rowNumber,
+              'subject_code',
+              'Duplicate teacher-subject mapping entry in file',
+              mapKey,
+              'Same faculty is already mapped to this subject, semester, section, and academic year in this file.',
+              'Remove duplicate mapping row.'
+            )
+          );
         } else {
           intraFileKeys.add(mapKey);
         }
 
-        if (ctx.teacherSubjectSet.has(mapKey)) {
+        const legacyMapKey = `${empCode}|${scode}|${sem}|${sec}`;
+        if (ctx.teacherSubjectSet.has(legacyMapKey) || ctx.teacherSubjectSet.has(mapKey)) {
           isDuplicate = true;
-          duplicateReason = `Mapping for Faculty ${fid} to ${scode} (Sem ${sem}, Sec ${sec}) already exists.`;
+          duplicateReason = `Mapping for Faculty ${empCode} to ${scode} (Sem ${sem}, Sec ${sec}) already exists.`;
+        }
+        break;
+      }
+
+      case 'class_incharge': {
+        const empCode = String(cleanData.employee_code || cleanData.faculty_id || '').trim().toUpperCase();
+        const dept = String(cleanData.department_code || cleanData.department || '').trim().toUpperCase();
+        const sem = Number(cleanData.semester);
+        const sec = String(cleanData.section || 'A').trim().toUpperCase();
+        const ay = String(cleanData.academic_year || '').trim();
+
+        if (empCode && !ctx.facultyMap.has(empCode)) {
+          rowErrors.push(
+            createRowError(
+              rowNumber,
+              'employee_code',
+              `Faculty "${empCode}" does not exist in Faculty Master`,
+              empCode,
+              'Class in-charge must be an existing verified faculty member.',
+              'Verify employee code against Faculty Master.'
+            )
+          );
+        }
+
+        // Faculty must belong to same department
+        const facultyObj = ctx.facultyMap.get(empCode);
+        if (facultyObj && dept) {
+          const facDept = String(facultyObj.department || facultyObj.department_code || '').trim().toUpperCase();
+          if (facDept && facDept !== dept) {
+            rowErrors.push(
+              createRowError(
+                rowNumber,
+                'employee_code',
+                `Faculty ${empCode} belongs to ${facDept}, not ${dept}`,
+                empCode,
+                'Class In-Charge must belong to the same department as the class.',
+                `Assign a faculty member from ${dept} or update department assignment.`
+              )
+            );
+          }
+        }
+
+        if (isNaN(sem) || sem < 1 || sem > 8) {
+          rowErrors.push(
+            createRowError(
+              rowNumber,
+              'semester',
+              `Invalid semester "${cleanData.semester}"`,
+              cleanData.semester,
+              'Semester must be an integer between 1 and 8.',
+              'Specify valid semester 1-8.'
+            )
+          );
+        }
+
+        // One active class in-charge per department + semester + section + academic year
+        const classKey = `${dept}|${sem}|${sec}|${ay}`;
+        if (intraFileKeys.has(classKey)) {
+          rowErrors.push(
+            createRowError(
+              rowNumber,
+              'section',
+              `Multiple in-charges assigned to ${dept} Sem ${sem}-${sec} for ${ay}`,
+              classKey,
+              'Only one active class in-charge is permitted per class section per academic year.',
+              'Remove duplicate in-charge assignment.'
+            )
+          );
+        } else {
+          intraFileKeys.add(classKey);
+        }
+
+        if (ctx.classInchargeSet && ctx.classInchargeSet.has(classKey)) {
+          isDuplicate = true;
+          duplicateReason = `Class in-charge for ${dept} Sem ${sem}-${sec} (${ay}) already exists.`;
+        }
+        break;
+      }
+
+      case 'hod_assignment': {
+        const empCode = String(cleanData.employee_code || cleanData.faculty_id || '').trim().toUpperCase();
+        const dept = String(cleanData.department_code || cleanData.department || '').trim().toUpperCase();
+        const effFrom = String(cleanData.effective_from || '').trim();
+        const effUntil = String(cleanData.effective_until || '').trim();
+
+        if (dept && ctx.departmentsSet.size > 0 && !ctx.departmentsSet.has(dept)) {
+          rowErrors.push(
+            createRowError(
+              rowNumber,
+              'department_code',
+              `Unknown department code "${dept}"`,
+              dept,
+              'HOD can only be assigned to a registered department.',
+              `Choose an existing department: ${Array.from(ctx.departmentsSet).join(', ')}`
+            )
+          );
+        }
+
+        if (empCode && !ctx.facultyMap.has(empCode)) {
+          rowErrors.push(
+            createRowError(
+              rowNumber,
+              'employee_code',
+              `Faculty "${empCode}" does not exist in Faculty Master`,
+              empCode,
+              'HOD must be a valid faculty member.',
+              'Verify faculty employee code.'
+            )
+          );
+        }
+
+        // Faculty must belong to that department
+        const facultyObj = ctx.facultyMap.get(empCode);
+        if (facultyObj && dept) {
+          const facDept = String(facultyObj.department || facultyObj.department_code || '').trim().toUpperCase();
+          if (facDept && facDept !== dept) {
+            rowErrors.push(
+              createRowError(
+                rowNumber,
+                'employee_code',
+                `Faculty ${empCode} belongs to ${facDept}, cannot be assigned as HOD of ${dept}`,
+                empCode,
+                'HOD must be a faculty member of the corresponding department.',
+                `Select a faculty member belonging to ${dept}.`
+              )
+            );
+          }
+        }
+
+        // Validate effective dates
+        if (effFrom) {
+          const dFrom = new Date(effFrom);
+          if (isNaN(dFrom.getTime())) {
+            rowErrors.push(
+              createRowError(
+                rowNumber,
+                'effective_from',
+                `Invalid effective_from date "${effFrom}"`,
+                effFrom,
+                'Date must be in YYYY-MM-DD format.',
+                'Use format "YYYY-MM-DD".'
+              )
+            );
+          }
+        }
+
+        if (effUntil) {
+          const dUntil = new Date(effUntil);
+          const dFrom = new Date(effFrom);
+          if (isNaN(dUntil.getTime())) {
+            rowErrors.push(
+              createRowError(
+                rowNumber,
+                'effective_until',
+                `Invalid effective_until date "${effUntil}"`,
+                effUntil,
+                'Date must be in YYYY-MM-DD format.',
+                'Use format "YYYY-MM-DD".'
+              )
+            );
+          } else if (!isNaN(dFrom.getTime()) && dUntil < dFrom) {
+            rowErrors.push(
+              createRowError(
+                rowNumber,
+                'effective_until',
+                'effective_until cannot be earlier than effective_from',
+                effUntil,
+                'End date of HOD tenure must be after start date.',
+                'Adjust effective_until to a date after effective_from.'
+              )
+            );
+          }
         }
         break;
       }
 
       case 'timetable': {
         const scode = String(cleanData.subject_code || '').trim().toUpperCase();
-        const fid = String(cleanData.faculty_id || '').trim().toUpperCase();
-        const day = String(cleanData.day || '').trim();
-        const br = String(cleanData.branch || '').trim().toUpperCase();
+        const empCode = String(cleanData.employee_code || cleanData.faculty_id || '').trim().toUpperCase();
+        const day = String(cleanData.day_of_week || cleanData.day || '').trim();
         const sem = Number(cleanData.semester);
         const sec = String(cleanData.section || 'A').trim().toUpperCase();
+        const room = String(cleanData.room_code || cleanData.room || '').trim().toUpperCase();
 
         const validDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
         const dayMatch = validDays.find(d => d.toLowerCase() === day.toLowerCase());
         if (!dayMatch) {
-          rowErrors.push({
-            rowNumber,
-            column: 'day',
-            message: `Invalid day "${cleanData.day}". Must be Monday through Saturday.`
-          });
+          rowErrors.push(
+            createRowError(
+              rowNumber,
+              'day_of_week',
+              `Invalid day "${day}"`,
+              day,
+              'Day of week must be Monday through Saturday.',
+              'Use one of: Monday, Tuesday, Wednesday, Thursday, Friday, Saturday.'
+            )
+          );
         } else {
           cleanData.day = dayMatch;
+          cleanData.day_of_week = dayMatch;
         }
 
         if (scode && !ctx.subjectsMap.has(scode)) {
-          rowErrors.push({
-            rowNumber,
-            column: 'subject_code',
-            message: `Subject "${cleanData.subject_code}" does not exist in Subjects Master.`
-          });
+          rowErrors.push(
+            createRowError(
+              rowNumber,
+              'subject_code',
+              `Subject "${scode}" does not exist in Subjects Master`,
+              scode,
+              'Cannot schedule a timetable slot for an unregistered subject.',
+              'Import subject into Subjects Master first.'
+            )
+          );
         }
 
-        if (fid && !ctx.facultyMap.has(fid)) {
-          rowErrors.push({
-            rowNumber,
-            column: 'faculty_id',
-            message: `Faculty member "${cleanData.faculty_id}" does not exist in Faculty Master.`
-          });
+        if (empCode && !ctx.facultyMap.has(empCode)) {
+          rowErrors.push(
+            createRowError(
+              rowNumber,
+              'employee_code',
+              `Faculty "${empCode}" does not exist in Faculty Master`,
+              empCode,
+              'Cannot schedule timetable slot for an unverified faculty member.',
+              'Import faculty record into Faculty Master first.'
+            )
+          );
+        }
+
+        if (!room) {
+          rowErrors.push(
+            createRowError(
+              rowNumber,
+              'room_code',
+              'room_code is required for timetable slot',
+              room,
+              'Every timetable slot must specify a classroom or lab room code.',
+              'Specify room code (e.g., "LH-101", "CS-LAB-1").'
+            )
+          );
         }
 
         const startMin = parseTimeToMinutes(cleanData.start_time);
         const endMin = parseTimeToMinutes(cleanData.end_time);
 
         if (startMin === null) {
-          rowErrors.push({
-            rowNumber,
-            column: 'start_time',
-            message: `Invalid start_time format "${cleanData.start_time}". Use HH:MM AM/PM format.`
-          });
+          rowErrors.push(
+            createRowError(
+              rowNumber,
+              'start_time',
+              `Invalid start_time format "${cleanData.start_time}"`,
+              cleanData.start_time,
+              'Start time must be in HH:MM AM/PM or HH:MM 24-hr format.',
+              'Use format like "09:30 AM" or "09:30".'
+            )
+          );
         }
 
         if (endMin === null) {
-          rowErrors.push({
-            rowNumber,
-            column: 'end_time',
-            message: `Invalid end_time format "${cleanData.end_time}". Use HH:MM AM/PM format.`
-          });
+          rowErrors.push(
+            createRowError(
+              rowNumber,
+              'end_time',
+              `Invalid end_time format "${cleanData.end_time}"`,
+              cleanData.end_time,
+              'End time must be in HH:MM AM/PM or HH:MM 24-hr format.',
+              'Use format like "10:30 AM" or "10:30".'
+            )
+          );
         }
 
         if (startMin !== null && endMin !== null) {
           if (startMin >= endMin) {
-            rowErrors.push({
-              rowNumber,
-              column: 'end_time',
-              message: `end_time must be later than start_time (${formatMinutesToTime(startMin)} vs ${formatMinutesToTime(endMin)}).`
-            });
-          } else {
-            // Check for timetable conflicts against existing timetable slots
-            const slotDay = cleanData.day;
-            
-            // 1. Faculty conflict check: Is faculty already teaching elsewhere at this time on this day?
-            const facultyConflict = ctx.timetableSlots.find(slot => 
-              slot.day.toLowerCase() === String(slotDay).toLowerCase() &&
-              slot.facultyId.toUpperCase() === fid &&
-              Math.max(startMin, slot.startMinutes) < Math.min(endMin, slot.endMinutes)
-            );
-
-            if (facultyConflict) {
-              rowErrors.push({
+            rowErrors.push(
+              createRowError(
                 rowNumber,
-                column: 'faculty_id',
-                message: `Timetable Conflict: Faculty "${fid}" is already assigned to ${facultyConflict.subjectCode} (${facultyConflict.branch} Sem ${facultyConflict.semester}-${facultyConflict.section}) on ${slotDay} from ${facultyConflict.startTime} to ${facultyConflict.endTime}.`
-              });
+                'end_time',
+                `end_time must be later than start_time`,
+                cleanData.end_time,
+                `Lecture end time must be after start time (${formatMinutesToTime(startMin)} vs ${formatMinutesToTime(endMin)}).`,
+                'Set end_time to be after start_time.'
+              )
+            );
+          } else {
+            const slotDay = cleanData.day;
+
+            // 1. Intra-file Faculty Conflict
+            if (empCode) {
+              const fileFacConflict = intraFileTimetableFaculty.find(f => 
+                f.day.toLowerCase() === slotDay.toLowerCase() &&
+                f.fid === empCode &&
+                Math.max(startMin, f.start) < Math.min(endMin, f.end)
+              );
+              if (fileFacConflict) {
+                rowErrors.push(
+                  createRowError(
+                    rowNumber,
+                    'employee_code',
+                    `Faculty conflict with row ${fileFacConflict.row}`,
+                    empCode,
+                    `Faculty "${empCode}" is scheduled concurrently in row ${fileFacConflict.row} on ${slotDay}.`,
+                    'Adjust class timing or reassign faculty.'
+                  )
+                );
+              } else {
+                intraFileTimetableFaculty.push({ day: slotDay, fid: empCode, start: startMin, end: endMin, row: rowNumber });
+              }
+
+              // DB Faculty conflict
+              const dbFacConflict = ctx.timetableSlots.find(slot => 
+                slot.day.toLowerCase() === slotDay.toLowerCase() &&
+                slot.facultyId.toUpperCase() === empCode &&
+                Math.max(startMin, slot.startMinutes) < Math.min(endMin, slot.endMinutes)
+              );
+              if (dbFacConflict) {
+                rowErrors.push(
+                  createRowError(
+                    rowNumber,
+                    'employee_code',
+                    `Faculty timetable conflict with existing schedule`,
+                    empCode,
+                    `Faculty "${empCode}" is already teaching ${dbFacConflict.subjectCode} on ${slotDay} from ${dbFacConflict.startTime} to ${dbFacConflict.endTime}.`,
+                    'Choose an unbooked timeslot for this faculty member.'
+                  )
+                );
+              }
             }
 
-            // 2. Section conflict check: Does this section already have another lecture at this time on this day?
-            const sectionConflict = ctx.timetableSlots.find(slot => 
-              slot.day.toLowerCase() === String(slotDay).toLowerCase() &&
-              slot.branch.toUpperCase() === br &&
-              slot.semester === sem &&
-              slot.section.toUpperCase() === sec &&
-              Math.max(startMin, slot.startMinutes) < Math.min(endMin, slot.endMinutes)
-            );
+            // 2. Intra-file Room Conflict
+            if (room) {
+              const fileRoomConflict = intraFileTimetableRoom.find(r => 
+                r.day.toLowerCase() === slotDay.toLowerCase() &&
+                r.room === room &&
+                Math.max(startMin, r.start) < Math.min(endMin, r.end)
+              );
+              if (fileRoomConflict) {
+                rowErrors.push(
+                  createRowError(
+                    rowNumber,
+                    'room_code',
+                    `Room conflict with row ${fileRoomConflict.row}`,
+                    room,
+                    `Room "${room}" is already assigned concurrently in row ${fileRoomConflict.row} on ${slotDay}.`,
+                    'Assign a different room for this slot.'
+                  )
+                );
+              } else {
+                intraFileTimetableRoom.push({ day: slotDay, room, start: startMin, end: endMin, row: rowNumber });
+              }
 
-            if (sectionConflict) {
-              rowErrors.push({
-                rowNumber,
-                column: 'section',
-                message: `Timetable Conflict: Section ${br} Sem ${sem}-${sec} already has a scheduled class "${sectionConflict.subjectCode}" on ${slotDay} from ${sectionConflict.startTime} to ${sectionConflict.endTime}.`
-              });
+              // DB Room conflict
+              const dbRoomConflict = ctx.timetableSlots.find(slot => 
+                slot.day.toLowerCase() === slotDay.toLowerCase() &&
+                (slot.roomCode || slot.room || '').toUpperCase() === room &&
+                Math.max(startMin, slot.startMinutes) < Math.min(endMin, slot.endMinutes)
+              );
+              if (dbRoomConflict) {
+                rowErrors.push(
+                  createRowError(
+                    rowNumber,
+                    'room_code',
+                    `Room conflict with existing schedule`,
+                    room,
+                    `Room "${room}" is already booked on ${slotDay} (${dbRoomConflict.startTime} - ${dbRoomConflict.endTime}).`,
+                    'Choose an alternative room or adjust timing.'
+                  )
+                );
+              }
             }
           }
+        }
+
+        // GPS Coordinates validation
+        if (cleanData.room_lat !== undefined && cleanData.room_lat !== '') {
+          const lat = Number(cleanData.room_lat);
+          if (isNaN(lat) || lat < -90 || lat > 90) {
+            rowErrors.push(
+              createRowError(
+                rowNumber,
+                'room_lat',
+                `Invalid latitude "${cleanData.room_lat}"`,
+                cleanData.room_lat,
+                'Latitude must be a valid number between -90 and +90 degrees.',
+                'Provide valid decimal degrees (e.g., 28.6139).'
+              )
+            );
+          }
+        }
+
+        if (cleanData.room_long !== undefined && cleanData.room_long !== '') {
+          const lng = Number(cleanData.room_long);
+          if (isNaN(lng) || lng < -180 || lng > 180) {
+            rowErrors.push(
+              createRowError(
+                rowNumber,
+                'room_long',
+                `Invalid longitude "${cleanData.room_long}"`,
+                cleanData.room_long,
+                'Longitude must be a valid number between -180 and +180 degrees.',
+                'Provide valid decimal degrees (e.g., 77.2090).'
+              )
+            );
+          }
+        }
+
+        if (cleanData.geofence_radius_meters !== undefined && cleanData.geofence_radius_meters !== '') {
+          const rad = Number(cleanData.geofence_radius_meters);
+          if (isNaN(rad) || rad < 5 || rad > 1000) {
+            rowErrors.push(
+              createRowError(
+                rowNumber,
+                'geofence_radius_meters',
+                `Invalid geofence radius "${cleanData.geofence_radius_meters}"`,
+                cleanData.geofence_radius_meters,
+                'Geofence radius must be between 5m and 1000m (default is 30m).',
+                'Specify realistic radius e.g. 30.'
+              )
+            );
+          }
+        }
+        break;
+      }
+
+      case 'sessional_marks': {
+        const roll = String(cleanData.roll_no || '').trim().toUpperCase();
+        const scode = String(cleanData.subject_code || '').trim().toUpperCase();
+
+        if (roll && !ctx.studentsMap.has(roll)) {
+          rowErrors.push(
+            createRowError(
+              rowNumber,
+              'roll_no',
+              `Student roll number "${roll}" does not exist in Students Master`,
+              roll,
+              'Marks can only be recorded for students present in the master database.',
+              'Import student record first.'
+            )
+          );
+        }
+
+        if (scode && !ctx.subjectsMap.has(scode)) {
+          rowErrors.push(
+            createRowError(
+              rowNumber,
+              'subject_code',
+              `Subject "${scode}" does not exist in Subjects Master`,
+              scode,
+              'Subject must be in catalog to record marks.',
+              'Verify subject code in catalog.'
+            )
+          );
+        }
+
+        const marksObtained = Number(cleanData.obtained_marks !== undefined ? cleanData.obtained_marks : cleanData.marks_obtained);
+        const maxMarks = Number(cleanData.max_marks);
+
+        if (isNaN(marksObtained) || marksObtained < 0) {
+          rowErrors.push(
+            createRowError(
+              rowNumber,
+              'obtained_marks',
+              `obtained_marks must be a non-negative number`,
+              cleanData.obtained_marks,
+              'Negative or non-numeric marks are not allowed.',
+              'Enter a valid score >= 0.'
+            )
+          );
+        }
+
+        if (isNaN(maxMarks) || maxMarks <= 0) {
+          rowErrors.push(
+            createRowError(
+              rowNumber,
+              'max_marks',
+              `max_marks must be a positive number`,
+              cleanData.max_marks,
+              'Maximum marks for an assessment must be greater than zero.',
+              'Set max_marks to assessment scale (e.g., 20, 50, 100).'
+            )
+          );
+        }
+
+        if (!isNaN(marksObtained) && !isNaN(maxMarks)) {
+          if (marksObtained > maxMarks) {
+            rowErrors.push(
+              createRowError(
+                rowNumber,
+                'obtained_marks',
+                `Marks obtained (${marksObtained}) cannot exceed max_marks (${maxMarks})`,
+                marksObtained,
+                'Student score cannot exceed the maximum possible marks.',
+                'Ensure obtained_marks <= max_marks.'
+              )
+            );
+          }
+        }
+        break;
+      }
+
+      case 'results_grades': {
+        const roll = String(cleanData.roll_no || '').trim().toUpperCase();
+        const sem = Number(cleanData.semester);
+
+        if (roll && !ctx.studentsMap.has(roll)) {
+          rowErrors.push(
+            createRowError(
+              rowNumber,
+              'roll_no',
+              `Student roll number "${roll}" does not exist`,
+              roll,
+              'Result entry requires valid student roll number.',
+              'Check roll number in Students Master.'
+            )
+          );
+        }
+
+        if (isNaN(sem) || sem < 1 || sem > 8) {
+          rowErrors.push(
+            createRowError(
+              rowNumber,
+              'semester',
+              `Invalid semester "${cleanData.semester}"`,
+              cleanData.semester,
+              'Semester must be between 1 and 8.',
+              'Set semester to 1-8.'
+            )
+          );
+        }
+
+        if (cleanData.sgpa !== undefined && cleanData.sgpa !== '') {
+          const sgpa = Number(cleanData.sgpa);
+          if (isNaN(sgpa) || sgpa < 0 || sgpa > 10) {
+            rowErrors.push(
+              createRowError(
+                rowNumber,
+                'sgpa',
+                `Invalid SGPA "${cleanData.sgpa}"`,
+                cleanData.sgpa,
+                'SGPA must be on a 10-point scale (0.00 to 10.00).',
+                'Enter SGPA between 0.0 and 10.0.'
+              )
+            );
+          }
+        }
+
+        if (cleanData.cgpa !== undefined && cleanData.cgpa !== '') {
+          const cgpa = Number(cleanData.cgpa);
+          if (isNaN(cgpa) || cgpa < 0 || cgpa > 10) {
+            rowErrors.push(
+              createRowError(
+                rowNumber,
+                'cgpa',
+                `Invalid CGPA "${cleanData.cgpa}"`,
+                cleanData.cgpa,
+                'CGPA must be on a 10-point scale (0.00 to 10.00).',
+                'Enter CGPA between 0.0 and 10.0.'
+              )
+            );
+          }
+        }
+        break;
+      }
+
+      case 'user_invitations': {
+        const email = String(cleanData.email || '').trim().toLowerCase();
+        const role = String(cleanData.role || '').trim().toLowerCase();
+        const identifier = String(cleanData.identifier || '').trim().toUpperCase();
+
+        if (!EMAIL_REGEX.test(email)) {
+          rowErrors.push(
+            createRowError(
+              rowNumber,
+              'email',
+              `Invalid invitation email "${email}"`,
+              email,
+              'Email does not match standard email pattern.',
+              'Provide valid destination email address.'
+            )
+          );
+        }
+
+        if (!['student', 'teacher', 'hod'].includes(role)) {
+          rowErrors.push(
+            createRowError(
+              rowNumber,
+              'role',
+              `Invalid invitation role "${cleanData.role}"`,
+              cleanData.role,
+              'Invitations can only be sent for student, teacher, or hod roles. Admin/Principal cannot be created via import.',
+              'Set role to "student", "teacher", or "hod".'
+            )
+          );
+        }
+
+        if (role === 'student' && identifier && !ctx.studentsMap.has(identifier)) {
+          rowErrors.push(
+            createRowError(
+              rowNumber,
+              'identifier',
+              `Student roll number "${identifier}" does not exist in master records`,
+              identifier,
+              'User account invitation requires a pre-existing student master record.',
+              'Import student into Students Master before inviting.'
+            )
+          );
+        }
+
+        if ((role === 'teacher' || role === 'hod') && identifier && !ctx.facultyMap.has(identifier)) {
+          rowErrors.push(
+            createRowError(
+              rowNumber,
+              'identifier',
+              `Faculty code "${identifier}" does not exist in master records`,
+              identifier,
+              'User account invitation requires a pre-existing faculty master record.',
+              'Import faculty into Faculty Master before inviting.'
+            )
+          );
         }
         break;
       }
@@ -537,32 +1268,45 @@ export function validateImportBatch(
         const dateStr = String(cleanData.date || '').trim();
 
         if (roll && !ctx.studentsMap.has(roll)) {
-          rowErrors.push({
-            rowNumber,
-            column: 'roll_no',
-            message: `Student roll number "${cleanData.roll_no}" does not exist in Students Master.`
-          });
+          rowErrors.push(
+            createRowError(
+              rowNumber,
+              'roll_no',
+              `Student roll number "${roll}" does not exist`,
+              roll,
+              'Attendance requires registered student.',
+              'Import student first.'
+            )
+          );
         }
 
         if (scode && !ctx.subjectsMap.has(scode)) {
-          rowErrors.push({
-            rowNumber,
-            column: 'subject_code',
-            message: `Subject code "${cleanData.subject_code}" does not exist in Subjects Master.`
-          });
+          rowErrors.push(
+            createRowError(
+              rowNumber,
+              'subject_code',
+              `Subject "${scode}" does not exist`,
+              scode,
+              'Attendance requires valid subject.',
+              'Import subject first.'
+            )
+          );
         }
 
-        // Date check
         const d = new Date(dateStr);
         if (isNaN(d.getTime())) {
-          rowErrors.push({
-            rowNumber,
-            column: 'date',
-            message: `Invalid attendance date "${cleanData.date}". Use YYYY-MM-DD format.`
-          });
+          rowErrors.push(
+            createRowError(
+              rowNumber,
+              'date',
+              `Invalid attendance date "${dateStr}"`,
+              dateStr,
+              'Date must be in YYYY-MM-DD format.',
+              'Use YYYY-MM-DD format.'
+            )
+          );
         }
 
-        // Status check: present, absent, late, leave
         const rawStat = String(cleanData.status || '').toLowerCase().trim();
         const allowedStatuses: Record<string, string> = {
           present: 'Present',
@@ -573,157 +1317,18 @@ export function validateImportBatch(
         };
 
         if (!allowedStatuses[rawStat]) {
-          rowErrors.push({
-            rowNumber,
-            column: 'status',
-            message: `Invalid attendance status "${cleanData.status}". Allowed values: present, absent, late, leave.`
-          });
+          rowErrors.push(
+            createRowError(
+              rowNumber,
+              'status',
+              `Invalid attendance status "${cleanData.status}"`,
+              cleanData.status,
+              'Allowed values: present, absent, late, leave.',
+              'Use present, absent, late, or leave.'
+            )
+          );
         } else {
           cleanData.status = allowedStatuses[rawStat];
-        }
-
-        // Duplicate attendance check (student + subject + date)
-        const attKey = `${roll}|${scode}|${dateStr}`;
-        if (intraFileKeys.has(attKey)) {
-          rowErrors.push({
-            rowNumber,
-            column: 'date',
-            message: `Duplicate attendance record for student ${roll}, subject ${scode}, date ${dateStr} in file.`
-          });
-        } else {
-          intraFileKeys.add(attKey);
-        }
-
-        if (ctx.attendanceSet.has(attKey)) {
-          isDuplicate = true;
-          duplicateReason = `Attendance record for ${roll} on ${dateStr} for ${scode} already recorded in database.`;
-        }
-        break;
-      }
-
-      case 'sessional_marks': {
-        const roll = String(cleanData.roll_no || '').trim().toUpperCase();
-        const scode = String(cleanData.subject_code || '').trim().toUpperCase();
-
-        if (roll && !ctx.studentsMap.has(roll)) {
-          rowErrors.push({
-            rowNumber,
-            column: 'roll_no',
-            message: `Student with roll number "${cleanData.roll_no}" does not exist.`
-          });
-        }
-
-        if (scode && !ctx.subjectsMap.has(scode)) {
-          rowErrors.push({
-            rowNumber,
-            column: 'subject_code',
-            message: `Subject "${cleanData.subject_code}" does not exist in Subjects Master.`
-          });
-        }
-
-        const marksObtained = Number(cleanData.marks_obtained);
-        const maxMarks = Number(cleanData.max_marks);
-
-        if (isNaN(marksObtained) || marksObtained < 0) {
-          rowErrors.push({
-            rowNumber,
-            column: 'marks_obtained',
-            message: `marks_obtained must be a non-negative number (got "${cleanData.marks_obtained}").`
-          });
-        }
-
-        if (isNaN(maxMarks) || maxMarks <= 0) {
-          rowErrors.push({
-            rowNumber,
-            column: 'max_marks',
-            message: `max_marks must be a positive number (got "${cleanData.max_marks}").`
-          });
-        }
-
-        if (!isNaN(marksObtained) && !isNaN(maxMarks)) {
-          if (marksObtained > maxMarks) {
-            rowErrors.push({
-              rowNumber,
-              column: 'marks_obtained',
-              message: `Marks obtained (${marksObtained}) cannot exceed maximum marks (${maxMarks}).`
-            });
-          }
-        }
-        break;
-      }
-
-      case 'results_grades': {
-        const roll = String(cleanData.roll_no || '').trim().toUpperCase();
-        const scode = String(cleanData.subject_code || '').trim().toUpperCase();
-        const sem = Number(cleanData.semester);
-
-        if (roll && !ctx.studentsMap.has(roll)) {
-          rowErrors.push({
-            rowNumber,
-            column: 'roll_no',
-            message: `Student with roll number "${cleanData.roll_no}" does not exist.`
-          });
-        }
-
-        if (scode && !ctx.subjectsMap.has(scode)) {
-          rowErrors.push({
-            rowNumber,
-            column: 'subject_code',
-            message: `Subject code "${cleanData.subject_code}" does not exist.`
-          });
-        }
-
-        if (isNaN(sem) || sem < 1 || sem > 8) {
-          rowErrors.push({
-            rowNumber,
-            column: 'semester',
-            message: `Invalid semester "${cleanData.semester}". Must be between 1 and 8.`
-          });
-        } else {
-          cleanData.semester = sem;
-        }
-
-        // Grade format
-        const validGrades = ['O', 'A+', 'A', 'B+', 'B', 'C', 'P', 'F'];
-        const gradeVal = String(cleanData.grade || '').toUpperCase().trim();
-        if (!validGrades.includes(gradeVal)) {
-          rowErrors.push({
-            rowNumber,
-            column: 'grade',
-            message: `Invalid grade format "${cleanData.grade}". Expected one of: ${validGrades.join(', ')}`
-          });
-        } else {
-          cleanData.grade = gradeVal;
-        }
-
-        // Grade point
-        const gp = Number(cleanData.grade_point);
-        if (isNaN(gp) || gp < 0 || gp > 10) {
-          rowErrors.push({
-            rowNumber,
-            column: 'grade_point',
-            message: `Invalid grade_point "${cleanData.grade_point}". Must be a number between 0.0 and 10.0.`
-          });
-        } else {
-          cleanData.grade_point = gp;
-        }
-
-        // Credits
-        const cr = Number(cleanData.credits);
-        if (isNaN(cr) || cr <= 0) {
-          rowErrors.push({
-            rowNumber,
-            column: 'credits',
-            message: `Invalid credits "${cleanData.credits}". Must be greater than 0.`
-          });
-        } else {
-          cleanData.credits = cr;
-        }
-
-        const gradeKey = `${roll}|${scode}|${sem}`;
-        if (ctx.gradesSet.has(gradeKey)) {
-          isDuplicate = true;
-          duplicateReason = `Grade record for student ${roll}, subject ${scode}, semester ${sem} already exists.`;
         }
         break;
       }
@@ -731,28 +1336,62 @@ export function validateImportBatch(
       case 'syllabus': {
         const scode = String(cleanData.subject_code || '').trim().toUpperCase();
         if (scode && !ctx.subjectsMap.has(scode)) {
-          rowErrors.push({
-            rowNumber,
-            column: 'subject_code',
-            message: `Subject "${cleanData.subject_code}" does not exist in Subjects Master.`
-          });
+          rowErrors.push(
+            createRowError(
+              rowNumber,
+              'subject_code',
+              `Subject "${scode}" does not exist in Subjects Master`,
+              scode,
+              'Syllabus must link to existing subject.',
+              'Check subject code.'
+            )
+          );
         }
+        break;
+      }
 
-        const sem = Number(cleanData.semester);
-        if (isNaN(sem) || sem < 1 || sem > 8) {
-          rowErrors.push({
-            rowNumber,
-            column: 'semester',
-            message: `Invalid semester "${cleanData.semester}". Must be between 1 and 8.`
-          });
+      case 'calendar': {
+        const startDate = String(cleanData.start_date || '').trim();
+        const endDate = String(cleanData.end_date || '').trim();
+        if (startDate && isNaN(new Date(startDate).getTime())) {
+          rowErrors.push(
+            createRowError(
+              rowNumber,
+              'start_date',
+              `Invalid start date "${startDate}"`,
+              startDate,
+              'Date must be in YYYY-MM-DD format.',
+              'Use format YYYY-MM-DD.'
+            )
+          );
         }
+        if (endDate && isNaN(new Date(endDate).getTime())) {
+          rowErrors.push(
+            createRowError(
+              rowNumber,
+              'end_date',
+              `Invalid end date "${endDate}"`,
+              endDate,
+              'Date must be in YYYY-MM-DD format.',
+              'Use format YYYY-MM-DD.'
+            )
+          );
+        }
+        break;
+      }
 
-        if (cleanData.document_url && !cleanData.document_url.startsWith('http')) {
-          rowErrors.push({
-            rowNumber,
-            column: 'document_url',
-            message: `document_url must be a valid HTTP/HTTPS web link (got "${cleanData.document_url}").`
-          });
+      case 'notices': {
+        if (!cleanData.title) {
+          rowErrors.push(
+            createRowError(
+              rowNumber,
+              'title',
+              'Notice title is required',
+              cleanData.title,
+              'Notice must have a title headline.',
+              'Provide notice title.'
+            )
+          );
         }
         break;
       }
@@ -760,37 +1399,16 @@ export function validateImportBatch(
       case 'pyqs': {
         const scode = String(cleanData.subject_code || '').trim().toUpperCase();
         if (scode && !ctx.subjectsMap.has(scode)) {
-          rowErrors.push({
-            rowNumber,
-            column: 'subject_code',
-            message: `Subject "${cleanData.subject_code}" does not exist in Subjects Master.`
-          });
-        }
-
-        const year = Number(cleanData.year);
-        if (isNaN(year) || year < 2000 || year > 2050) {
-          rowErrors.push({
-            rowNumber,
-            column: 'year',
-            message: `Invalid exam year "${cleanData.year}". Must be a 4-digit year (e.g. 2025).`
-          });
-        }
-
-        const examType = String(cleanData.exam_type || '').toLowerCase();
-        if (!examType.includes('sem') && !examType.includes('mid') && !examType.includes('sessional')) {
-          rowErrors.push({
-            rowNumber,
-            column: 'exam_type',
-            message: `Invalid exam_type "${cleanData.exam_type}". Expected: End Sem, Mid Sem, Sessional.`
-          });
-        }
-
-        if (cleanData.document_url && !cleanData.document_url.startsWith('http')) {
-          rowErrors.push({
-            rowNumber,
-            column: 'document_url',
-            message: `document_url must be a valid HTTP/HTTPS link (got "${cleanData.document_url}").`
-          });
+          rowErrors.push(
+            createRowError(
+              rowNumber,
+              'subject_code',
+              `Subject "${scode}" does not exist`,
+              scode,
+              'PYQ must belong to valid subject.',
+              'Verify subject code.'
+            )
+          );
         }
         break;
       }

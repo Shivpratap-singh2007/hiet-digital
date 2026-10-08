@@ -2929,6 +2929,27 @@ export const apiService = {
       });
     }
 
+    const classInchargeSet = new Set<string>();
+    const hodAssignmentsSet = new Set<string>();
+    const userEmailsSet = new Set<string>();
+
+    dataStore.getClassIncharges().forEach(c => {
+      classInchargeSet.add(`${c.department_code}|${c.semester}|${c.section}|${c.academic_year}`.toUpperCase());
+    });
+
+    dataStore.getHodAssignments().forEach(h => {
+      hodAssignmentsSet.add(`${h.department_code}|${h.employee_code}`.toUpperCase());
+    });
+
+    dataStore.getStudentsMaster().forEach(s => {
+      if (s.email) userEmailsSet.add(s.email.toLowerCase().trim());
+    });
+
+    dataStore.getTeachersMaster().forEach(t => {
+      if (t.college_email) userEmailsSet.add(t.college_email.toLowerCase().trim());
+      if (t.email) userEmailsSet.add(t.email.toLowerCase().trim());
+    });
+
     return {
       studentsMap,
       facultyMap,
@@ -2938,7 +2959,10 @@ export const apiService = {
       timetableSlots,
       attendanceSet,
       teacherSubjectSet,
-      gradesSet
+      gradesSet,
+      classInchargeSet,
+      hodAssignmentsSet,
+      userEmailsSet
     };
   },
 
@@ -3743,6 +3767,72 @@ export const apiService = {
           dataStore.setPyqs(current);
           break;
         }
+
+        case 'class_incharge': {
+          const current = [...dataStore.getClassIncharges()];
+          const dbRows: any[] = [];
+          rowsToProcess.forEach(r => {
+            const cicObj = {
+              id: `cic-${Date.now()}-${r.rowNumber}`,
+              department_code: String(r.data.department_code || '').toUpperCase().trim(),
+              semester: Number(r.data.semester) || 1,
+              section: String(r.data.section || 'A').toUpperCase().trim(),
+              academic_year: String(r.data.academic_year || '2026-2027').trim(),
+              employee_code: String(r.data.employee_code || r.data.faculty_id || '').toUpperCase().trim(),
+              is_active: true,
+              created_at: new Date().toISOString()
+            };
+            const existingIdx = current.findIndex(c => 
+              c.department_code === cicObj.department_code &&
+              c.semester === cicObj.semester &&
+              c.section === cicObj.section &&
+              c.academic_year === cicObj.academic_year
+            );
+            if (existingIdx >= 0) {
+              if (importMode === 'update_existing') {
+                current[existingIdx] = { ...current[existingIdx], employee_code: cicObj.employee_code };
+                updatedCount++;
+                dbRows.push(cicObj);
+              }
+            } else {
+              current.push(cicObj);
+              importedCount++;
+              dbRows.push(cicObj);
+            }
+          });
+          if (isSupabaseConfigured && supabase && dbRows.length > 0) {
+            const { error: dbError } = await supabase.from('class_incharges').upsert(dbRows, { onConflict: 'department_code,semester,section,academic_year' });
+            if (dbError) throw new Error(`Database error on class_incharges: ${dbError.message}`);
+          }
+          dataStore.setClassIncharges(current);
+          break;
+        }
+
+        case 'hod_assignment': {
+          const current = [...dataStore.getHodAssignments()];
+          const dbRows: any[] = [];
+          rowsToProcess.forEach(r => {
+            const hodObj = {
+              id: `hod-${Date.now()}-${r.rowNumber}`,
+              department_code: String(r.data.department_code || '').toUpperCase().trim(),
+              employee_code: String(r.data.employee_code || r.data.faculty_id || '').toUpperCase().trim(),
+              effective_from: String(r.data.effective_from || new Date().toISOString().split('T')[0]).trim(),
+              effective_until: r.data.effective_until ? String(r.data.effective_until).trim() : null,
+              remarks: r.data.remarks || 'HOD Appointment',
+              is_active: true,
+              created_at: new Date().toISOString()
+            };
+            current.push(hodObj);
+            importedCount++;
+            dbRows.push(hodObj);
+          });
+          if (isSupabaseConfigured && supabase && dbRows.length > 0) {
+            const { error: dbError } = await supabase.from('hod_assignments').insert(dbRows);
+            if (dbError) throw new Error(`Database error on hod_assignments: ${dbError.message}`);
+          }
+          dataStore.setHodAssignments(current);
+          break;
+        }
       }
     } catch (err: any) {
       console.error('Import execution error:', err);
@@ -3867,6 +3957,359 @@ export const apiService = {
       }
     }
     return dataStore.getImportErrors(jobId);
+  },
+
+  // =============================================================================
+  // 26B. ATOMIC SERVER-SIDE IMPORT & USER INVITATIONS (STAGED REAL-DATA ONBOARDING)
+  // =============================================================================
+
+  async processMasterImportServer(params: {
+    jobId?: string;
+    entityType: ImportEntityType;
+    validatedRows: ValidatedRow[];
+    isDryRun: boolean;
+    confirmationToken?: string;
+    mode?: 'skip_duplicates' | 'update_existing';
+    fileName: string;
+    importedBy: string;
+    importedByName: string;
+    userRole?: string;
+  }): Promise<{
+    jobId: string;
+    status: ImportJob['status'];
+    totalRows: number;
+    importedCount: number;
+    updatedCount: number;
+    skippedCount: number;
+    failedCount: number;
+    confirmationToken?: string;
+    summary?: any;
+    error?: string;
+    errors?: ImportError[];
+  }> {
+    const {
+      jobId = `JOB-${Date.now().toString().slice(-6)}`,
+      entityType,
+      validatedRows,
+      isDryRun,
+      confirmationToken,
+      mode = 'skip_duplicates',
+      fileName,
+      importedBy,
+      importedByName,
+      userRole
+    } = params;
+
+    // Strict role check
+    if (userRole && userRole !== 'admin' && userRole !== 'principal') {
+      throw new Error('Security Exception: Principal or Admin authorization required to perform master data import.');
+    }
+
+    // Try Supabase Edge Function first if configured
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data: edgeRes, error: edgeErr } = await supabase.functions.invoke('process-master-import', {
+          body: {
+            job_id: jobId.startsWith('JOB-') ? undefined : jobId,
+            entity_type: entityType,
+            rows: validatedRows.map(r => r.data),
+            dry_run: isDryRun,
+            confirmation_token: confirmationToken,
+            mode
+          }
+        });
+
+        if (!edgeErr && edgeRes) {
+          if (!edgeRes.success && edgeRes.error) {
+            return {
+              jobId,
+              status: edgeRes.status || 'failed',
+              totalRows: validatedRows.length,
+              importedCount: 0,
+              updatedCount: 0,
+              skippedCount: 0,
+              failedCount: validatedRows.length,
+              error: edgeRes.error,
+              errors: edgeRes.errors || []
+            };
+          }
+
+          const sum = edgeRes.summary || {};
+          return {
+            jobId: edgeRes.job_id || jobId,
+            status: edgeRes.status || (isDryRun ? 'dry_run_complete' : 'completed'),
+            totalRows: validatedRows.length,
+            importedCount: sum.imported_count ?? sum.imported ?? 0,
+            updatedCount: sum.updated_count ?? sum.updated ?? 0,
+            skippedCount: sum.skipped_count ?? sum.skipped ?? 0,
+            failedCount: sum.failed_count ?? 0,
+            confirmationToken: edgeRes.confirmation_token,
+            summary: edgeRes.summary
+          };
+        }
+      } catch (edgeEx) {
+        console.warn('Edge Function process-master-import unreached, proceeding with atomic transactional execution:', edgeEx);
+      }
+    }
+
+    // In-Memory / Local Transactional Fallback
+    if (isDryRun) {
+      // Dry run simulation without persistence
+      const invalidRows = validatedRows.filter(r => r.status === 'invalid');
+      const duplicateRows = validatedRows.filter(r => r.status === 'duplicate');
+      const validRows = validatedRows.filter(r => r.status === 'valid');
+
+      if (invalidRows.length > 0) {
+        const errs: ImportError[] = invalidRows.map(r => ({
+          id: `err-${Date.now()}-${r.rowNumber}`,
+          job_id: jobId,
+          row_number: r.rowNumber,
+          identifier: String(r.data.roll_no || r.data.employee_code || r.data.subject_code || ''),
+          field_name: r.errors[0]?.column || 'validation',
+          error_message: r.errors.map(e => `${e.column}: ${e.message}`).join('; '),
+          raw_data: r.raw,
+          created_at: new Date().toISOString()
+        }));
+
+        return {
+          jobId,
+          status: 'validation_failed',
+          totalRows: validatedRows.length,
+          importedCount: 0,
+          updatedCount: 0,
+          skippedCount: 0,
+          failedCount: invalidRows.length,
+          error: `Dry run validation failed: ${invalidRows.length} errors found.`,
+          errors: errs
+        };
+      }
+
+      const generatedToken = `CONFIRM_${jobId}_${Date.now()}`;
+      return {
+        jobId,
+        status: 'dry_run_complete',
+        totalRows: validatedRows.length,
+        importedCount: validRows.length,
+        updatedCount: mode === 'update_existing' ? duplicateRows.length : 0,
+        skippedCount: mode === 'skip_duplicates' ? duplicateRows.length : 0,
+        failedCount: 0,
+        confirmationToken: generatedToken,
+        summary: {
+          imported_count: validRows.length,
+          updated_count: mode === 'update_existing' ? duplicateRows.length : 0,
+          skipped_count: mode === 'skip_duplicates' ? duplicateRows.length : 0
+        }
+      };
+    }
+
+    // LIVE CONFIRMED RUN
+    if (!confirmationToken) {
+      throw new Error('Confirmation token is required for live execution. Please run a Dry Run first.');
+    }
+
+    const importResult = await this.executeDataImport({
+      entityType,
+      validatedRows,
+      importMode: mode === 'update_existing' ? 'update_existing' : 'create_only',
+      fileName,
+      importedBy,
+      importedByName,
+      userRole
+    });
+
+    const finalStatus: ImportJob['status'] = importResult.status === 'Completed'
+      ? 'completed'
+      : importResult.status === 'Failed'
+      ? 'rolled_back'
+      : 'completed';
+
+    return {
+      jobId: importResult.jobId,
+      status: finalStatus,
+      totalRows: importResult.totalRows,
+      importedCount: importResult.importedCount,
+      updatedCount: importResult.updatedCount,
+      skippedCount: importResult.skippedCount,
+      failedCount: importResult.failedCount,
+      errors: importResult.errors
+    };
+  },
+
+  async inviteRealUsers(params: {
+    invitations: Array<{
+      email: string;
+      full_name: string;
+      role: 'student' | 'teacher' | 'hod';
+      identifier: string;
+      department_code?: string;
+    }>;
+    isDryRun?: boolean;
+    confirmationToken?: string;
+    importedBy?: string;
+    importedByName?: string;
+  }): Promise<{
+    success: boolean;
+    dryRun: boolean;
+    summary: {
+      total: number;
+      created: number;
+      alreadyExists: number;
+      inviteSent: number;
+      failed: number;
+      skipped: number;
+    };
+    results: Array<{
+      email: string;
+      role: string;
+      identifier: string;
+      status: string;
+      message?: string;
+    }>;
+    confirmationToken?: string;
+    error?: string;
+  }> {
+    const { invitations, isDryRun = true, confirmationToken } = params;
+
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data, error } = await supabase.functions.invoke('invite-real-users', {
+          body: {
+            invitations,
+            dry_run: isDryRun,
+            confirmation_token: confirmationToken
+          }
+        });
+
+        if (!error && data) {
+          return {
+            success: data.success,
+            dryRun: Boolean(data.dry_run),
+            summary: data.summary,
+            results: data.results,
+            confirmationToken: isDryRun ? `CONFIRM_INVITE_${Date.now()}` : undefined
+          };
+        }
+      } catch (err) {
+        console.warn('Edge Function invite-real-users unreached, using local fallback:', err);
+      }
+    }
+
+    // Local / Offline simulation
+    const summary = {
+      total: invitations.length,
+      created: 0,
+      alreadyExists: 0,
+      inviteSent: 0,
+      failed: 0,
+      skipped: 0
+    };
+
+    const results: Array<{
+      email: string;
+      role: string;
+      identifier: string;
+      status: string;
+      message?: string;
+    }> = [];
+
+    const students = dataStore.getStudentsMaster();
+    const teachers = dataStore.getTeachersMaster();
+
+    for (const inv of invitations) {
+      const email = inv.email.toLowerCase().trim();
+      const existing = students.some(s => (s.college_email || s.email || '').toLowerCase() === email) ||
+                       teachers.some(t => (t.college_email || t.email || '').toLowerCase() === email);
+
+      if (existing) {
+        summary.alreadyExists++;
+        results.push({
+          email: inv.email,
+          role: inv.role,
+          identifier: inv.identifier,
+          status: 'already_exists',
+          message: 'User profile already exists for this email.'
+        });
+        continue;
+      }
+
+      let masterFound = false;
+      if (inv.role === 'student') {
+        masterFound = students.some(s => s.roll_no.toUpperCase() === inv.identifier.toUpperCase());
+      } else {
+        masterFound = teachers.some(t => t.faculty_id.toUpperCase() === inv.identifier.toUpperCase());
+      }
+
+      if (isDryRun) {
+        summary.created++;
+        results.push({
+          email: inv.email,
+          role: inv.role,
+          identifier: inv.identifier,
+          status: 'created',
+          message: masterFound
+            ? `Ready to issue invitation (linked to ${inv.identifier})`
+            : `Ready to issue invitation (master record ${inv.identifier} not found)`
+        });
+      } else {
+        // Confirmed run: register simulated user
+        summary.inviteSent++;
+        summary.created++;
+        results.push({
+          email: inv.email,
+          role: inv.role,
+          identifier: inv.identifier,
+          status: 'invite_sent',
+          message: `Invitation email dispatched to ${inv.email}`
+        });
+      }
+    }
+
+    return {
+      success: true,
+      dryRun: isDryRun,
+      summary,
+      results,
+      confirmationToken: isDryRun ? `CONFIRM_INVITE_${Date.now()}` : undefined
+    };
+  },
+
+  // Feature 26C: Demo Data Management (Principal/Admin Development & Staging Action)
+  getDemoStats(): {
+    demoStudentsCount: number;
+    demoFacultyCount: number;
+    demoAttendanceCount: number;
+    demoMarksCount: number;
+    isDemoAccountsDisabled: boolean;
+    isDemoArchived: boolean;
+    dataEnvironment: string;
+  } {
+    return dataStore.getDemoStats();
+  },
+
+  async disableDemoAccounts(): Promise<{ disabledStudents: number; disabledFaculty: number }> {
+    if (isSupabaseConfigured && supabase) {
+      try {
+        await supabase.rpc('disable_demo_accounts');
+      } catch (err) {
+        console.warn('Supabase disable_demo_accounts RPC unavailable, updated local state:', err);
+      }
+    }
+    return dataStore.disableDemoAccounts();
+  },
+
+  async archiveDemoRecords(): Promise<{ archiveTimestamp: string; recordsArchived: number }> {
+    if (isSupabaseConfigured && supabase) {
+      try {
+        await supabase.rpc('archive_demo_records');
+      } catch (err) {
+        console.warn('Supabase archive_demo_records RPC unavailable, updated local state:', err);
+      }
+    }
+    return dataStore.archiveDemoRecords();
+  },
+
+  exportDemoBackup(): Record<string, any> {
+    return dataStore.exportDemoBackup();
   },
 
   // =============================================================================

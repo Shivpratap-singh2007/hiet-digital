@@ -24,6 +24,7 @@ import { CampusAiAssistantModal } from './components/ai/CampusAiAssistantModal';
 import { VerifyPublicDoc } from './components/common/VerifyPublicDoc';
 import { DemoAccountsPage } from './pages/dev/DemoAccountsPage';
 import { AiCampusView } from './pages/ai/AiCampusView';
+import { areDevRoutesEnabled } from './lib/envConfig';
 
 const MainLayout: React.FC = () => {
   const { user, role, mustChangePassword } = useAuth();
@@ -143,7 +144,7 @@ const MainLayout: React.FC = () => {
   }, []);
 
   // Development Demo Accounts Switcher (/dev/demo-accounts)
-  if (isDev && pathname === '/dev/demo-accounts') {
+  if (areDevRoutesEnabled() && pathname === '/dev/demo-accounts') {
     return <DemoAccountsPage />;
   }
 
@@ -161,7 +162,7 @@ const MainLayout: React.FC = () => {
   let effectiveRole = role;
   let devPreviewActive = false;
 
-  if (isDev && typeof window !== 'undefined') {
+  if (areDevRoutesEnabled() && typeof window !== 'undefined') {
     const params = new URLSearchParams(window.location.search);
     const pRole = params.get('previewRole');
     if (pRole) {

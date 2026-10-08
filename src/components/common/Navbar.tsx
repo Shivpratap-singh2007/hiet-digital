@@ -15,6 +15,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { ThemeToggle } from '../../context/ThemeContext';
 import { dataStore } from '../../lib/mockData';
+import { getAppEnvironment, isProduction } from '../../lib/envConfig';
 
 interface Props {
   onToggleSidebar: () => void;
@@ -127,9 +128,16 @@ export const Navbar: React.FC<Props> = ({
               <span className="font-extrabold text-[#0f2942] dark:text-[#f5f5f5] text-sm sm:text-base tracking-tight block leading-tight">
                 HIET GROUP OF INSTITUTIONS
               </span>
-              <span className="text-[11px] text-slate-500 dark:text-[#a3a3a3] font-semibold block leading-none mt-0.5">
-                HIET Digital Campus
-              </span>
+              <div className="flex items-center gap-2 mt-0.5">
+                <span className="text-[11px] text-slate-500 dark:text-[#a3a3a3] font-semibold block leading-none">
+                  HIET Digital Campus
+                </span>
+                {((role === 'principal' || role === 'admin') && !isProduction()) && (
+                  <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold tracking-wide uppercase bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-300/80 dark:border-amber-800 leading-tight">
+                    {getAppEnvironment() === 'staging' ? 'Staging Environment' : 'Development Environment'}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         </div>

@@ -32,6 +32,7 @@ export interface StudentMaster {
   semester: number;
   section: string;
   college_email: string;
+  email?: string;
   phone: string;
   avatar_url?: string;
   status: 'active' | 'disabled' | 'graduated' | 'suspended';
@@ -48,6 +49,7 @@ export interface TeacherMaster {
   department: string;
   designation: string;
   college_email: string;
+  email?: string;
   phone: string;
   role?: 'teacher' | 'hod';
   is_hod: boolean;
@@ -701,17 +703,23 @@ export interface FineAppeal {
 }
 
 export type ImportEntityType = 
-  | 'students' 
+  | 'departments'
+  | 'departments_branches'
   | 'faculty' 
-  | 'departments_branches' 
+  | 'students' 
   | 'subjects' 
   | 'teacher_subjects' 
+  | 'class_incharge'
+  | 'hod_assignment'
   | 'timetable' 
-  | 'attendance' 
+  | 'syllabus' 
   | 'sessional_marks' 
   | 'results_grades' 
-  | 'syllabus' 
-  | 'pyqs';
+  | 'attendance' 
+  | 'calendar'
+  | 'notices'
+  | 'pyqs'
+  | 'user_invitations';
 
 export interface ImportJob {
   id: string;
@@ -725,7 +733,20 @@ export interface ImportJob {
   failed_rows: number;
   imported_by?: string;
   imported_by_name: string;
-  status: 'Processing' | 'Completed' | 'Completed with warnings' | 'Failed';
+  status: 
+    | 'uploaded'
+    | 'validating'
+    | 'validation_failed'
+    | 'dry_run_complete'
+    | 'awaiting_confirmation'
+    | 'processing'
+    | 'completed'
+    | 'rolled_back'
+    | 'failed'
+    | 'Processing' 
+    | 'Completed' 
+    | 'Completed with warnings' 
+    | 'Failed';
   created_at: string;
 }
 
@@ -733,11 +754,41 @@ export interface ImportError {
   id: string;
   job_id: string;
   row_number: number;
+  row?: number;
   identifier?: string;
   field_name?: string;
   error_message: string;
+  message?: string;
+  column?: string;
+  invalid_value?: string;
+  reason?: string;
+  suggested_correction?: string;
   raw_data?: any;
   created_at: string;
+}
+
+export interface ClassInchargeRecord {
+  id: string;
+  department_code: string;
+  semester: number;
+  section: string;
+  academic_year: string;
+  employee_code: string;
+  faculty_name?: string;
+  is_active?: boolean;
+  created_at?: string;
+}
+
+export interface HodAssignmentRecord {
+  id: string;
+  department_code: string;
+  employee_code: string;
+  faculty_name?: string;
+  effective_from: string;
+  effective_until?: string | null;
+  remarks?: string;
+  is_active?: boolean;
+  created_at?: string;
 }
 
 export interface AiKnowledgeDocument {

@@ -25,7 +25,13 @@ import {
   FileText,
   FileQuestion,
   Check,
-  AlertCircle
+  AlertCircle,
+  Building2,
+  UserCheck,
+  Mail,
+  Compass,
+  X,
+  Lock
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { useAuth } from '../../context/AuthContext';
@@ -41,26 +47,35 @@ import {
   ValidationMasterContext, 
   ValidationSummary 
 } from '../../lib/importValidation';
+import { RealDataOnboardingWizard } from './RealDataOnboardingWizard';
+import { DemoDataManagementModal } from './DemoDataManagementModal';
+import { isProduction } from '../../lib/envConfig';
 
 const MODULE_ICONS: Record<ImportEntityType, React.ElementType> = {
-  students: GraduationCap,
-  faculty: Briefcase,
+  departments: Building2,
   departments_branches: Layers,
+  faculty: Briefcase,
+  students: GraduationCap,
   subjects: BookOpen,
   teacher_subjects: Users,
+  class_incharge: UserCheck,
+  hod_assignment: Award,
   timetable: Calendar,
-  attendance: CalendarCheck,
+  syllabus: FileSpreadsheet,
   sessional_marks: FileText,
   results_grades: Award,
-  syllabus: FileSpreadsheet,
-  pyqs: FileQuestion
+  attendance: CalendarCheck,
+  calendar: Calendar,
+  notices: FileText,
+  pyqs: FileQuestion,
+  user_invitations: Mail
 };
 
 export const MasterDataImportView: React.FC = () => {
   const { user, role } = useAuth();
 
-  // Active top tab
-  const [activeTab, setActiveTab] = useState<'import' | 'audit'>('import');
+  // Active top tab: wizard | import | audit
+  const [activeTab, setActiveTab] = useState<'wizard' | 'import' | 'audit'>('wizard');
 
   // Selected Entity Module
   const [selectedEntity, setSelectedEntity] = useState<ImportEntityType>('students');
@@ -73,6 +88,14 @@ export const MasterDataImportView: React.FC = () => {
   const [validationSummary, setValidationSummary] = useState<ValidationSummary | null>(null);
   const [isValidating, setIsValidating] = useState(false);
   const [isDryRunSuccess, setIsDryRunSuccess] = useState(false);
+  const [dryRunToken, setDryRunToken] = useState<string | null>(null);
+
+  // Confirmation Modal State
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [hasAcknowledgedSafety, setHasAcknowledgedSafety] = useState(false);
+
+  // Demo Data Management Modal State
+  const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
 
   // Execution State
   const [isProcessing, setIsProcessing] = useState(false);
@@ -83,7 +106,7 @@ export const MasterDataImportView: React.FC = () => {
     updatedCount: number;
     skippedCount: number;
     failedCount: number;
-    status: 'Completed' | 'Completed with warnings' | 'Failed';
+    status: ImportJob['status'];
     errors: ImportError[];
   } | null>(null);
 
@@ -97,6 +120,7 @@ export const MasterDataImportView: React.FC = () => {
   const [validationContext, setValidationContext] = useState<ValidationMasterContext | null>(null);
   const [isLoadingContext, setIsLoadingContext] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successToast, setSuccessToast] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -145,6 +169,7 @@ export const MasterDataImportView: React.FC = () => {
   const handleSelectModule = (entity: ImportEntityType) => {
     setSelectedEntity(entity);
     handleResetWorkflow();
+    setActiveTab('import');
   };
 
   const handleResetWorkflow = () => {
@@ -153,8 +178,11 @@ export const MasterDataImportView: React.FC = () => {
     setRawRows([]);
     setValidationSummary(null);
     setIsDryRunSuccess(false);
+    setDryRunToken(null);
     setImportResult(null);
     setErrorMessage(null);
+    setIsConfirmModalOpen(false);
+    setHasAcknowledgedSafety(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -173,6 +201,7 @@ export const MasterDataImportView: React.FC = () => {
     setErrorMessage(null);
     setImportResult(null);
     setIsDryRunSuccess(false);
+    setDryRunToken(null);
 
     // Limit check: 5MB maximum
     if (file.size > 5 * 1024 * 1024) {
@@ -237,7 +266,15 @@ export const MasterDataImportView: React.FC = () => {
     try {
       const summary = validateImportBatch(entity, rows, ctx);
       setValidationSummary(summary);
-      setIsDryRunSuccess(true);
+      
+      // If 0 invalid rows, dry run passes and produces token
+      if (summary.invalidCount === 0) {
+        setIsDryRunSuccess(true);
+        setDryRunToken(`CONFIRM_DRYRUN_${Date.now()}`);
+      } else {
+        setIsDryRunSuccess(false);
+        setDryRunToken(null);
+      }
     } catch (e: any) {
       setErrorMessage(`Validation error: ${e.message || 'Unknown verification error'}`);
     } finally {
@@ -245,30 +282,98 @@ export const MasterDataImportView: React.FC = () => {
     }
   };
 
-  // Execute Actual Import
-  const handleExecuteImport = async () => {
-    if (!validationSummary || validationSummary.rows.length === 0) return;
+  // Open Confirmation Modal
+  const handleInitiateImport = () => {
+    if (!validationSummary) return;
+
+    if (validationSummary.invalidCount > 0) {
+      setErrorMessage('Cannot proceed: Uploaded file contains validation errors. All rows must pass validation before atomic import.');
+      return;
+    }
+
+    if (!isDryRunSuccess || !dryRunToken) {
+      setErrorMessage('Please run and complete a successful Dry Run before confirming.');
+      return;
+    }
+
+    setIsConfirmModalOpen(true);
+    setHasAcknowledgedSafety(false);
+  };
+
+  // Execute Confirmed Atomic Server-Side Import
+  const handleConfirmedAtomicImport = async () => {
+    if (!validationSummary || !dryRunToken) return;
 
     setIsProcessing(true);
     setErrorMessage(null);
 
     try {
-      const res = await apiService.executeDataImport({
-        entityType: selectedEntity,
-        validatedRows: validationSummary.rows,
-        importMode,
-        fileName: fileName || `${selectedEntity}_import.csv`,
-        importedBy: user?.id || 'admin',
-        importedByName: user?.name || 'College Administrator',
-        userRole: role || undefined
-      });
+      if (selectedEntity === 'user_invitations') {
+        const invitations = validationSummary.rows.map(r => ({
+          email: r.data.email,
+          full_name: r.data.full_name || r.data.name || 'Invited User',
+          role: r.data.role || 'student',
+          identifier: r.data.identifier || r.data.roll_no || r.data.employee_code || '',
+          department_code: r.data.department_code || 'CSE'
+        }));
 
-      setImportResult(res);
+        const inviteRes = await apiService.inviteRealUsers({
+          invitations,
+          isDryRun: false,
+          confirmationToken: dryRunToken,
+          importedBy: user?.id,
+          importedByName: user?.name
+        });
+
+        setIsConfirmModalOpen(false);
+        setImportResult({
+          jobId: `INV-${Date.now().toString().slice(-6)}`,
+          totalRows: invitations.length,
+          importedCount: inviteRes.summary.inviteSent,
+          updatedCount: 0,
+          skippedCount: inviteRes.summary.alreadyExists,
+          failedCount: inviteRes.summary.failed,
+          status: inviteRes.summary.failed === 0 ? 'completed' : 'completed',
+          errors: []
+        });
+      } else {
+        const res = await apiService.processMasterImportServer({
+          entityType: selectedEntity,
+          validatedRows: validationSummary.rows,
+          isDryRun: false,
+          confirmationToken: dryRunToken,
+          mode: importMode === 'update_existing' ? 'update_existing' : 'skip_duplicates',
+          fileName: fileName || `${selectedEntity}_import.csv`,
+          importedBy: user?.id || 'admin',
+          importedByName: user?.name || 'College Administrator',
+          userRole: role || undefined
+        });
+
+        setIsConfirmModalOpen(false);
+        setImportResult({
+          jobId: res.jobId,
+          totalRows: res.totalRows,
+          importedCount: res.importedCount,
+          updatedCount: res.updatedCount,
+          skippedCount: res.skippedCount,
+          failedCount: res.failedCount,
+          status: res.status,
+          errors: res.errors || []
+        });
+
+        if (res.status === 'rolled_back') {
+          setErrorMessage(`Atomic Rollback Triggered: ${res.error || 'A required constraint failed during execution. All row insertions were safely rolled back.'}`);
+        } else {
+          setSuccessToast(`Successfully imported ${res.importedCount} records for ${selectedEntity}.`);
+        }
+      }
+
       // Refresh audit jobs list and master validation context
       loadAuditJobs();
       loadValidationContext();
     } catch (e: any) {
-      setErrorMessage(e.message || 'Import could not be completed. Please check your connection and try again.');
+      setIsConfirmModalOpen(false);
+      setErrorMessage(`Import failed and rolled back safely: ${e.message || 'Transaction aborted.'}`);
     } finally {
       setIsProcessing(false);
     }
@@ -281,7 +386,7 @@ export const MasterDataImportView: React.FC = () => {
       .filter(r => r.status === 'invalid')
       .map(r => ({
         rowNumber: r.rowNumber,
-        identifier: r.data.roll_no || r.data.faculty_id || r.data.subject_code || r.data.branch_code || 'N/A',
+        identifier: r.data.roll_no || r.data.employee_code || r.data.faculty_id || r.data.subject_code || r.data.branch_code || 'N/A',
         field: r.errors[0]?.column || 'validation',
         error: r.errors.map(e => `${e.column}: ${e.message}`).join('; '),
         rawData: r.data
@@ -293,86 +398,109 @@ export const MasterDataImportView: React.FC = () => {
   // Security Check: Only Principal / Admin should access
   if (role !== 'admin' && role !== 'principal') {
     return (
-      <div className="max-w-4xl mx-auto p-6 sm:p-12 text-center bg-white rounded-2xl border border-red-200 shadow-xs my-8">
-        <div className="w-16 h-16 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-red-100">
+      <div className="max-w-4xl mx-auto p-6 sm:p-12 text-center bg-white dark:bg-slate-900 rounded-2xl border border-red-200 dark:border-red-900 shadow-xs my-8">
+        <div className="w-16 h-16 bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-red-100 dark:border-red-900">
           <ShieldAlert className="w-8 h-8" />
         </div>
-        <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Access Restricted</h2>
-        <p className="text-sm text-slate-600 mt-2 max-w-md mx-auto">
-          The College Data Import & Master Management Console is strictly accessible only to Principal & College Administration.
+        <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Access Restricted</h2>
+        <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-2 max-w-md mx-auto">
+          The Master Data Import and Staged Real-Data Onboarding Console is restricted strictly to College Principals and System Administrators.
         </p>
       </div>
     );
   }
 
-  const selectedConfig = IMPORT_MODULE_CONFIGS[selectedEntity];
-  const ModuleIcon = MODULE_ICONS[selectedEntity];
+  const selectedConfig = IMPORT_MODULE_CONFIGS[selectedEntity] || IMPORT_MODULE_CONFIGS['students'];
+  const ModuleIcon = MODULE_ICONS[selectedEntity] || GraduationCap;
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-16">
-      {/* 1. Header & Navigation Breadcrumb */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-xs">
+    <div className="space-y-6 max-w-7xl mx-auto pb-12">
+      {/* Top Header Card */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 text-xs text-slate-500 mb-1.5 flex-wrap">
-              <span>Principal Dashboard</span>
+            <div className="flex items-center space-x-2 text-xs text-slate-500 mb-1">
+              <span>Administration</span>
               <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-              <span className="font-medium text-slate-700">Data Management</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">Data Management</span>
               <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-              <span className="font-semibold text-[#0f2942] bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">
-                Import College Data
+              <span className="font-semibold text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded-md border border-blue-200 dark:border-blue-900">
+                Staged Real College Onboarding
               </span>
             </div>
-            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2.5">
-              <Database className="w-6 h-6 text-blue-600" />
-              College Data Import & Master Management
+            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2.5">
+              <Database className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+              College Data Import & Real-Data Onboarding
             </h1>
-            <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-2xl">
-              Add and update student databases, faculty allocations, timetable schedules, attendance, and exam grades through validated CSV/XLSX imports without manual database queries.
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-2xl">
+              Safely onboard real college records (Departments, Faculty, Students, Subjects, Timetable, Marks) with atomic transactional rollback and zero plaintext password imports.
             </p>
           </div>
 
-          {/* Tab Selector: Import Console vs Audit Logs */}
-          <div className="flex items-center bg-slate-100 p-1 rounded-xl self-start sm:self-auto border border-slate-200">
-            <button
-              onClick={() => setActiveTab('import')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 ${
-                activeTab === 'import'
-                  ? 'bg-white text-slate-900 shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <UploadCloud className="w-3.5 h-3.5" />
-              Import Wizard
-            </button>
-            <button
-              onClick={() => setActiveTab('audit')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 ${
-                activeTab === 'audit'
-                  ? 'bg-white text-slate-900 shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <History className="w-3.5 h-3.5" />
-              Import History ({auditJobs.length})
-            </button>
+          {/* Top Actions: Tabs + Demo Data Management */}
+          <div className="flex flex-wrap items-center gap-2.5 self-start sm:self-auto">
+            {!isProduction() && (
+              <button
+                onClick={() => setIsDemoModalOpen(true)}
+                className="px-3 py-1.5 rounded-xl border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/60 text-amber-800 dark:text-amber-300 font-semibold text-xs transition flex items-center gap-1.5 shadow-xs"
+              >
+                <Database className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                Demo Data
+              </button>
+            )}
+
+            <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
+              <button
+                onClick={() => setActiveTab('wizard')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 ${
+                  activeTab === 'wizard'
+                    ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                <Compass className="w-3.5 h-3.5 text-indigo-500" />
+                Onboarding Wizard
+              </button>
+              <button
+                onClick={() => setActiveTab('import')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 ${
+                  activeTab === 'import'
+                    ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                <UploadCloud className="w-3.5 h-3.5 text-blue-500" />
+                Import Console
+              </button>
+              <button
+                onClick={() => setActiveTab('audit')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 ${
+                  activeTab === 'audit'
+                    ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                <History className="w-3.5 h-3.5 text-slate-500" />
+                Audit Logs ({auditJobs.length})
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Status / Notice Pill */}
-        <div className="mt-4 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500">
+        <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
           <div className="flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+            <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
             <span>Strict Role Verification Active: Administrator Authorization Enforced</span>
           </div>
           <div className="flex items-center gap-2">
             {isLoadingContext ? (
-              <span className="flex items-center gap-1.5 text-blue-600">
+              <span className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400">
                 <RefreshCw className="w-3 h-3 animate-spin" />
                 Synchronizing master catalogs...
               </span>
             ) : (
-              <span className="text-slate-400">
+              <span className="text-slate-400 dark:text-slate-500 font-medium">
                 {validationContext?.studentsMap.size || 0} Students • {validationContext?.facultyMap.size || 0} Faculty • {validationContext?.subjectsMap.size || 0} Subjects verified
               </span>
             )}
@@ -382,39 +510,64 @@ export const MasterDataImportView: React.FC = () => {
 
       {/* Global Error Banner */}
       {errorMessage && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3 text-red-800 text-xs sm:text-sm">
-          <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+        <div className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 rounded-xl p-4 flex items-start gap-3 text-red-800 dark:text-red-300 text-xs sm:text-sm shadow-xs">
+          <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
           <div className="flex-1">
             <span className="font-semibold">Import Notice: </span>
             {errorMessage}
           </div>
           <button 
             onClick={() => setErrorMessage(null)}
-            className="text-red-600 hover:text-red-900 text-xs font-medium"
+            className="text-red-600 hover:text-red-900 dark:hover:text-red-200 text-xs font-medium"
           >
             Dismiss
           </button>
         </div>
       )}
 
-      {activeTab === 'audit' ? (
-        /* ========================================================================= */
-        /* SECTION 20: IMPORT HISTORY & AUDIT LOGS                                   */
-        /* ========================================================================= */
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-xs space-y-6">
+      {/* Success Banner */}
+      {successToast && (
+        <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 rounded-xl p-4 flex items-start gap-3 text-emerald-800 dark:text-emerald-300 text-xs sm:text-sm shadow-xs">
+          <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <span className="font-semibold">Success: </span>
+            {successToast}
+          </div>
+          <button 
+            onClick={() => setSuccessToast(null)}
+            className="text-emerald-600 hover:text-emerald-900 dark:hover:text-emerald-200 text-xs font-medium"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
+      {/* TAB 1: ONBOARDING WIZARD */}
+      {activeTab === 'wizard' && (
+        <RealDataOnboardingWizard
+          onSelectModule={handleSelectModule}
+          context={validationContext}
+          recentJobs={auditJobs}
+          onOpenDemoManagement={!isProduction() ? () => setIsDemoModalOpen(true) : undefined}
+        />
+      )}
+
+      {/* TAB 2: AUDIT LOGS */}
+      {activeTab === 'audit' && (
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xs space-y-6">
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div>
-              <h2 className="text-base sm:text-lg font-bold text-slate-900">
+              <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
                 Master Data Import Audit History
               </h2>
-              <p className="text-xs text-slate-500">
-                Immutable record of all college bulk imports, processed rows, skips, and rejections.
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Immutable ledger of all college bulk imports, processed rows, skips, and rejections.
               </p>
             </div>
             <button
               onClick={loadAuditJobs}
               disabled={isLoadingAudit}
-              className="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-1.5"
+              className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-1.5"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isLoadingAudit ? 'animate-spin' : ''}`} />
               Refresh
@@ -422,150 +575,171 @@ export const MasterDataImportView: React.FC = () => {
           </div>
 
           {auditJobs.length === 0 ? (
-            <div className="text-center py-12 border-2 border-dashed border-slate-200 rounded-xl">
-              <History className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-              <p className="text-sm font-semibold text-slate-700">No import records recorded yet</p>
-              <p className="text-xs text-slate-400 mt-1">
+            <div className="text-center py-12 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
+              <History className="w-10 h-10 text-slate-300 dark:text-slate-700 mx-auto mb-2" />
+              <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">No import records recorded yet</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
                 Completed imports from the Import Wizard will be audited and logged here.
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-xl border border-slate-200">
+            <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
               <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200">
+                <thead className="bg-slate-50 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-800">
                   <tr>
                     <th className="p-3">Date</th>
                     <th className="p-3">Admin</th>
                     <th className="p-3">Data Type</th>
                     <th className="p-3">File Name</th>
                     <th className="p-3 text-center">Total Rows</th>
-                    <th className="p-3 text-center text-emerald-700">Imported</th>
-                    <th className="p-3 text-center text-blue-700">Updated</th>
-                    <th className="p-3 text-center text-amber-700">Skipped</th>
-                    <th className="p-3 text-center text-red-700">Failed</th>
+                    <th className="p-3 text-center text-emerald-700 dark:text-emerald-400">Imported</th>
+                    <th className="p-3 text-center text-blue-700 dark:text-blue-400">Updated</th>
+                    <th className="p-3 text-center text-amber-700 dark:text-amber-400">Skipped</th>
+                    <th className="p-3 text-center text-red-700 dark:text-red-400">Failed</th>
                     <th className="p-3">Status</th>
                     <th className="p-3 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 text-slate-700">
-                  {auditJobs.map((job) => {
-                    const d = new Date(job.created_at);
-                    const formattedDate = !isNaN(d.getTime()) 
-                      ? d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
-                      : job.created_at;
-
-                    return (
-                      <tr key={job.id} className="hover:bg-slate-50/80 transition">
-                        <td className="p-3 font-medium text-slate-900 whitespace-nowrap">{formattedDate}</td>
-                        <td className="p-3 whitespace-nowrap">{job.imported_by_name || 'Admin'}</td>
-                        <td className="p-3 whitespace-nowrap">
-                          <span className="font-semibold text-slate-800 capitalize">
-                            {job.target_entity.replace('_', ' ')}
-                          </span>
-                        </td>
-                        <td className="p-3 font-mono text-[11px] text-slate-600 max-w-[160px] truncate" title={job.file_name}>
-                          {job.file_name}
-                        </td>
-                        <td className="p-3 text-center font-bold text-slate-800">{job.total_rows}</td>
-                        <td className="p-3 text-center font-bold text-emerald-600">{job.successful_rows}</td>
-                        <td className="p-3 text-center font-semibold text-blue-600">{job.updated_rows || 0}</td>
-                        <td className="p-3 text-center text-amber-600">{job.skipped_rows || 0}</td>
-                        <td className="p-3 text-center font-bold text-red-600">{job.failed_rows}</td>
-                        <td className="p-3 whitespace-nowrap">
-                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                            job.status === 'Completed'
-                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                              : job.status === 'Completed with warnings'
-                              ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                              : 'bg-red-50 text-red-700 border border-red-200'
-                          }`}>
-                            {job.status === 'Completed' && <CheckCircle2 className="w-3 h-3" />}
-                            {job.status === 'Completed with warnings' && <AlertTriangle className="w-3 h-3" />}
-                            {job.status === 'Failed' && <XCircle className="w-3 h-3" />}
-                            {job.status}
-                          </span>
-                        </td>
-                        <td className="p-3 text-right">
-                          <button
-                            onClick={() => handleSelectAuditJob(job)}
-                            className="text-xs text-blue-600 font-semibold hover:underline"
-                          >
-                            Details
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
+                  {auditJobs.map((job) => (
+                    <tr key={job.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
+                      <td className="p-3 font-mono text-[11px] text-slate-500 dark:text-slate-400">
+                        {job.created_at ? new Date(job.created_at).toLocaleString() : 'N/A'}
+                      </td>
+                      <td className="p-3 font-medium text-slate-900 dark:text-white">
+                        {job.imported_by_name || 'Admin'}
+                      </td>
+                      <td className="p-3 uppercase font-mono font-bold text-slate-600 dark:text-slate-400">
+                        {job.target_entity}
+                      </td>
+                      <td className="p-3 font-medium text-slate-800 dark:text-slate-200 max-w-[150px] truncate" title={job.file_name}>
+                        {job.file_name}
+                      </td>
+                      <td className="p-3 text-center font-bold">{job.total_rows}</td>
+                      <td className="p-3 text-center font-bold text-emerald-700 dark:text-emerald-400">{job.successful_rows}</td>
+                      <td className="p-3 text-center font-bold text-blue-700 dark:text-blue-400">{job.updated_rows || 0}</td>
+                      <td className="p-3 text-center font-bold text-amber-700 dark:text-amber-400">{job.skipped_rows || 0}</td>
+                      <td className="p-3 text-center font-bold text-red-700 dark:text-red-400">{job.failed_rows}</td>
+                      <td className="p-3">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                          job.status === 'Completed' || job.status === 'completed'
+                            ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900'
+                            : job.status === 'Failed' || job.status === 'failed' || job.status === 'rolled_back'
+                            ? 'bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-400 border-red-200 dark:border-red-900'
+                            : 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-900'
+                        }`}>
+                          {job.status}
+                        </span>
+                      </td>
+                      <td className="p-3 text-right">
+                        <button
+                          onClick={() => handleSelectAuditJob(job)}
+                          className="px-2.5 py-1 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/50 rounded-lg transition"
+                        >
+                          View Details
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
           )}
 
-          {/* Audit Job Detail Modal / Panel */}
+          {/* Audit Job Detail Modal */}
           {selectedAuditJob && (
-            <div className="border border-slate-200 rounded-xl p-4 sm:p-5 bg-slate-50 space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900">
-                    Audit Job: {selectedAuditJob.id} — {selectedAuditJob.target_entity}
-                  </h3>
-                  <p className="text-xs text-slate-500">
-                    File: {selectedAuditJob.file_name} • Mode: {selectedAuditJob.import_mode}
-                  </p>
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 max-w-2xl w-full shadow-2xl relative my-8">
+                <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
+                  <div>
+                    <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                      Import Job Audit: {selectedAuditJob.id}
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      Target Entity: <span className="font-mono font-bold uppercase">{selectedAuditJob.target_entity}</span> • {selectedAuditJob.file_name}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setSelectedAuditJob(null)}
+                    className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
                 </div>
-                <button
-                  onClick={() => setSelectedAuditJob(null)}
-                  className="text-xs font-semibold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 px-2.5 py-1 rounded-lg"
-                >
-                  Close
-                </button>
-              </div>
 
-              {auditErrors.length > 0 ? (
-                <div className="space-y-2">
-                  <span className="text-xs font-bold text-red-700">Logged Row Rejections ({auditErrors.length}):</span>
-                  <div className="max-h-48 overflow-y-auto space-y-1.5">
-                    {auditErrors.map((err, idx) => (
-                      <div key={idx} className="p-2.5 bg-white border border-red-200 rounded-lg text-xs text-slate-800 flex items-start gap-2">
-                        <span className="font-bold text-red-600 whitespace-nowrap">Row {err.row_number}:</span>
-                        <span className="font-mono text-[11px] text-slate-500">[{err.field_name || 'general'}]</span>
-                        <span className="text-slate-700">{err.error_message}</span>
-                      </div>
-                    ))}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 my-4">
+                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800">
+                    <span className="text-[10px] text-slate-500 uppercase font-semibold">Total Rows</span>
+                    <span className="text-lg font-bold text-slate-900 dark:text-white block">{selectedAuditJob.total_rows}</span>
+                  </div>
+                  <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900">
+                    <span className="text-[10px] text-emerald-700 uppercase font-semibold">Imported</span>
+                    <span className="text-lg font-bold text-emerald-700 block">{selectedAuditJob.successful_rows}</span>
+                  </div>
+                  <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900">
+                    <span className="text-[10px] text-amber-700 uppercase font-semibold">Skipped</span>
+                    <span className="text-lg font-bold text-amber-700 block">{selectedAuditJob.skipped_rows || 0}</span>
+                  </div>
+                  <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900">
+                    <span className="text-[10px] text-red-700 uppercase font-semibold">Failed</span>
+                    <span className="text-lg font-bold text-red-700 block">{selectedAuditJob.failed_rows}</span>
                   </div>
                 </div>
-              ) : (
-                <p className="text-xs text-slate-500">No rejection errors recorded for this job.</p>
-              )}
+
+                {auditErrors.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                      Logged Errors ({auditErrors.length}):
+                    </h4>
+                    <div className="max-h-48 overflow-y-auto space-y-1.5 p-2 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200 dark:border-slate-800">
+                      {auditErrors.map((err, i) => (
+                        <div key={i} className="text-xs p-2 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 flex items-start gap-2">
+                          <span className="font-bold text-red-600">Row {err.row_number || err.row}:</span>
+                          <span className="text-slate-600 dark:text-slate-400">{err.error_message || err.message}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="mt-5 pt-3 border-t border-slate-200 dark:border-slate-800 flex justify-end">
+                  <button
+                    onClick={() => setSelectedAuditJob(null)}
+                    className="px-4 py-2 rounded-xl bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white text-xs font-semibold"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>
-      ) : (
-        /* ========================================================================= */
-        /* IMPORT WIZARD (7-STEP WORKFLOW)                                          */
-        /* ========================================================================= */
+      )}
+
+      {/* TAB 3: IMPORT CONSOLE */}
+      {activeTab === 'import' && (
         <div className="space-y-6">
-          {/* STEP 1: Select Data Type (11 Clean Cards Grid) */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
+          {/* STEP 1: Select Data Type (All 16 Clean Cards Grid) */}
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
             <div className="flex items-center justify-between flex-wrap gap-2">
               <div>
-                <span className="text-[11px] font-extrabold uppercase tracking-wider text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">
+                <span className="text-[11px] font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded-md border border-blue-100 dark:border-blue-900">
                   Step 1 of 7
                 </span>
-                <h2 className="text-base sm:text-lg font-bold text-slate-900 mt-1">
+                <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mt-1">
                   Select Target College Data Module
                 </h2>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
                   Choose the academic or administrative module you wish to batch import or update.
                 </p>
               </div>
             </div>
 
-            {/* 11 Cards Grid */}
+            {/* 16 Cards Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
               {(Object.keys(IMPORT_MODULE_CONFIGS) as ImportEntityType[]).map((key, index) => {
                 const config = IMPORT_MODULE_CONFIGS[key];
-                const Icon = MODULE_ICONS[key];
+                const Icon = MODULE_ICONS[key] || FileSpreadsheet;
                 const isSelected = selectedEntity === key;
 
                 return (
@@ -575,14 +749,16 @@ export const MasterDataImportView: React.FC = () => {
                     onClick={() => handleSelectModule(key)}
                     className={`text-left p-3.5 rounded-xl border transition relative flex flex-col justify-between ${
                       isSelected
-                        ? 'border-blue-600 bg-blue-50/50 ring-2 ring-blue-500/20 shadow-xs'
-                        : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/60'
+                        ? 'border-blue-600 dark:border-blue-500 bg-blue-50/50 dark:bg-blue-950/30 ring-2 ring-blue-500/20 shadow-xs'
+                        : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50/60 dark:hover:bg-slate-800/60'
                     }`}
                   >
                     <div>
                       <div className="flex items-center justify-between mb-2">
                         <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                          isSelected ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700'
+                          isSelected 
+                            ? 'bg-blue-600 text-white' 
+                            : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
                         }`}>
                           <Icon className="w-4 h-4" />
                         </div>
@@ -591,21 +767,21 @@ export const MasterDataImportView: React.FC = () => {
                         </span>
                       </div>
                       <h3 className={`text-xs sm:text-sm font-bold ${
-                        isSelected ? 'text-blue-900' : 'text-slate-800'
+                        isSelected ? 'text-blue-900 dark:text-blue-300' : 'text-slate-800 dark:text-slate-200'
                       }`}>
                         {config.title}
                       </h3>
-                      <p className="text-[11px] text-slate-500 mt-1 line-clamp-2 leading-relaxed">
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 leading-relaxed">
                         {config.description}
                       </p>
                     </div>
 
-                    <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[10px]">
+                    <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[10px]">
                       <span className="font-mono text-slate-400">
                         {config.headers.length} headers
                       </span>
                       {isSelected ? (
-                        <span className="font-bold text-blue-600 flex items-center gap-0.5">
+                        <span className="font-bold text-blue-600 dark:text-blue-400 flex items-center gap-0.5">
                           <Check className="w-3 h-3" /> Selected
                         </span>
                       ) : (
@@ -619,17 +795,17 @@ export const MasterDataImportView: React.FC = () => {
           </div>
 
           {/* STEP 2: Download Template & Required Fields Reference */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <span className="text-[11px] font-extrabold uppercase tracking-wider text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">
+                <span className="text-[11px] font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded-md border border-blue-100 dark:border-blue-900">
                   Step 2 of 7
                 </span>
-                <h2 className="text-base sm:text-lg font-bold text-slate-900 mt-1 flex items-center gap-2">
-                  <ModuleIcon className="w-5 h-5 text-blue-600" />
+                <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mt-1 flex items-center gap-2">
+                  <ModuleIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                   Download Official Template for: {selectedConfig.title}
                 </h2>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
                   Pre-configured with standard column headers, verified sample rows, and college-accepted formatting.
                 </p>
               </div>
@@ -639,9 +815,9 @@ export const MasterDataImportView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => handleDownloadTemplate('csv')}
-                  className="px-3.5 py-2 bg-white hover:bg-slate-50 active:bg-slate-100 text-slate-700 border border-slate-300 font-semibold rounded-xl text-xs transition flex items-center gap-1.5 shadow-xs"
+                  className="px-3.5 py-2 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 font-semibold rounded-xl text-xs transition flex items-center gap-1.5 shadow-xs"
                 >
-                  <Download className="w-3.5 h-3.5 text-blue-600" />
+                  <Download className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                   Download CSV Template
                 </button>
                 <button
@@ -656,9 +832,9 @@ export const MasterDataImportView: React.FC = () => {
             </div>
 
             {/* Required Fields Badge List */}
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2">
-              <div className="flex items-center gap-2 text-xs font-bold text-slate-700">
-                <Info className="w-4 h-4 text-blue-600" />
+            <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 space-y-2">
+              <div className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-300">
+                <Info className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                 Required Columns for {selectedConfig.title}:
               </div>
               <div className="flex flex-wrap gap-1.5">
@@ -669,8 +845,8 @@ export const MasterDataImportView: React.FC = () => {
                       key={h}
                       className={`px-2 py-1 rounded-md text-[11px] font-mono border ${
                         isReq
-                          ? 'bg-blue-50 text-blue-800 border-blue-200 font-bold'
-                          : 'bg-white text-slate-600 border-slate-200'
+                          ? 'bg-blue-50 dark:bg-blue-950/80 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-800 font-bold'
+                          : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800'
                       }`}
                       title={selectedConfig.fieldDescriptions[h] || h}
                     >
@@ -679,22 +855,22 @@ export const MasterDataImportView: React.FC = () => {
                   );
                 })}
               </div>
-              <p className="text-[11px] text-slate-500 pt-1">
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 pt-1">
                 * Bold columns with an asterisk are required. Passwords must never be stored in CSV files; Supabase Auth handles credentials.
               </p>
             </div>
           </div>
 
           {/* STEP 3 & 4: Upload File & Duplicate Handling Mode */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-xs space-y-5">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xs space-y-5">
             <div>
-              <span className="text-[11px] font-extrabold uppercase tracking-wider text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">
+              <span className="text-[11px] font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded-md border border-blue-100 dark:border-blue-900">
                 Step 3 & 4 of 7
               </span>
-              <h2 className="text-base sm:text-lg font-bold text-slate-900 mt-1">
+              <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mt-1">
                 Upload File & Select Duplicate Record Policy
               </h2>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 Upload your completed CSV or XLSX sheet. Choose how to handle records that already exist in the database.
               </p>
             </div>
@@ -704,8 +880,8 @@ export const MasterDataImportView: React.FC = () => {
               <label 
                 className={`p-3.5 rounded-xl border cursor-pointer transition flex items-start gap-3 ${
                   importMode === 'create_only'
-                    ? 'border-blue-600 bg-blue-50/40 ring-1 ring-blue-500/20'
-                    : 'border-slate-200 bg-white hover:bg-slate-50'
+                    ? 'border-blue-600 dark:border-blue-500 bg-blue-50/40 dark:bg-blue-950/30 ring-1 ring-blue-500/20'
+                    : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800'
                 }`}
               >
                 <input
@@ -716,10 +892,10 @@ export const MasterDataImportView: React.FC = () => {
                   className="mt-0.5 text-blue-600 focus:ring-blue-500"
                 />
                 <div>
-                  <span className="text-xs font-bold text-slate-800 block">
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">
                     [Skip Existing] — Safe Insert Only
                   </span>
-                  <span className="text-[11px] text-slate-500 leading-relaxed block mt-0.5">
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed block mt-0.5">
                     Inserts only new records. If a record already exists in the database, it will be skipped without overwriting existing data.
                   </span>
                 </div>
@@ -728,8 +904,8 @@ export const MasterDataImportView: React.FC = () => {
               <label 
                 className={`p-3.5 rounded-xl border cursor-pointer transition flex items-start gap-3 ${
                   importMode === 'update_existing'
-                    ? 'border-blue-600 bg-blue-50/40 ring-1 ring-blue-500/20'
-                    : 'border-slate-200 bg-white hover:bg-slate-50'
+                    ? 'border-blue-600 dark:border-blue-500 bg-blue-50/40 dark:bg-blue-950/30 ring-1 ring-blue-500/20'
+                    : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800'
                 }`}
               >
                 <input
@@ -740,10 +916,10 @@ export const MasterDataImportView: React.FC = () => {
                   className="mt-0.5 text-blue-600 focus:ring-blue-500"
                 />
                 <div>
-                  <span className="text-xs font-bold text-slate-800 block">
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">
                     [Update Existing] — Upsert & Overwrite
                   </span>
-                  <span className="text-[11px] text-slate-500 leading-relaxed block mt-0.5">
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed block mt-0.5">
                     Inserts new records and updates existing records with the fresh data from this spreadsheet.
                   </span>
                 </div>
@@ -751,7 +927,7 @@ export const MasterDataImportView: React.FC = () => {
             </div>
 
             {/* Upload Drag & Drop Area */}
-            <div className="border-2 border-dashed border-slate-300 hover:border-blue-500 rounded-xl p-6 sm:p-8 text-center transition bg-slate-50/50 hover:bg-blue-50/20">
+            <div className="border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-blue-500 rounded-xl p-6 sm:p-8 text-center transition bg-slate-50/50 dark:bg-slate-800/40 hover:bg-blue-50/20">
               <input
                 ref={fileInputRef}
                 type="file"
@@ -761,21 +937,21 @@ export const MasterDataImportView: React.FC = () => {
                 id="master-file-upload"
               />
               <label htmlFor="master-file-upload" className="cursor-pointer block">
-                <div className="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center mx-auto mb-3">
+                <div className="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400 flex items-center justify-center mx-auto mb-3">
                   <UploadCloud className="w-6 h-6" />
                 </div>
-                <span className="text-xs sm:text-sm font-bold text-slate-800 block">
+                <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 block">
                   Click to select file or drag and drop
                 </span>
-                <span className="text-[11px] text-slate-500 block mt-1">
+                <span className="text-[11px] text-slate-500 dark:text-slate-400 block mt-1">
                   Supported formats: CSV (.csv), Excel (.xlsx, .xls) • Maximum file size: 5MB
                 </span>
               </label>
 
               {fileName && (
-                <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-700 shadow-xs">
-                  <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
-                  <span className="font-semibold text-slate-900">{fileName}</span>
+                <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs font-medium text-slate-700 dark:text-slate-300 shadow-xs">
+                  <FileSpreadsheet className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  <span className="font-semibold text-slate-900 dark:text-white">{fileName}</span>
                   <span className="text-slate-400">({fileSize})</span>
                   <button
                     type="button"
@@ -791,16 +967,16 @@ export const MasterDataImportView: React.FC = () => {
 
           {/* STEP 5, 6, 7: Preview, Validation Breakdown, & Action Confirmation */}
           {validationSummary && (
-            <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-xs space-y-6">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xs space-y-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">
+                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded-md border border-blue-100 dark:border-blue-900">
                     Step 5, 6 & 7 of 7
                   </span>
-                  <h2 className="text-base sm:text-lg font-bold text-slate-900 mt-1">
+                  <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mt-1">
                     Validation Summary & Data Preview
                   </h2>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
                     Review row-by-row validation results before committing changes to the college database.
                   </p>
                 </div>
@@ -810,7 +986,7 @@ export const MasterDataImportView: React.FC = () => {
                     type="button"
                     onClick={() => runValidation(rawRows, selectedEntity)}
                     disabled={isValidating}
-                    className="px-3.5 py-2 bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 font-semibold rounded-xl text-xs transition flex items-center gap-1.5 shadow-xs"
+                    className="px-3.5 py-2 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-semibold rounded-xl text-xs transition flex items-center gap-1.5 shadow-xs"
                   >
                     <RefreshCw className={`w-3.5 h-3.5 ${isValidating ? 'animate-spin' : ''}`} />
                     Re-Validate
@@ -819,7 +995,7 @@ export const MasterDataImportView: React.FC = () => {
                     <button
                       type="button"
                       onClick={handleDownloadErrors}
-                      className="px-3.5 py-2 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 font-semibold rounded-xl text-xs transition flex items-center gap-1.5"
+                      className="px-3.5 py-2 bg-red-50 dark:bg-red-950/40 hover:bg-red-100 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-900 font-semibold rounded-xl text-xs transition flex items-center gap-1.5"
                     >
                       <Download className="w-3.5 h-3.5" />
                       Download Error Report ({validationSummary.invalidCount})
@@ -830,58 +1006,72 @@ export const MasterDataImportView: React.FC = () => {
 
               {/* Validation Summary Stat Cards */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/60">
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
+                <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40">
+                  <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
                     Total Rows
                   </span>
-                  <span className="text-2xl font-extrabold text-slate-900 mt-1 block">
+                  <span className="text-2xl font-extrabold text-slate-900 dark:text-white mt-1 block">
                     {validationSummary.totalRows}
                   </span>
                 </div>
 
-                <div className="p-4 rounded-xl border border-emerald-200 bg-emerald-50/50">
-                  <span className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider block flex items-center gap-1">
+                <div className="p-4 rounded-xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/50 dark:bg-emerald-950/30">
+                  <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider block flex items-center gap-1">
                     <CheckCircle2 className="w-3.5 h-3.5" /> Valid
                   </span>
-                  <span className="text-2xl font-extrabold text-emerald-800 mt-1 block">
+                  <span className="text-2xl font-extrabold text-emerald-800 dark:text-emerald-300 mt-1 block">
                     {validationSummary.validCount}
                   </span>
                 </div>
 
-                <div className="p-4 rounded-xl border border-amber-200 bg-amber-50/50">
-                  <span className="text-[11px] font-bold text-amber-700 uppercase tracking-wider block flex items-center gap-1">
+                <div className="p-4 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/50 dark:bg-amber-950/30">
+                  <span className="text-[11px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider block flex items-center gap-1">
                     <AlertTriangle className="w-3.5 h-3.5" /> Duplicate
                   </span>
-                  <span className="text-2xl font-extrabold text-amber-800 mt-1 block">
+                  <span className="text-2xl font-extrabold text-amber-800 dark:text-amber-300 mt-1 block">
                     {validationSummary.duplicateCount}
                   </span>
                 </div>
 
-                <div className="p-4 rounded-xl border border-red-200 bg-red-50/50">
-                  <span className="text-[11px] font-bold text-red-700 uppercase tracking-wider block flex items-center gap-1">
+                <div className="p-4 rounded-xl border border-red-200 dark:border-red-900/60 bg-red-50/50 dark:bg-red-950/30">
+                  <span className="text-[11px] font-bold text-red-700 dark:text-red-400 uppercase tracking-wider block flex items-center gap-1">
                     <XCircle className="w-3.5 h-3.5" /> Invalid
                   </span>
-                  <span className="text-2xl font-extrabold text-red-800 mt-1 block">
+                  <span className="text-2xl font-extrabold text-red-800 dark:text-red-300 mt-1 block">
                     {validationSummary.invalidCount}
                   </span>
                 </div>
               </div>
 
-              {/* Error Detail Breakdown (if any invalid rows) */}
+              {/* Rich 5-Tuple Error Breakdown (if any invalid rows) */}
               {validationSummary.invalidCount > 0 && (
-                <div className="border border-red-200 bg-red-50/40 rounded-xl p-4 space-y-2.5">
-                  <div className="flex items-center gap-2 text-xs font-bold text-red-800">
-                    <AlertCircle className="w-4 h-4 text-red-600" />
+                <div className="border border-red-200 dark:border-red-900 bg-red-50/40 dark:bg-red-950/20 rounded-xl p-4 space-y-2.5">
+                  <div className="flex items-center gap-2 text-xs font-bold text-red-800 dark:text-red-300">
+                    <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
                     Validation Errors Found ({validationSummary.errors.length} issues in {validationSummary.invalidCount} rows):
                   </div>
-                  <div className="max-h-48 overflow-y-auto space-y-1.5 pr-1">
+                  <p className="text-[11px] text-red-700 dark:text-red-400">
+                    Atomic transaction safety rule: All validation errors must be corrected in the spreadsheet before import. No partial import is permitted.
+                  </p>
+                  <div className="max-h-56 overflow-y-auto space-y-2 pr-1">
                     {validationSummary.errors.slice(0, 100).map((err, idx) => (
-                      <div key={idx} className="p-2 bg-white border border-red-100 rounded-lg text-xs flex items-start gap-2 shadow-2xs">
-                        <span className="font-bold text-red-700 shrink-0">Row {err.rowNumber}</span>
-                        <span className="text-slate-400">→</span>
-                        <span className="font-mono text-[11px] text-slate-600 shrink-0">Column "{err.column}"</span>
-                        <span className="text-slate-400">→</span>
-                        <span className="text-red-700 font-medium">{err.message}</span>
+                      <div key={idx} className="p-3 bg-white dark:bg-slate-900 border border-red-100 dark:border-red-900/60 rounded-xl text-xs space-y-1 shadow-2xs">
+                        <div className="flex items-center justify-between font-bold text-red-700 dark:text-red-400">
+                          <span>Row {err.rowNumber} • Column: <code className="font-mono bg-red-50 dark:bg-red-950 px-1 py-0.5 rounded">{err.column}</code></span>
+                          {err.invalidValue !== undefined && err.invalidValue !== '' && (
+                            <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
+                              Got: "{err.invalidValue}"
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-slate-700 dark:text-slate-300 font-medium">
+                          <strong>Reason:</strong> {err.reason || err.message}
+                        </div>
+                        {err.suggestedCorrection && (
+                          <div className="text-emerald-700 dark:text-emerald-400 text-[11px]">
+                            💡 <strong>Suggested Correction:</strong> {err.suggestedCorrection}
+                          </div>
+                        )}
                       </div>
                     ))}
                     {validationSummary.errors.length > 100 && (
@@ -893,34 +1083,34 @@ export const MasterDataImportView: React.FC = () => {
                 </div>
               )}
 
-              {/* In-Container Horizontally Scrollable Preview Table */}
+              {/* Data Preview Table */}
               <div className="space-y-2">
-                <span className="text-xs font-bold text-slate-800 block">
+                <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">
                   Data Preview (First 50 Rows):
                 </span>
-                <div className="overflow-x-auto rounded-xl border border-slate-200 max-h-80 overflow-y-auto">
+                <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 max-h-80 overflow-y-auto">
                   <table className="w-full text-left text-xs whitespace-nowrap">
-                    <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200 sticky top-0 z-10">
+                    <thead className="bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-800 sticky top-0 z-10">
                       <tr>
-                        <th className="p-2.5 bg-slate-50">Row</th>
-                        <th className="p-2.5 bg-slate-50">Validation Status</th>
+                        <th className="p-2.5 bg-slate-50 dark:bg-slate-800">Row</th>
+                        <th className="p-2.5 bg-slate-50 dark:bg-slate-800">Status</th>
                         {selectedConfig.headers.map(h => (
-                          <th key={h} className="p-2.5 bg-slate-50 font-mono text-[11px]">
+                          <th key={h} className="p-2.5 bg-slate-50 dark:bg-slate-800 font-mono text-[11px]">
                             {h}
                           </th>
                         ))}
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100 text-slate-700">
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
                       {validationSummary.rows.slice(0, 50).map((row) => (
                         <tr 
                           key={row.rowNumber} 
                           className={
                             row.status === 'invalid'
-                              ? 'bg-red-50/40 hover:bg-red-50/60'
+                              ? 'bg-red-50/40 dark:bg-red-950/20 hover:bg-red-50/60'
                               : row.status === 'duplicate'
-                              ? 'bg-amber-50/30 hover:bg-amber-50/50'
-                              : 'hover:bg-slate-50/60'
+                              ? 'bg-amber-50/30 dark:bg-amber-950/20 hover:bg-amber-50/50'
+                              : 'hover:bg-slate-50/60 dark:hover:bg-slate-800/40'
                           }
                         >
                           <td className="p-2.5 font-bold text-slate-500 font-mono text-[11px]">
@@ -928,13 +1118,13 @@ export const MasterDataImportView: React.FC = () => {
                           </td>
                           <td className="p-2.5">
                             {row.status === 'valid' && (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
                                 <CheckCircle2 className="w-3 h-3" /> Valid
                               </span>
                             )}
                             {row.status === 'duplicate' && (
                               <span 
-                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200"
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800"
                                 title={row.duplicateReason}
                               >
                                 <AlertTriangle className="w-3 h-3" /> Duplicate
@@ -942,7 +1132,7 @@ export const MasterDataImportView: React.FC = () => {
                             )}
                             {row.status === 'invalid' && (
                               <span 
-                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-50 text-red-700 border border-red-200"
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800"
                                 title={row.errors.map(e => e.message).join('; ')}
                               >
                                 <XCircle className="w-3 h-3" /> Invalid ({row.errors.length})
@@ -961,16 +1151,16 @@ export const MasterDataImportView: React.FC = () => {
                 </div>
               </div>
 
-              {/* Action Buttons: Dry Run [Validate Only] vs [Import Valid Records] */}
-              <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
-                <div className="text-xs text-slate-500">
+              {/* Action Buttons: Dry Run -> Explicit Confirmation -> Atomic Import */}
+              <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div className="text-xs text-slate-500 dark:text-slate-400">
                   {importMode === 'create_only' ? (
                     <span>
-                      Mode: <strong className="text-slate-700">Skip Existing</strong> ({validationSummary.validCount} valid new rows will be imported, {validationSummary.duplicateCount} duplicates skipped).
+                      Mode: <strong className="text-slate-700 dark:text-slate-300">Skip Existing</strong> ({validationSummary.validCount} new rows will be imported, {validationSummary.duplicateCount} duplicates skipped).
                     </span>
                   ) : (
                     <span>
-                      Mode: <strong className="text-slate-700">Update Existing</strong> ({validationSummary.validCount + validationSummary.duplicateCount} records will be imported / updated).
+                      Mode: <strong className="text-slate-700 dark:text-slate-300">Update Existing</strong> ({validationSummary.validCount + validationSummary.duplicateCount} records will be imported / updated).
                     </span>
                   )}
                 </div>
@@ -979,7 +1169,7 @@ export const MasterDataImportView: React.FC = () => {
                   <button
                     type="button"
                     onClick={handleResetWorkflow}
-                    className="px-4 py-2 bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 font-semibold rounded-xl text-xs transition"
+                    className="px-4 py-2 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-semibold rounded-xl text-xs transition"
                   >
                     Cancel
                   </button>
@@ -987,59 +1177,59 @@ export const MasterDataImportView: React.FC = () => {
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => {
-                        runValidation(rawRows, selectedEntity);
-                        setIsDryRunSuccess(true);
-                      }}
-                      className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold rounded-xl text-xs transition flex items-center gap-1.5"
+                      onClick={() => runValidation(rawRows, selectedEntity)}
+                      className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-semibold rounded-xl text-xs transition flex items-center gap-1.5"
                     >
-                      <FileCheck className="w-3.5 h-3.5 text-blue-600" />
-                      Validate Only (Dry Run)
+                      <FileCheck className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                      Run Dry Run
                     </button>
                     {isDryRunSuccess && (
-                      <span className="text-[11px] font-bold text-emerald-600 flex items-center gap-1">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> Verified
+                      <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> Dry Run Passed
                       </span>
                     )}
                   </div>
 
                   <button
                     type="button"
-                    onClick={handleExecuteImport}
-                    disabled={isProcessing || (validationSummary.validCount === 0 && (importMode !== 'update_existing' || validationSummary.duplicateCount === 0))}
+                    onClick={handleInitiateImport}
+                    disabled={isProcessing || !isDryRunSuccess || validationSummary.invalidCount > 0}
                     className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:opacity-50 text-white font-bold rounded-xl text-xs transition shadow-xs flex items-center justify-center gap-2"
                   >
-                    {isProcessing ? (
-                      <>
-                        <RefreshCw className="w-4 h-4 animate-spin" />
-                        Writing to Database...
-                      </>
-                    ) : (
-                      <>
-                        <UploadCloud className="w-4 h-4" />
-                        Import Valid Records
-                      </>
-                    )}
+                    <Lock className="w-3.5 h-3.5" />
+                    Proceed to Import...
                   </button>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Post-Import Result Report Card (Section 17) */}
+          {/* Post-Import Result Report Card */}
           {importResult && (
-            <div className="bg-white border-2 border-emerald-500 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
+            <div className={`bg-white dark:bg-slate-900 border-2 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4 ${
+              importResult.status === 'rolled_back' || importResult.status === 'failed'
+                ? 'border-red-500'
+                : 'border-emerald-500'
+            }`}>
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
-                    <CheckCircle2 className="w-6 h-6" />
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                    importResult.status === 'rolled_back' || importResult.status === 'failed'
+                      ? 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-400'
+                      : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400'
+                  }`}>
+                    {importResult.status === 'rolled_back' || importResult.status === 'failed' ? (
+                      <AlertTriangle className="w-6 h-6" />
+                    ) : (
+                      <CheckCircle2 className="w-6 h-6" />
+                    )}
                   </div>
                   <div>
-                    <h2 className="text-base sm:text-lg font-bold text-slate-900">
-                      Import Operation Complete
+                    <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+                      {importResult.status === 'rolled_back' ? 'Import Rolled Back (Atomic Safeguard)' : 'Import Operation Complete'}
                     </h2>
-                    <p className="text-xs text-slate-500">
-                      Audit Job Reference: <strong className="font-mono text-slate-700">{importResult.jobId}</strong> • Status: {importResult.status}
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      Audit Job Reference: <strong className="font-mono text-slate-700 dark:text-slate-300">{importResult.jobId}</strong> • Status: {importResult.status}
                     </p>
                   </div>
                 </div>
@@ -1058,33 +1248,40 @@ export const MasterDataImportView: React.FC = () => {
 
               {/* Import Numbers Grid */}
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-2">
-                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
                   <span className="text-[10px] font-bold text-slate-500 uppercase">Total Rows</span>
-                  <span className="text-xl font-extrabold text-slate-900 block mt-0.5">{importResult.totalRows}</span>
+                  <span className="text-xl font-extrabold text-slate-900 dark:text-white block mt-0.5">{importResult.totalRows}</span>
                 </div>
-                <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200">
+                <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl border border-emerald-200 dark:border-emerald-900">
                   <span className="text-[10px] font-bold text-emerald-700 uppercase">✓ Imported</span>
                   <span className="text-xl font-extrabold text-emerald-700 block mt-0.5">{importResult.importedCount}</span>
                 </div>
-                <div className="p-3 bg-blue-50 rounded-xl border border-blue-200">
+                <div className="p-3 bg-blue-50 dark:bg-blue-950/40 rounded-xl border border-blue-200 dark:border-blue-900">
                   <span className="text-[10px] font-bold text-blue-700 uppercase">↻ Updated</span>
                   <span className="text-xl font-extrabold text-blue-700 block mt-0.5">{importResult.updatedCount}</span>
                 </div>
-                <div className="p-3 bg-amber-50 rounded-xl border border-amber-200">
+                <div className="p-3 bg-amber-50 dark:bg-amber-950/40 rounded-xl border border-amber-200 dark:border-amber-900">
                   <span className="text-[10px] font-bold text-amber-700 uppercase">⚠ Skipped</span>
                   <span className="text-xl font-extrabold text-amber-700 block mt-0.5">{importResult.skippedCount}</span>
                 </div>
-                <div className="p-3 bg-red-50 rounded-xl border border-red-200">
+                <div className="p-3 bg-red-50 dark:bg-red-950/40 rounded-xl border border-red-200 dark:border-red-900">
                   <span className="text-[10px] font-bold text-red-700 uppercase">✕ Failed</span>
                   <span className="text-xl font-extrabold text-red-700 block mt-0.5">{importResult.failedCount}</span>
                 </div>
               </div>
 
-              <div className="flex justify-end pt-2">
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('audit')}
+                  className="px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+                >
+                  View Audit Logs
+                </button>
                 <button
                   type="button"
                   onClick={handleResetWorkflow}
-                  className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl text-xs transition"
+                  className="px-4 py-2 bg-slate-900 hover:bg-slate-800 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white font-semibold rounded-xl text-xs transition"
                 >
                   Import Another File
                 </button>
@@ -1093,6 +1290,119 @@ export const MasterDataImportView: React.FC = () => {
           )}
         </div>
       )}
+
+      {/* Explicit Confirmation Modal */}
+      {isConfirmModalOpen && validationSummary && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 max-w-lg w-full shadow-2xl relative my-8">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+              <div className="flex items-center space-x-2.5">
+                <div className="p-2 rounded-xl bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400">
+                  <Lock className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                    Explicit Import Confirmation
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Step 7: Atomic Database Transaction Authorization
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsConfirmModalOpen(false)}
+                className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4 my-5 text-xs text-slate-600 dark:text-slate-300">
+              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800 space-y-1.5">
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Target Entity:</span>
+                  <span className="font-bold text-slate-900 dark:text-white uppercase">{selectedEntity}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Source File:</span>
+                  <span className="font-mono text-slate-800 dark:text-slate-200">{fileName}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Valid Rows to Process:</span>
+                  <span className="font-bold text-emerald-600">{validationSummary.validCount} rows</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Duplicate Handling:</span>
+                  <span className="font-semibold text-slate-800 dark:text-slate-200">
+                    {importMode === 'update_existing' ? 'Update & Overwrite' : 'Skip Existing'}
+                  </span>
+                </div>
+                <div className="flex justify-between pt-1 border-t border-slate-200 dark:border-slate-700">
+                  <span className="text-slate-500">Dry Run Token:</span>
+                  <span className="font-mono text-[10px] text-blue-600 dark:text-blue-400">{dryRunToken}</span>
+                </div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/60 text-amber-800 dark:text-amber-300 text-xs space-y-1">
+                <div className="font-bold flex items-center gap-1.5">
+                  <ShieldCheck className="w-4 h-4 text-amber-600" />
+                  Atomic Transaction Guarantee
+                </div>
+                <p className="text-[11px] leading-relaxed">
+                  If any single row violates database foreign keys or unique constraints during insertion, the entire batch will be automatically rolled back with zero partial writes.
+                </p>
+              </div>
+
+              <label className="flex items-start gap-2.5 p-3 rounded-xl bg-slate-100 dark:bg-slate-800 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={hasAcknowledgedSafety}
+                  onChange={(e) => setHasAcknowledgedSafety(e.target.checked)}
+                  className="mt-0.5 rounded text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-xs font-medium text-slate-800 dark:text-slate-200 leading-relaxed">
+                  I confirm this spreadsheet contains verified HIET college data and authorize committing these records to the database ledger.
+                </span>
+              </label>
+            </div>
+
+            <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-200 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={() => setIsConfirmModalOpen(false)}
+                className="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold hover:bg-slate-50 dark:hover:bg-slate-800"
+              >
+                Back to Preview
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmedAtomicImport}
+                disabled={!hasAcknowledgedSafety || isProcessing}
+                className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-xs"
+              >
+                {isProcessing ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    Executing Transaction...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    Confirm & Import Now
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Demo Data Management Modal */}
+      <DemoDataManagementModal
+        isOpen={isDemoModalOpen}
+        onClose={() => setIsDemoModalOpen(false)}
+        onSuccess={(msg) => setSuccessToast(msg)}
+      />
     </div>
   );
 };

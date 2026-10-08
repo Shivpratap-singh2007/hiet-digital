@@ -41,7 +41,9 @@ import {
   PushDeliveryLog,
   SmartBoardLesson,
   CampusZone,
-  CampusPresenceRecord
+  CampusPresenceRecord,
+  ClassInchargeRecord,
+  HodAssignmentRecord
 } from '../types';
 
 // =============================================================================
@@ -3511,6 +3513,49 @@ class DataStore {
     setLocalItem('campus_presence', data);
   }
 
+  // Feature 13: Class In-Charges & HOD Assignments
+  getClassIncharges(): ClassInchargeRecord[] {
+    return getLocalItem('class_incharges', [
+      {
+        id: 'cic-01',
+        department_code: 'CSE',
+        semester: 6,
+        section: 'A',
+        academic_year: '2026-2027',
+        employee_code: 'FAC-001',
+        created_at: '2026-01-15T00:00:00Z'
+      },
+      {
+        id: 'cic-02',
+        department_code: 'CSE',
+        semester: 4,
+        section: 'A',
+        academic_year: '2026-2027',
+        employee_code: 'FAC-002',
+        created_at: '2026-01-15T00:00:00Z'
+      }
+    ]);
+  }
+  setClassIncharges(data: ClassInchargeRecord[]): void {
+    setLocalItem('class_incharges', data);
+  }
+
+  getHodAssignments(): HodAssignmentRecord[] {
+    return getLocalItem('hod_assignments', [
+      {
+        id: 'hod-01',
+        department_code: 'CSE',
+        employee_code: 'FAC-001',
+        effective_from: '2026-01-01',
+        remarks: 'Appointed HOD Computer Science & Engineering',
+        created_at: '2026-01-01T00:00:00Z'
+      }
+    ]);
+  }
+  setHodAssignments(data: HodAssignmentRecord[]): void {
+    setLocalItem('hod_assignments', data);
+  }
+
   // Atomic Transaction Rollback & Recovery Snapshots
   getEntitySnapshot(entity: string): any {
     switch (entity) {
@@ -3523,6 +3568,8 @@ class DataStore {
       case 'results_grades': return JSON.parse(JSON.stringify(this.getAcademicRecords()));
       case 'syllabus': return JSON.parse(JSON.stringify(this.getSyllabus()));
       case 'pyqs': return JSON.parse(JSON.stringify(this.getPyqs()));
+      case 'class_incharge': return JSON.parse(JSON.stringify(this.getClassIncharges()));
+      case 'hod_assignment': return JSON.parse(JSON.stringify(this.getHodAssignments()));
       default: return null;
     }
   }
@@ -3539,7 +3586,94 @@ class DataStore {
       case 'results_grades': this.setAcademicRecords(snapshot); break;
       case 'syllabus': this.setSyllabus(snapshot); break;
       case 'pyqs': this.setPyqs(snapshot); break;
+      case 'class_incharge': this.setClassIncharges(snapshot); break;
+      case 'hod_assignment': this.setHodAssignments(snapshot); break;
     }
+  }
+
+  // Feature 14: Demo Data Management (Development & Staging Only)
+  getDemoStats(): {
+    demoStudentsCount: number;
+    demoFacultyCount: number;
+    demoAttendanceCount: number;
+    demoMarksCount: number;
+    isDemoAccountsDisabled: boolean;
+    isDemoArchived: boolean;
+    dataEnvironment: string;
+  } {
+    const students = this.getStudentsMaster();
+    const faculty = this.getTeachersMaster();
+    const attendance = this.getAttendance();
+    const marks = this.getSessionalResults();
+    const isAccountsDisabled = Boolean(getLocalItem('hiet_demo_accounts_disabled', false));
+    const isArchived = Boolean(getLocalItem('hiet_demo_archived', false));
+
+    return {
+      demoStudentsCount: students.length,
+      demoFacultyCount: faculty.length,
+      demoAttendanceCount: attendance.length,
+      demoMarksCount: marks.length,
+      isDemoAccountsDisabled: isAccountsDisabled,
+      isDemoArchived: isArchived,
+      dataEnvironment: (import.meta as any).env?.VITE_APP_ENV || 'development'
+    };
+  }
+
+  disableDemoAccounts(): { disabledStudents: number; disabledFaculty: number } {
+    const students = this.getStudentsMaster().map(s => ({
+      ...s,
+      status: 'disabled' as const,
+      is_demo_account: true,
+      data_environment: 'development'
+    }));
+    this.setStudentsMaster(students);
+
+    const faculty = this.getTeachersMaster().map(f => ({
+      ...f,
+      status: 'disabled' as const,
+      is_demo_account: true,
+      data_environment: 'development'
+    }));
+    this.setTeachersMaster(faculty);
+
+    setLocalItem('hiet_demo_accounts_disabled', true);
+
+    return {
+      disabledStudents: students.length,
+      disabledFaculty: faculty.length
+    };
+  }
+
+  archiveDemoRecords(): { archiveTimestamp: string; recordsArchived: number } {
+    const archivePayload = this.exportDemoBackup();
+    setLocalItem('hiet_demo_records_archive', archivePayload);
+    setLocalItem('hiet_demo_archived', true);
+
+    return {
+      archiveTimestamp: new Date().toISOString(),
+      recordsArchived:
+        (archivePayload.students?.length || 0) +
+        (archivePayload.faculty?.length || 0) +
+        (archivePayload.attendance?.length || 0)
+    };
+  }
+
+  exportDemoBackup(): Record<string, any> {
+    return {
+      version: '1.0',
+      exported_at: new Date().toISOString(),
+      institution: 'Himachal Institute of Engineering & Technology (HIET), Shahpur',
+      environment: (import.meta as any).env?.VITE_APP_ENV || 'development',
+      students: this.getStudentsMaster(),
+      faculty: this.getTeachersMaster(),
+      subjects: this.getSubjects(),
+      attendance: this.getAttendance(),
+      sessional_marks: this.getSessionalResults(),
+      academic_records: this.getAcademicRecords(),
+      timetable: this.getTimetable(),
+      class_incharges: this.getClassIncharges(),
+      hod_assignments: this.getHodAssignments()
+    };
   }
 }
 
