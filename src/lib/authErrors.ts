@@ -18,6 +18,7 @@ export function normalizeAuthEmail(raw: string | undefined | null): string {
   // Strip surrounding quotes
   clean = clean.replace(/^["'`]+|["'`]+$/g, '').trim();
   // Remove zero-width spaces, BOM, NBSP, and control characters
+  // eslint-disable-next-line no-control-regex
   clean = clean.replace(new RegExp('[\\u200B-\\u200D\\uFEFF\\u00A0\\x00-\\x1F\\x7F]', 'g'), '');
   // Unescape backslash-escaped characters (e.g. \@ -> @)
   clean = clean.replace(/\\@/g, '@');

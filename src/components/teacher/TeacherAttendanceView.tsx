@@ -179,6 +179,20 @@ export const TeacherAttendanceView: React.FC = () => {
   // Manual Override approval for flagged student
   const handleApproveFlagged = async (studentId: string) => {
     if (!qrSession) return;
+    const reason = window.prompt('Enter reason for manual attendance correction (audited):', 'Indoor GPS variance; student verified present in lecture hall.');
+    if (!reason || !reason.trim()) return;
+
+    try {
+      await apiService.recordManualAttendanceOverride({
+        sessionId: qrSession.sessionId,
+        studentId,
+        status: 'Present',
+        reason: reason.trim()
+      });
+    } catch (err) {
+      console.warn('Manual override record notice:', err);
+    }
+
     await attendanceService.approveFlaggedStudent(qrSession.sessionId, studentId);
     setAttendanceMap(prev => ({ ...prev, [studentId]: 'Present' }));
     setLiveScanLogs([...attendanceService.getSessionLogs(qrSession.sessionId)]);
@@ -468,6 +482,26 @@ export const TeacherAttendanceView: React.FC = () => {
               </div>
             </div>
           </div>
+
+          {/* Development Attendance Diagnostics (Dev-Only) */}
+          {(Boolean(import.meta.env.DEV) || Boolean(import.meta.env.VITE_ATTENDANCE_TEST_MODE === 'true')) && (
+            <div className="p-3 bg-neutral-900 text-neutral-100 rounded-xl border border-neutral-700 text-[11px] font-mono space-y-1">
+              <div className="flex items-center justify-between font-bold text-amber-400 border-b border-neutral-800 pb-1">
+                <span>Development Attendance Diagnostics (Faculty Monitor)</span>
+                <span className="text-[9px] uppercase px-1.5 py-0.5 bg-neutral-800 text-neutral-300 rounded font-sans">Dev Only</span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-[10px]">
+                <div>Session: <span className="text-emerald-400 font-bold">active</span></div>
+                <div>Rolling Interval: <span className="text-amber-400 font-bold">6s</span></div>
+                <div>Allowed Radius: <span className="font-bold">30.0m</span></div>
+                <div>Max Accuracy: <span className="font-bold">±20.0m</span></div>
+                <div>Scans Logged: <span className="text-white font-bold">{liveScanLogs.length}</span></div>
+                <div>Verified: <span className="text-emerald-400 font-bold">{verifiedScansCount}</span></div>
+                <div>Flagged: <span className="text-amber-400 font-bold">{flaggedScansCount}</span></div>
+                <div>Rejected: <span className="text-rose-400 font-bold">{invalidScansCount}</span></div>
+              </div>
+            </div>
+          )}
 
           {/* QR Code and Live Scanner Feed Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">

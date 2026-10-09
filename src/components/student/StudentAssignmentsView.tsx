@@ -42,10 +42,6 @@ export const StudentAssignmentsView: React.FC = () => {
   const [submissionSuccess, setSubmissionSuccess] = useState<string | null>(null);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadData();
-  }, [studentId, branch, semester]);
-
   const loadData = async () => {
     setLoading(true);
     try {
@@ -64,6 +60,10 @@ export const StudentAssignmentsView: React.FC = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadData();
+  }, [studentId, branch, semester]);
 
   const filteredAssignments = assignments.filter(a => {
     if (selectedSubjectId === 'all') return true;
@@ -380,11 +380,21 @@ export const StudentAssignmentsView: React.FC = () => {
                     )}
                     {selectedAssignment.my_submission.file_url && (
                       <button
-                        onClick={() => window.open(selectedAssignment.my_submission?.file_url, '_blank')}
+                        type="button"
+                        onClick={async () => {
+                          const rawUrl = selectedAssignment.my_submission?.file_url;
+                          if (!rawUrl) return;
+                          try {
+                            const signed = await apiService.getFileSignedUrl('assignment-submissions', rawUrl, 900);
+                            window.open(signed, '_blank');
+                          } catch {
+                            window.open(rawUrl, '_blank');
+                          }
+                        }}
                         className="inline-flex items-center gap-1.5 text-blue-700 hover:underline font-bold text-xs pt-1"
                       >
                         <FileText className="w-3.5 h-3.5" />
-                        <span>View Submitted File</span>
+                        <span>View Submitted File (Expiring Link)</span>
                         <ExternalLink className="w-3 h-3" />
                       </button>
                     )}

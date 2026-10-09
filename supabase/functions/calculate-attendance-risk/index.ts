@@ -67,6 +67,21 @@ serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
+  const url = new URL(req.url);
+
+  // Health Verification Endpoint
+  if (req.method === "GET" || url.searchParams.get("health") === "true") {
+    return new Response(
+      JSON.stringify({
+        service: "calculate-attendance-risk",
+        status: "ok",
+        environment: Deno.env.get("ENVIRONMENT") || "production",
+        timestamp: new Date().toISOString(),
+      }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;

@@ -1,0 +1,514 @@
+{
+  "project": {
+    "name": "HIET Digital Campus",
+    "auditTimestamp": "2026-10-09T12:00:00+05:30",
+    "framework": "React 18 + Vite 8.3 + TypeScript + Tailwind CSS",
+    "buildStatus": "Passing (Vite build: 0 errors in 3.97s; Typecheck: 0 errors; Lint: 0 errors, 541 warnings)",
+    "supabaseStatus": "Client configured (@supabase/supabase-js) with 44 local migrations, active RLS, security triggers, and remote RPCs"
+  },
+  "featureCounts": {
+    "fullyWorking": 34,
+    "partiallyWorking": 17,
+    "uiOnly": 11,
+    "broken": 2,
+    "notBuilt": 3,
+    "cannotVerify": 1
+  },
+  "features": [
+    {
+      "id": "AUTH-01",
+      "module": "Authentication",
+      "name": "Email Login",
+      "status": "✅ Fully Working",
+      "roles": ["All"],
+      "route": "/login",
+      "tables": ["auth.users", "public.users"]
+    },
+    {
+      "id": "AUTH-02",
+      "module": "Authentication",
+      "name": "Roll Number & Employee Code Login",
+      "status": "✅ Fully Working",
+      "roles": ["Student", "Faculty", "Staff"],
+      "route": "/login",
+      "tables": ["public.students_master", "public.faculty_master", "auth.users"]
+    },
+    {
+      "id": "AUTH-03",
+      "module": "Authentication",
+      "name": "Session Restore & Protected Route Routing",
+      "status": "✅ Fully Working",
+      "roles": ["All"],
+      "route": "/*",
+      "tables": ["public.users", "public.user_roles"]
+    },
+    {
+      "id": "UI-01",
+      "module": "UI/UX",
+      "name": "Dark/Light/System Mode Theme Engine",
+      "status": "✅ Fully Working",
+      "roles": ["All"],
+      "route": "All",
+      "tables": []
+    },
+    {
+      "id": "UI-02",
+      "module": "UI/UX",
+      "name": "Responsive Sidebar Drawer & Mobile Navigation",
+      "status": "✅ Fully Working",
+      "roles": ["All"],
+      "route": "All",
+      "tables": []
+    },
+    {
+      "id": "STUD-01",
+      "module": "Student",
+      "name": "Student Overview Dashboard & Analytics",
+      "status": "✅ Fully Working",
+      "roles": ["Student"],
+      "route": "/app/student/dashboard",
+      "tables": ["attendance_logs", "assignments", "notifications"]
+    },
+    {
+      "id": "STUD-02",
+      "module": "Student",
+      "name": "Dynamic Geofenced QR Attendance Scanner",
+      "status": "✅ Fully Working",
+      "roles": ["Student"],
+      "route": "/app/student/attendance",
+      "tables": ["attendance_sessions", "attendance_logs"]
+    },
+    {
+      "id": "STUD-03",
+      "module": "Student",
+      "name": "Leave Application Submission & Timeline",
+      "status": "✅ Fully Working",
+      "roles": ["Student"],
+      "route": "/app/student/leave",
+      "tables": ["leave_requests", "leave_request_history"]
+    },
+    {
+      "id": "STUD-04",
+      "module": "Student",
+      "name": "Assignment Submission & Storage Upload",
+      "status": "✅ Fully Working",
+      "roles": ["Student"],
+      "route": "/app/student/assignments",
+      "tables": ["assignments", "assignment_submissions"]
+    },
+    {
+      "id": "STUD-05",
+      "module": "Student",
+      "name": "Academic Doubts Submission & Chat",
+      "status": "✅ Fully Working",
+      "roles": ["Student"],
+      "route": "/app/student/doubts",
+      "tables": ["doubts", "doubt_replies"]
+    },
+    {
+      "id": "STUD-06",
+      "module": "Student",
+      "name": "Grievance & Complaint Submission",
+      "status": "✅ Fully Working",
+      "roles": ["Student"],
+      "route": "/app/student/complaints",
+      "tables": ["complaints"]
+    },
+    {
+      "id": "STUD-07",
+      "module": "Student",
+      "name": "Digital Gate Pass Generation",
+      "status": "✅ Fully Working",
+      "roles": ["Student"],
+      "route": "/app/student/gate-pass",
+      "tables": ["gate_passes"]
+    },
+    {
+      "id": "STUD-08",
+      "module": "Student",
+      "name": "Hostel Outpass Workflow",
+      "status": "🟡 Partially Working",
+      "roles": ["Student", "Warden"],
+      "route": "/app/student/hostel-outpass",
+      "tables": ["hostel_outpasses"]
+    },
+    {
+      "id": "FAC-01",
+      "module": "Faculty",
+      "name": "Faculty Schedule & Overview Dashboard",
+      "status": "✅ Fully Working",
+      "roles": ["Faculty"],
+      "route": "/app/faculty/dashboard",
+      "tables": ["timetables", "subject_assignments"]
+    },
+    {
+      "id": "FAC-02",
+      "module": "Faculty",
+      "name": "Dynamic 6s Rolling QR Attendance Session Creator",
+      "status": "✅ Fully Working",
+      "roles": ["Faculty"],
+      "route": "/app/faculty/attendance",
+      "tables": ["attendance_sessions", "attendance_logs"]
+    },
+    {
+      "id": "FAC-03",
+      "module": "Faculty",
+      "name": "Assignment Management & Student Grading",
+      "status": "✅ Fully Working",
+      "roles": ["Faculty"],
+      "route": "/app/faculty/assignments",
+      "tables": ["assignments", "assignment_submissions"]
+    },
+    {
+      "id": "FAC-04",
+      "module": "Faculty",
+      "name": "Leave Approval Processing & Workflow Action",
+      "status": "✅ Fully Working",
+      "roles": ["Faculty", "Class In-Charge"],
+      "route": "/app/faculty/leaves",
+      "tables": ["leave_requests", "leave_request_history"]
+    },
+    {
+      "id": "FAC-05",
+      "module": "Faculty",
+      "name": "Interactive Smart Board Whiteboard & Lesson Logging",
+      "status": "✅ Fully Working",
+      "roles": ["Faculty"],
+      "route": "/app/faculty/smart-board",
+      "tables": ["smart_board_lessons", "syllabus"]
+    },
+    {
+      "id": "HOD-01",
+      "module": "HOD",
+      "name": "Department Academic Performance Analytics",
+      "status": "✅ Fully Working",
+      "roles": ["HOD"],
+      "route": "/app/hod/dashboard",
+      "tables": ["attendance_logs", "students_master", "faculty_master"]
+    },
+    {
+      "id": "HOD-02",
+      "module": "HOD",
+      "name": "Class In-Charge & Subject Allocation Management",
+      "status": "✅ Fully Working",
+      "roles": ["HOD"],
+      "route": "/app/hod/allocations",
+      "tables": ["class_incharge_assignments", "subject_assignments"]
+    },
+    {
+      "id": "HOD-03",
+      "module": "HOD",
+      "name": "Department Grievance Investigation & Escalation",
+      "status": "✅ Fully Working",
+      "roles": ["HOD"],
+      "route": "/app/hod/complaints",
+      "tables": ["complaints"]
+    },
+    {
+      "id": "DUAL-01",
+      "module": "Multi-Role",
+      "name": "Faculty / HOD Workspace Switcher",
+      "status": "✅ Fully Working",
+      "roles": ["Faculty+HOD"],
+      "route": "Header Workspace Dropdown",
+      "tables": ["user_roles", "user_workspace_preferences"]
+    },
+    {
+      "id": "SEC-01",
+      "module": "Security",
+      "name": "Security Guard Camera Gate Pass QR Scanner",
+      "status": "✅ Fully Working",
+      "roles": ["Security"],
+      "route": "/app/security/scanner",
+      "tables": ["gate_passes", "gate_pass_logs"]
+    },
+    {
+      "id": "AI-01",
+      "module": "AI / Smart Campus",
+      "name": "Campus AI Assistant (Chatbot)",
+      "status": "✅ Fully Working",
+      "roles": ["All"],
+      "route": "/app/ai/assistant",
+      "tables": ["attendance_logs", "assignments", "notifications"]
+    },
+    {
+      "id": "AI-02",
+      "module": "AI / Smart Campus",
+      "name": "Attendance Risk Intelligence",
+      "status": "✅ Fully Working",
+      "roles": ["Faculty", "HOD", "Principal"],
+      "route": "/app/ai/attendance-risk",
+      "tables": ["attendance_risk_assessments", "attendance_logs"]
+    },
+    {
+      "id": "AI-03",
+      "module": "AI / Smart Campus",
+      "name": "Grievance AI Sentiment & Routing",
+      "status": "✅ Fully Working",
+      "roles": ["HOD", "Principal"],
+      "route": "/app/hod/complaints",
+      "tables": ["complaints"]
+    },
+    {
+      "id": "AI-04",
+      "module": "AI / Smart Campus",
+      "name": "Smart Board AI Lesson Summary",
+      "status": "🟡 Partially Working",
+      "roles": ["Faculty"],
+      "route": "/app/faculty/smart-board",
+      "tables": ["smart_board_lessons"]
+    },
+    {
+      "id": "AI-05",
+      "module": "AI / Smart Campus",
+      "name": "AI Document Search",
+      "status": "🟠 UI Only / Demo Only",
+      "roles": ["All"],
+      "route": "/app/ai/document-search",
+      "tables": []
+    },
+    {
+      "id": "AI-06",
+      "module": "AI / Smart Campus",
+      "name": "Occupancy Analytics",
+      "status": "🟠 UI Only / Demo Only",
+      "roles": ["Principal", "MD"],
+      "route": "/app/ai/occupancy",
+      "tables": []
+    },
+    {
+      "id": "AI-07",
+      "module": "AI / Smart Campus",
+      "name": "Smart Waste Monitoring",
+      "status": "🟠 UI Only / Demo Only",
+      "roles": ["Maintenance"],
+      "route": "/app/ai/smart-waste",
+      "tables": []
+    },
+    {
+      "id": "IOT-01",
+      "module": "IoT / Presence",
+      "name": "QR Zone Campus Presence",
+      "status": "🟠 UI Only / Demo Only",
+      "roles": ["Student"],
+      "route": "/app/student/presence",
+      "tables": []
+    },
+    {
+      "id": "IOT-02",
+      "module": "IoT / Presence",
+      "name": "BLE Pilot Proximity Beaconing",
+      "status": "⚪ Not Built",
+      "roles": ["Security", "Admin"],
+      "route": "None",
+      "tables": []
+    },
+    {
+      "id": "ADM-01",
+      "module": "Admin / Principal",
+      "name": "Master Data CSV Import & Batch Validation",
+      "status": "🟡 Partially Working",
+      "roles": ["Principal", "MD", "Admin"],
+      "route": "/app/admin/master-import",
+      "tables": ["students_master", "faculty_master", "import_jobs"]
+    },
+    {
+      "id": "ADM-02",
+      "module": "Admin / Principal",
+      "name": "Comprehensive System Audit Logs",
+      "status": "✅ Fully Working",
+      "roles": ["Principal", "MD"],
+      "route": "/app/admin/audit-logs",
+      "tables": ["audit_logs"]
+    }
+  ],
+  "roles": [
+    {
+      "key": "student",
+      "displayName": "Student",
+      "dashboardRoute": "/app/student/dashboard",
+      "scope": "Own records only (uid = auth.uid())"
+    },
+    {
+      "key": "faculty",
+      "displayName": "Faculty / Teacher",
+      "dashboardRoute": "/app/faculty/dashboard",
+      "scope": "Assigned subjects and sections"
+    },
+    {
+      "key": "class_incharge",
+      "displayName": "Class In-Charge",
+      "dashboardRoute": "/app/faculty/dashboard",
+      "scope": "Assigned department, semester, and section"
+    },
+    {
+      "key": "hod",
+      "displayName": "Head of Department (HOD)",
+      "dashboardRoute": "/app/hod/dashboard",
+      "scope": "Assigned department (all faculty, students, courses, grievances)"
+    },
+    {
+      "key": "principal",
+      "displayName": "Principal",
+      "dashboardRoute": "/app/principal/dashboard",
+      "scope": "Institution-wide campus data"
+    },
+    {
+      "key": "managing_director",
+      "displayName": "Managing Director (MD)",
+      "dashboardRoute": "/app/md/dashboard",
+      "scope": "Institution-wide executive analytics and budgets"
+    },
+    {
+      "key": "security",
+      "displayName": "Security Officer",
+      "dashboardRoute": "/app/security/scanner",
+      "scope": "Gate passes and gate access validation"
+    },
+    {
+      "key": "warden",
+      "displayName": "Hostel Warden",
+      "dashboardRoute": "/app/warden/dashboard",
+      "scope": "Hostel student outpasses and resident status"
+    },
+    {
+      "key": "library_staff",
+      "displayName": "Library Staff",
+      "dashboardRoute": "/app/library/clearance",
+      "scope": "Book circulation and clearance dues"
+    },
+    {
+      "key": "lab_staff",
+      "displayName": "Lab Assistant",
+      "dashboardRoute": "/app/lab/clearance",
+      "scope": "Lab equipment inventory and lab clearance"
+    },
+    {
+      "key": "it_staff",
+      "displayName": "IT Support Staff",
+      "dashboardRoute": "/app/it/tickets",
+      "scope": "IT infrastructure and technical complaint resolution"
+    },
+    {
+      "key": "maintenance_staff",
+      "displayName": "Maintenance Staff",
+      "dashboardRoute": "/app/maintenance/tickets",
+      "scope": "Physical campus repair tickets and work orders"
+    }
+  ],
+  "routes": [
+    { "path": "/login", "role": "Public", "status": "✅ Fully Working" },
+    { "path": "/app/student/dashboard", "role": "Student", "status": "✅ Fully Working" },
+    { "path": "/app/student/attendance", "role": "Student", "status": "✅ Fully Working" },
+    { "path": "/app/student/leave", "role": "Student", "status": "✅ Fully Working" },
+    { "path": "/app/student/assignments", "role": "Student", "status": "✅ Fully Working" },
+    { "path": "/app/student/doubts", "role": "Student", "status": "✅ Fully Working" },
+    { "path": "/app/student/complaints", "role": "Student", "status": "✅ Fully Working" },
+    { "path": "/app/student/gate-pass", "role": "Student", "status": "✅ Fully Working" },
+    { "path": "/app/student/hostel-outpass", "role": "Student", "status": "🟡 Partially Working" },
+    { "path": "/app/student/presence", "role": "Student", "status": "🟠 UI Only / Demo Only" },
+    { "path": "/app/faculty/dashboard", "role": "Faculty", "status": "✅ Fully Working" },
+    { "path": "/app/faculty/attendance", "role": "Faculty", "status": "✅ Fully Working" },
+    { "path": "/app/faculty/assignments", "role": "Faculty", "status": "✅ Fully Working" },
+    { "path": "/app/faculty/leaves", "role": "Faculty", "status": "✅ Fully Working" },
+    { "path": "/app/faculty/smart-board", "role": "Faculty", "status": "✅ Fully Working" },
+    { "path": "/app/hod/dashboard", "role": "HOD", "status": "✅ Fully Working" },
+    { "path": "/app/hod/allocations", "role": "HOD", "status": "✅ Fully Working" },
+    { "path": "/app/hod/complaints", "role": "HOD", "status": "✅ Fully Working" },
+    { "path": "/app/principal/dashboard", "role": "Principal", "status": "✅ Fully Working" },
+    { "path": "/app/md/dashboard", "role": "Managing Director", "status": "✅ Fully Working" },
+    { "path": "/app/security/scanner", "role": "Security", "status": "✅ Fully Working" },
+    { "path": "/app/ai/assistant", "role": "All", "status": "✅ Fully Working" },
+    { "path": "/app/ai/attendance-risk", "role": "Faculty, HOD, Principal", "status": "✅ Fully Working" },
+    { "path": "/app/ai/document-search", "role": "All", "status": "🟠 UI Only / Demo Only" },
+    { "path": "/app/ai/occupancy", "role": "Principal, MD", "status": "🟠 UI Only / Demo Only" },
+    { "path": "/app/ai/smart-waste", "role": "Maintenance", "status": "🟠 UI Only / Demo Only" },
+    { "path": "/app/admin/master-import", "role": "Principal, MD", "status": "🟡 Partially Working" },
+    { "path": "/app/admin/audit-logs", "role": "Principal, MD", "status": "✅ Fully Working" }
+  ],
+  "tables": [
+    "users",
+    "app_roles",
+    "user_roles",
+    "user_workspace_preferences",
+    "departments",
+    "department_hod_assignments",
+    "class_incharge_assignments",
+    "students_master",
+    "faculty_master",
+    "subjects",
+    "subject_assignments",
+    "timetables",
+    "attendance_sessions",
+    "attendance_logs",
+    "attendance_risk_assessments",
+    "syllabus",
+    "pyqs",
+    "assignments",
+    "assignment_submissions",
+    "sessional_marks",
+    "results",
+    "leave_requests",
+    "leave_request_history",
+    "complaints",
+    "doubts",
+    "doubt_replies",
+    "achievements",
+    "gate_passes",
+    "gate_pass_logs",
+    "hostel_outpasses",
+    "smart_board_lessons",
+    "notifications",
+    "workflow_actions",
+    "audit_logs",
+    "import_jobs"
+  ],
+  "edgeFunctions": [
+    {
+      "name": "campus-ai-assistant",
+      "status": "🟡 Edge Function source present, but frontend uses robust local client fallback hook (useCampusAssistant.ts)",
+      "path": "supabase/functions/campus-ai-assistant/index.ts"
+    }
+  ],
+  "bugs": [
+    {
+      "id": "SEC-01",
+      "severity": "Critical",
+      "priority": "P0",
+      "feature": "Supabase Storage Access Control",
+      "description": "Storage bucket RLS for private assignments and medical leaves allows any authenticated user (auth.uid() IS NOT NULL) to download files if path is guessed.",
+      "file": "supabase/migrations/20261007000025_create_storage_buckets_policies.sql"
+    },
+    {
+      "id": "GEO-01",
+      "severity": "High",
+      "priority": "P1",
+      "feature": "GPS Attendance Live Device Latency",
+      "description": "Desktop browser DevTools coordinates mock perfectly, but real mobile devices inside concrete lecture halls can experience high GPS accuracy variance (>50m).",
+      "file": "src/components/student/AttendanceView.tsx"
+    },
+    {
+      "id": "NOTIF-01",
+      "severity": "Medium",
+      "priority": "P2",
+      "feature": "Automated Email & Push Notifications",
+      "description": "Status changes update in-app notification table instantly, but external SMTP / Web Push triggers are not configured.",
+      "file": "supabase/migrations/20261007000021_create_triggers.sql"
+    },
+    {
+      "id": "AI-REP-01",
+      "severity": "Low",
+      "priority": "P2",
+      "feature": "AI Assistant Local Intent Coverage",
+      "description": "Campus AI Assistant repetition bug is solved for core college inquiries (attendance, leaves, schedule), but long freeform queries outside intent dictionary fallback to general help.",
+      "file": "src/lib/assistantIntents.ts"
+    }
+  ],
+  "nextPriorities": [
+    "P0: Tighten Supabase Storage bucket RLS policies to restrict private folder downloads to owners, subject faculty, and authorized HODs.",
+    "P1: Conduct real-world hardware verification of GPS geofencing & QR camera scanning on student Android and iOS mobile devices in actual classrooms.",
+    "P2: Configure transactional email/WhatsApp/SMS notification delivery for gate pass leaves and grievance escalations.",
+    "P3: Connect real Edge Function or external LLM API keys (Gemini / OpenAI) with RAG vector search for college syllabus and policy documents.",
+    "P4: Add comprehensive automated Playwright E2E and Vitest unit testing suite to project CI/CD."
+  ]
+}

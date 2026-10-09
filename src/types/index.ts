@@ -38,6 +38,13 @@ export interface StudentMaster {
   status: 'active' | 'disabled' | 'graduated' | 'suspended';
   cgpa?: number | string;
   sgpa?: number | string;
+  gender?: 'Male' | 'Female' | string;
+  hostel_code?: string;
+  hostel_name?: string;
+  room_no?: string;
+  test_case?: string;
+  attendance_percentage?: number;
+  academic_year?: string;
   created_at?: string;
 }
 
@@ -54,6 +61,8 @@ export interface TeacherMaster {
   role?: 'teacher' | 'hod';
   is_hod: boolean;
   is_class_incharge?: boolean;
+  is_warden?: boolean;
+  warden_hostel_code?: string;
   class_incharge_details?: {
     branch: string;
     semester: number;
@@ -61,6 +70,25 @@ export interface TeacherMaster {
   };
   avatar_url?: string;
   status: 'active' | 'inactive' | 'disabled' | 'on_leave' | 'resigned';
+  academic_year?: string;
+  created_at?: string;
+}
+
+export interface Hostel {
+  id: string;
+  code: string;
+  hostel_code?: string;
+  name: string;
+  hostel_name?: string;
+  type: 'girls' | 'boys' | 'coed';
+  gender_type?: 'girls' | 'boys' | 'coed';
+  warden_user_id?: string;
+  warden_employee_code: string;
+  warden_name: string;
+  capacity: number;
+  is_active: boolean;
+  data_environment?: string;
+  is_demo_account?: boolean;
   created_at?: string;
 }
 
@@ -187,6 +215,10 @@ export interface TimetableSlot {
   branch: string;
   semester: number;
   section?: string;
+  room_lat?: number;
+  room_long?: number;
+  geofence_radius_meters?: number;
+  academic_year?: string;
 }
 
 export interface SyllabusProgress {
@@ -412,6 +444,7 @@ export interface Complaint {
   is_anonymous: boolean; // Anonymous vs Confidential
   category: 'Academic' | 'Hostel' | 'Infrastructure' | 'Faculty' | 'Transport' | 'Mess/Canteen' | 'Library' | 'Accounts/Fee' | 'Anti-Ragging' | 'Faculty/Staff' | 'Other';
   title: string;
+  department?: string;
   description: string;
   attachment_url?: string;
   priority: 'Low' | 'Medium' | 'High' | 'Urgent';

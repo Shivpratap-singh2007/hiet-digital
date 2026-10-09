@@ -157,7 +157,7 @@ export const AI_FEATURES: AiFeatureConfig[] = [
     description:
       'A role-aware assistant for authorized academic and campus information.',
     phase: 'phase_1',
-    status: 'coming_soon',
+    status: 'beta',
     roles: ['student', 'faculty', 'teacher', 'hod', 'principal', 'admin', 'managing_director', 'md'],
     route: '/app/ai/campus-assistant',
     icon: 'Bot',

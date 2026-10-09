@@ -1,82 +1,116 @@
-# HIET DIGITAL CAMPUS — PRODUCTION CUTOVER CHECKLIST
+# HIET DIGITAL CAMPUS — PRODUCTION CUTOVER & ENVIRONMENT SEPARATION PROTOCOL
 **Himachal Institute of Engineering & Technology, Shahpur**  
-**Classification:** Operational Go-Live Protocol  
-**Target Audience:** Principal, Registrar, Systems & Database Administrators  
+**Classification:** Operational Go-Live & Environment Governance Protocol  
+**Target Audience:** Principal, Registrar, Systems Administrators, DevOps  
 
 ---
 
-## 1. Pre-Cutover Environment Hardening
+## 1. Environment Separation Matrix
 
-| Step | Item | Action / Verification | Status |
+HIET Digital Campus strictly enforces three deployment tiers with clear operational boundaries:
+
+| Environment Feature | Development (`local`) | Staging (`staging`) | Production (`production`) |
+| :--- | :--- | :--- | :--- |
+| **Hosting Tier** | `localhost:5173` | Vercel Preview / Test Subdomain | `https://campus.hiet.ac.in` |
+| `VITE_APP_ENV` | `development` | `staging` | `production` |
+| **Demo Accounts** | Enabled (`VITE_ENABLE_DEMO_LOGIN=true`) | Restricted / Anonymized | **DISABLED (`VITE_ENABLE_DEMO_LOGIN=false`)** |
+| **Dev Debug Panels** | Visible (Attendance/AI debug) | Admin-only / Flagged | **COMPLETELY DISABLED** |
+| **Attendance Simulation** | Enabled | Allowed with Test Banner | **DISABLED (`VITE_ATTENDANCE_TEST_MODE=false`)** |
+| **Storage RLS Policies** | Hardened (Strict ownership) | Hardened (Strict ownership) | **Hardened (Strict ownership & Signed URLs)** |
+| **Email Notification Dispatch**| Console / Mock | Sandbox / Developer Inbox | **Live Domain Sender (`notifications.hiet.ac.in`)** |
+| **AI Knowledge Store** | Seeded Sample Bylaws | Seeded Sample Bylaws | **Full Institutional Regulations & Syllabus** |
+
+---
+
+## 2. Pre-Cutover Security Hardening Checklist
+
+| Step | Checkpoint | Verification Action | Required Sign-Off |
 | :---: | :--- | :--- | :---: |
-| 1.1 | **Environment Mode** | Set `VITE_APP_ENV=production` in production hosting environment variables. | [ ] |
-| 1.2 | **Disable Demo Seed** | Set `DEMO_SEED_ENABLED=false`. Verify that demo seeds do not execute on startup. | [ ] |
-| 1.3 | **Lock Down Dev Routes** | Verify `/dev/demo-accounts` and `?previewRole` queries return redirect/access denied. | [ ] |
-| 1.4 | **Hide Environment Badge** | Verify that `Development Environment` or `Staging Environment` badges are NOT displayed. | [ ] |
-| 1.5 | **Hide Demo Test Tools** | Verify attendance simulation testing panels and demo login helpers are hidden from students. | [ ] |
-| 1.6 | **Service Role Key Secrecy** | Ensure `SUPABASE_SERVICE_ROLE_KEY` is NOT bundled in frontend code. Accessible only in Edge Functions. | [ ] |
+| **2.1** | **Production Environment Flag** | Set `VITE_APP_ENV=production` in hosting project variables. | DevOps [ ] |
+| **2.2** | **Disable Demo Auth** | Set `VITE_ENABLE_DEMO_LOGIN=false` and `VITE_DEMO_MODE=false`. Verify login screen shows only university credentials input. | Security [ ] |
+| **2.3** | **Lock Down Dev Routes** | Confirm routes `/dev/*` and `?previewRole=*` return 404 or redirect to login. | Security [ ] |
+| **2.4** | **Hide Development Banners** | Confirm that no "Development" or "Diagnostics" cards appear for students or teachers. | QA [ ] |
+| **2.5** | **Storage RLS Verification** | Verify migration `20261009000001_harden_storage_policies.sql` is deployed. Ensure no `auth.uid() IS NOT NULL` open policies remain. | DBA [ ] |
+| **2.6** | **Service Role Secrecy** | Confirm `SUPABASE_SERVICE_ROLE_KEY` is never included in client JavaScript bundles (`dist/assets/*.js`). | Security [ ] |
 
 ---
 
-## 2. Backup & Demo Data Preservation
+## 3. Data Migration & Backup Preservation
 
-| Step | Item | Action / Verification | Status |
+| Step | Checkpoint | Action | Status |
 | :---: | :--- | :--- | :---: |
-| 2.1 | **Export Demo Dataset Backup** | In Staging/Dev, navigate to `Demo Data Management` → Click `Export Demo Backup`. Save JSON to secure offline storage. | [ ] |
-| 2.2 | **Archive Demo Records** | Click `Archive Demo Records` to invoke `public.archive_demo_records()` in Supabase. | [ ] |
-| 2.3 | **Disable Demo Accounts** | Click `Disable Demo Accounts` to prevent all test credentials from authenticating. | [ ] |
-| 2.4 | **Database Snapshot** | Take a point-in-time snapshot or `pg_dump` of the Supabase PostgreSQL database before starting live master imports. | [ ] |
+| **3.1** | **Database Snapshot** | Take an immediate pre-cutover PostgreSQL backup via Supabase Dashboard. | [ ] |
+| **3.2** | **Archive Demo Records** | Execute `SELECT public.archive_demo_records();` to move test records out of active student views. | [ ] |
+| **3.3** | **Disable Demo Accounts** | Execute `UPDATE auth.users SET banned_until = '2099-01-01' WHERE email LIKE '%@hiet.demo';`. | [ ] |
 
 ---
 
-## 3. Master Data Import Execution (Strict Sequence)
+## 4. Master Data Import Execution Sequence
 
-Execute imports on `/app/admin/import` following the 11-step sequence. For every step, run **Dry Run** first, verify 0 invalid rows, and review preview before confirming:
+Execute data imports strictly on `/app/admin/import` using the atomic import wizard:
 
-| Sequence | Entity Module | Validation Checkpoints | Executed By |
-| :---: | :--- | :--- | :---: |
-| **Step 1** | `departments` | Register all academic departments (`CSE`, `ECE`, `ME`, `CE`, `AS&H`). | Administrator [ ] |
-| **Step 2** | `faculty` | Employee codes unique (`FAC-xxx`), designations verified, valid departments. | Administrator [ ] |
-| **Step 3** | `students` | University roll numbers unique, semesters 1–8, valid departments and sections. | Administrator [ ] |
-| **Step 4** | `subjects` | Course codes unique, credits > 0, semester catalogs aligned with university syllabus. | Administrator [ ] |
-| **Step 5** | `teacher_subjects` | Faculty mapped to subjects; department consistency verified. | Administrator [ ] |
-| **Step 6** | `class_incharge` | Exactly 1 active class in-charge per department, semester, section, and year. | Administrator [ ] |
-| **Step 7** | `hod_assignment` | HOD assigned to department; faculty role preserved in `user_roles`. | Principal [ ] |
-| **Step 8** | `timetable` | Start time < end time; 0 faculty time conflicts; 0 room booking collisions; valid GPS coords. | Administrator [ ] |
-| **Step 9** | `syllabus` | Syllabus units and topics populated for active semester courses. | Administrator [ ] |
-| **Step 10** | `user_invitations` | Bulk activation invites issued via Edge Function `invite-real-users`. Zero plaintext passwords in CSV. | Principal [ ] |
-
----
-
-## 4. Pilot Cohort Verification
-
-| Step | Validation Target | Expected Result | Sign-Off |
-| :---: | :--- | :--- | :---: |
-| 4.1 | **Student Login** | Pilot student logs in with password set via email invite. Views personalized dashboard. | [ ] |
-| 4.2 | **Timetable Verification** | Pilot student sees exact weekly schedule matching their branch, semester, and section. | [ ] |
-| 4.3 | **Faculty Attendance** | Assigned teacher takes geofenced attendance for the pilot section. Records sync seamlessly. | [ ] |
-| 4.4 | **HOD Dual Role** | HOD can switch between Faculty and HOD dashboard views without permission errors. | [ ] |
-| 4.5 | **Class In-Charge RLS** | Class In-Charge can view section attendance summaries and review leave requests. | [ ] |
-| 4.6 | **Student Privacy** | Student A cannot view Student B's attendance, marks, or leaves (RLS enforced). | [ ] |
+```text
+Sequence Order:
+1. departments       ── Register CSE, ECE, ME, CE, AS&H
+2. faculty           ── Unique codes (FAC-xxx), department mapping
+3. students          ── University roll numbers, semesters 1-8, branch, section
+4. subjects          ── Course codes, credit units, semester catalogs
+5. teacher_subjects  ── Assign subject teachers
+6. class_incharge    ── 1 active Class In-Charge per section/semester
+7. hod_assignment    ── Assign HODs (retains dual faculty-HOD capability)
+8. timetable         ── Weekly lecture schedule & classroom GPS coords
+9. syllabus          ── Prescribed course units and topics
+10. user_invitations ── Bulk email activation invites via invite-real-users
+```
 
 ---
 
-## 5. Rollback & Contingency Plan
+## 5. Live Edge Function Verification
 
-In the event of an import failure during cutover:
+Before opening portal to students and staff, verify all Edge Function health checks return HTTP 200:
 
-1. **Transactional Safety:** If any row fails during confirmed import, the PostgreSQL function `process_master_import_atomic` rolls back all insertions automatically. Check the status badge (`rolled_back`) and download the error report.
-2. **Table-Level Reversion:** If invalid data was imported with bad mapping, restore the pre-import snapshot or execute:
-   ```sql
-   -- Example: Revert specific import job records
-   DELETE FROM public.students_master WHERE created_at >= '<cutover_start_timestamp>';
-   ```
-3. **Point-In-Time Restore:** If relational corruption occurs, restore the snapshot taken in Step 2.4 via Supabase Dashboard → Settings → Backups.
+```bash
+# Verify Notification Dispatcher
+curl -s https://<project-ref>.supabase.co/functions/v1/dispatch-notification | grep '"status":"ok"'
+
+# Verify Hall Ticket Generator
+curl -s https://<project-ref>.supabase.co/functions/v1/generate-hall-ticket | grep '"status":"ok"'
+
+# Verify Public Hall Ticket Verifier
+curl -s https://<project-ref>.supabase.co/functions/v1/verify-hall-ticket | grep '"status":"ok"'
+
+# Verify Campus AI Assistant
+curl -s https://<project-ref>.supabase.co/functions/v1/campus-ai-assistant | grep '"status":"ok"'
+
+# Verify Attendance Risk Calculator
+curl -s https://<project-ref>.supabase.co/functions/v1/calculate-attendance-risk | grep '"status":"ok"'
+```
 
 ---
 
-## 6. Final Go-Live Sign-Off
+## 6. Pilot Cohort Sign-Off & Verification
 
-- **Principal / Academic Head:** ___________________________  Date: ______________
-- **System Administrator:** ___________________________  Date: ______________
-- **Cutover Status:** [ ] GO  /  [ ] NO-GO
+| Role | Test Target | Acceptance Criteria | Verified |
+| :--- | :--- | :--- | :---: |
+| **Student** | Login & Dashboard | Logs in with set password; views personalized schedule, attendance, and dues. | [ ] |
+| **Faculty** | Dynamic QR Attendance | Launches 6-second dynamic QR; students within 30m successfully marked present. | [ ] |
+| **Faculty** | Manual Correction | Executes audited manual correction with written reason for student with indoor GPS drift. | [ ] |
+| **HOD** | Workspace Switcher | Toggles seamlessly between Faculty Class View and Department HOD Queue. | [ ] |
+| **Principal** | Audit Logs & Reports | Views institutional attendance reports and system audit trail. | [ ] |
+| **Exam Cell** | Hall Ticket Download | Student with 5 completed clearances downloads signed admit card with verified QR. | [ ] |
+
+---
+
+## 7. Rollback & Contingency Protocol
+
+1. **Transactional Reversal:** All master data imports execute under `process_master_import_atomic`. Any batch failure automatically rolls back.
+2. **Database Point-in-Time Restore:** If relational mapping errors occur, restore the backup snapshot taken in Step 3.1.
+3. **Emergency Maintenance Mode:** If critical issues arise post-cutover, toggle Vercel environment variable `VITE_MAINTENANCE_MODE=true` to display temporary institutional notice.
+
+---
+
+## 8. Final Authority Authorization
+
+- **Principal / Director:** ___________________________  Date: ______________
+- **Head of System Administration:** ___________________________  Date: ______________
+- **Cutover Decision:** [ ] **APPROVED FOR PRODUCTION GO-LIVE**

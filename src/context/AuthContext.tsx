@@ -49,311 +49,52 @@ export function getRoleRedirect(role?: string | null): string {
 }
 
 // =============================================================================
-// MASTER DEMO PROFILES (Section 15 Specification)
+// MASTER DEMO PROFILES (5 Faculty + 2 HODs + 1 Class In-Charge + 2 Wardens + 30 Students)
 // =============================================================================
-
-// Student 1: Aditya Nanda (CSE Sem 1 Sec A)
-export const DEMO_STUDENT_ADITYA: Profile & { identifier: string } = {
-  id: 'prof-std-cse-2026-001',
-  auth_user_id: 'auth-std-cse-2026-001',
-  role: 'student',
-  student_id: 'std-cse-2026-001',
-  identifier: 'HIET-CSE-2026-001',
-  name: 'Aditya Nanda',
-  email: 'student.cse01@hiet.demo',
-  must_change_password: false,
-  activeRoles: ['student'],
-  activeWorkspaceRole: 'student',
-  department: 'CSE',
-  studentMaster: {
-    id: 'std-cse-2026-001',
-    roll_no: 'HIET-CSE-2026-001',
-    name: 'Aditya Nanda',
-    father_name: 'Sh. Raman Nanda',
-    mother_name: 'Smt. Kavita Nanda',
-    dob: '2004-06-12',
-    course: 'B.Tech',
-    department: 'CSE',
-    branch: 'CSE',
-    semester: 1,
-    section: 'A',
-    college_email: 'student.cse01@hiet.demo',
-    phone: '+91 98160 44001',
-    avatar_url: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80',
-    cgpa: 8.24,
-    sgpa: 8.18,
-    status: 'active'
-  }
-};
-
-// Student 2: Aarav Sharma (CSE Sem 1 Sec A)
-export const DEMO_STUDENT_AARAV: Profile & { identifier: string } = {
-  id: 'prof-std-cse-2026-002',
-  auth_user_id: 'auth-std-cse-2026-002',
-  role: 'student',
-  student_id: 'std-cse-2026-002',
-  identifier: 'HIET-CSE-2026-002',
-  name: 'Aarav Sharma',
-  email: 'student.cse02@hiet.demo',
-  must_change_password: false,
-  activeRoles: ['student'],
-  activeWorkspaceRole: 'student',
-  department: 'CSE',
-  studentMaster: {
-    id: 'std-cse-2026-002',
-    roll_no: 'HIET-CSE-2026-002',
-    name: 'Aarav Sharma',
-    father_name: 'Sh. Rajesh Sharma',
-    mother_name: 'Smt. Sunita Sharma',
-    dob: '2004-08-15',
-    course: 'B.Tech',
-    department: 'CSE',
-    branch: 'CSE',
-    semester: 1,
-    section: 'A',
-    college_email: 'student.cse02@hiet.demo',
-    phone: '+91 98160 44002',
-    avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-    cgpa: 7.55,
-    sgpa: 7.62,
-    status: 'active'
-  }
-};
-
-// Student 3: Priya Verma (CSE Sem 1 Sec A)
-export const DEMO_STUDENT_PRIYA: Profile & { identifier: string } = {
-  id: 'prof-std-cse-2026-003',
-  auth_user_id: 'auth-std-cse-2026-003',
-  role: 'student',
-  student_id: 'std-cse-2026-003',
-  identifier: 'HIET-CSE-2026-003',
-  name: 'Priya Verma',
-  email: 'student.cse03@hiet.demo',
-  must_change_password: false,
-  activeRoles: ['student'],
-  activeWorkspaceRole: 'student',
-  department: 'CSE',
-  studentMaster: {
-    id: 'std-cse-2026-002',
-    roll_no: 'HIET-CSE-2026-003',
-    name: 'Priya Verma',
-    father_name: 'Sh. Vijay Verma',
-    mother_name: 'Smt. Anjali Verma',
-    dob: '2004-11-20',
-    course: 'B.Tech',
-    department: 'CSE',
-    branch: 'CSE',
-    semester: 1,
-    section: 'A',
-    college_email: 'student.cse03@hiet.demo',
-    phone: '+91 98160 44003',
-    avatar_url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
-    cgpa: 9.15,
-    sgpa: 9.20,
-    status: 'active'
-  }
-};
-
-// Faculty 1: Dr. Anuj Sharma (Faculty + HOD CSE)
-export const DEMO_FACULTY_ANUJ: Profile & { identifier: string } = {
-  id: 'prof-tch-fac-cse-001',
-  auth_user_id: 'auth-tch-fac-cse-001',
-  role: 'faculty',
-  teacher_id: 'tch-fac-cse-001',
-  faculty_id: 'HIET-FAC-CSE-001',
-  identifier: 'HIET-FAC-CSE-001',
-  name: 'Dr. Anuj Sharma',
-  email: 'anuj.sharma@hiet.demo',
-  must_change_password: false,
-  activeRoles: ['faculty', 'hod'],
-  activeWorkspaceRole: 'faculty',
-  workspaceRoles: [
-    { roleKey: 'faculty', label: 'Faculty Workspace', departmentName: 'CSE' },
-    { roleKey: 'hod', label: 'HOD — Computer Science & Engineering', departmentName: 'Computer Science & Engineering' }
-  ],
-  department: 'CSE',
-  teacherMaster: {
-    id: 'tch-fac-cse-001',
-    faculty_id: 'HIET-FAC-CSE-001',
-    full_name: 'Dr. Anuj Sharma',
-    name: 'Dr. Anuj Sharma',
-    department: 'CSE',
-    designation: 'Professor & Head',
-    college_email: 'anuj.sharma@hiet.demo',
-    phone: '+91 98160 55001',
-    role: 'teacher',
-    is_hod: true,
-    is_class_incharge: false,
-    avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-    status: 'active'
-  }
-};
-
-// Faculty 2: Dr. Neha Kapoor (Faculty)
-export const DEMO_FACULTY_NEHA: Profile & { identifier: string } = {
-  id: 'prof-tch-fac-cse-002',
-  auth_user_id: 'auth-tch-fac-cse-002',
-  role: 'faculty',
-  teacher_id: 'tch-fac-cse-002',
-  faculty_id: 'HIET-FAC-CSE-002',
-  identifier: 'HIET-FAC-CSE-002',
-  name: 'Dr. Neha Kapoor',
-  email: 'faculty.cse02@hiet.demo',
-  must_change_password: false,
-  activeRoles: ['faculty'],
-  activeWorkspaceRole: 'faculty',
-  department: 'CSE',
-  teacherMaster: {
-    id: 'tch-fac-cse-002',
-    faculty_id: 'HIET-FAC-CSE-002',
-    full_name: 'Dr. Neha Kapoor',
-    name: 'Dr. Neha Kapoor',
-    department: 'CSE',
-    designation: 'Assistant Professor',
-    college_email: 'faculty.cse02@hiet.demo',
-    phone: '+91 98160 55002',
-    role: 'teacher',
-    is_hod: false,
-    avatar_url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80',
-    status: 'active'
-  }
-};
-
-// Faculty 3: Mr. Rohit Mehta (Faculty + Class In-Charge)
-export const DEMO_FACULTY_ROHIT: Profile & { identifier: string } = {
-  id: 'prof-tch-fac-cse-003',
-  auth_user_id: 'auth-tch-fac-cse-003',
-  role: 'faculty',
-  teacher_id: 'tch-fac-cse-003',
-  faculty_id: 'HIET-FAC-CSE-003',
-  identifier: 'HIET-FAC-CSE-003',
-  name: 'Mr. Rohit Mehta',
-  email: 'faculty.cse03@hiet.demo',
-  must_change_password: false,
-  activeRoles: ['faculty', 'class_incharge'],
-  activeWorkspaceRole: 'faculty',
-  department: 'CSE',
-  teacherMaster: {
-    id: 'tch-fac-cse-003',
-    faculty_id: 'HIET-FAC-CSE-003',
-    full_name: 'Mr. Rohit Mehta',
-    name: 'Mr. Rohit Mehta',
-    department: 'CSE',
-    designation: 'Assistant Professor',
-    college_email: 'faculty.cse03@hiet.demo',
-    phone: '+91 98160 55003',
-    role: 'teacher',
-    is_hod: false,
-    is_class_incharge: true,
-    class_incharge_details: {
-      branch: 'CSE',
-      semester: 1,
-      section: 'A'
-    },
-    avatar_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
-    status: 'active'
-  }
-};
-
-export const DEMO_PRINCIPAL_RAJESH: Profile & { identifier: string } = {
-  id: 'prof-principal-01',
-  auth_user_id: 'auth-principal-01',
-  role: 'principal',
-  name: 'Dr. Rajesh Kumar',
-  email: 'principal@hiet.demo',
-  identifier: 'HIET-PRI-001',
-  activeRoles: ['principal'],
-  activeWorkspaceRole: 'principal',
-  must_change_password: false
-};
-
-export const DEMO_MD_SHARMA: Profile & { identifier: string } = {
-  id: 'prof-md-01',
-  auth_user_id: 'auth-md-01',
-  role: 'managing_director',
-  name: 'Mr. R. K. Sharma',
-  email: 'md@hiet.demo',
-  identifier: 'HIET-MD-001',
-  activeRoles: ['managing_director'],
-  activeWorkspaceRole: 'managing_director',
-  must_change_password: false
-};
-
-export const DEMO_SECURITY_RAMESH: Profile & { identifier: string } = {
-  id: 'prof-security-01',
-  auth_user_id: 'auth-security-01',
-  role: 'security_guard',
-  name: 'Ramesh Thakur',
-  email: 'security@hiet.demo',
-  identifier: 'HIET-SEC-001',
-  activeRoles: ['security', 'security_guard'],
-  activeWorkspaceRole: 'security',
-  must_change_password: false
-};
-
-export const DEMO_WARDEN_NEHA: Profile & { identifier: string } = {
-  id: 'prof-warden-01',
-  auth_user_id: 'auth-warden-01',
-  role: 'warden',
-  name: 'Ms. Neha Verma',
-  email: 'warden@hiet.demo',
-  identifier: 'HIET-WAR-001',
-  activeRoles: ['warden'],
-  activeWorkspaceRole: 'warden',
-  must_change_password: false
-};
-
-export const DEMO_LIBRARY_SUNITA: Profile & { identifier: string } = {
-  id: 'prof-lib-01',
-  auth_user_id: 'auth-lib-01',
-  role: 'library_staff',
-  name: 'Sunita Devi',
-  email: 'library@hiet.demo',
-  identifier: 'HIET-LIB-001',
-  activeRoles: ['library_staff'],
-  activeWorkspaceRole: 'library_staff',
-  must_change_password: false
-};
-
-export const DEMO_LAB_MOHIT: Profile & { identifier: string } = {
-  id: 'prof-lab-01',
-  auth_user_id: 'auth-lab-01',
-  role: 'lab_staff',
-  name: 'Mohit Kumar',
-  email: 'lab@hiet.demo',
-  identifier: 'HIET-LAB-001',
-  activeRoles: ['lab_staff'],
-  activeWorkspaceRole: 'lab_staff',
-  must_change_password: false
-};
-
-export const DEMO_IT_VIKRAM: Profile & { identifier: string } = {
-  id: 'prof-it-01',
-  auth_user_id: 'auth-it-01',
-  role: 'it_staff',
-  name: 'Vikram Singh',
-  email: 'it@hiet.demo',
-  identifier: 'HIET-IT-001',
-  activeRoles: ['it_staff'],
-  activeWorkspaceRole: 'it_staff',
-  must_change_password: false
-};
-
-export const MASTER_DEMO_ACCOUNTS = [
-  DEMO_STUDENT_ADITYA,
-  DEMO_STUDENT_AARAV,
-  DEMO_STUDENT_PRIYA,
+import {
+  ALL_DEMO_PROFILES,
+  ALL_DEMO_FACULTY_PROFILES,
+  ALL_DEMO_STUDENT_PROFILES,
+  ALL_DEMO_STAFF_PROFILES,
   DEMO_FACULTY_ANUJ,
-  DEMO_FACULTY_NEHA,
+  DEMO_FACULTY_KAVITA,
   DEMO_FACULTY_ROHIT,
+  DEMO_FACULTY_NEHA,
+  DEMO_FACULTY_POOJA,
   DEMO_PRINCIPAL_RAJESH,
   DEMO_MD_SHARMA,
   DEMO_SECURITY_RAMESH,
-  DEMO_WARDEN_NEHA,
   DEMO_LIBRARY_SUNITA,
   DEMO_LAB_MOHIT,
   DEMO_IT_VIKRAM
-];
+} from '../lib/mockDemoUsers';
+
+export const DEMO_STUDENT_ADITYA = ALL_DEMO_STUDENT_PROFILES[0];
+export const DEMO_STUDENT_AARAV = ALL_DEMO_STUDENT_PROFILES[1];
+export const DEMO_STUDENT_PRIYA = ALL_DEMO_STUDENT_PROFILES[2];
+export const DEMO_WARDEN_NEHA = DEMO_FACULTY_NEHA;
+export const DEMO_WARDEN_POOJA = DEMO_FACULTY_POOJA;
+
+export {
+  DEMO_FACULTY_ANUJ,
+  DEMO_FACULTY_KAVITA,
+  DEMO_FACULTY_ROHIT,
+  DEMO_FACULTY_NEHA,
+  DEMO_FACULTY_POOJA,
+  DEMO_PRINCIPAL_RAJESH,
+  DEMO_MD_SHARMA,
+  DEMO_SECURITY_RAMESH,
+  DEMO_LIBRARY_SUNITA,
+  DEMO_LAB_MOHIT,
+  DEMO_IT_VIKRAM,
+  ALL_DEMO_FACULTY_PROFILES,
+  ALL_DEMO_STUDENT_PROFILES,
+  ALL_DEMO_STAFF_PROFILES,
+  ALL_DEMO_PROFILES
+};
+
+export const MASTER_DEMO_ACCOUNTS = ALL_DEMO_PROFILES;
+
 
 // Fictional Demo Profiles as explicitly requested in Section 9
 export const DEMO_STUDENT_CSE: Profile = {

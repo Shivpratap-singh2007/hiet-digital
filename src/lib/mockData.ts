@@ -43,36 +43,23 @@ import {
   CampusZone,
   CampusPresenceRecord,
   ClassInchargeRecord,
-  HodAssignmentRecord
+  HodAssignmentRecord,
+  Hostel
 } from '../types';
+import { 
+  ALL_DEMO_FACULTY_PROFILES, 
+  ALL_DEMO_STUDENT_PROFILES, 
+  ALL_DEMO_PROFILES 
+} from './mockDemoUsers';
 
 // =============================================================================
-// 1. VERIFIED STUDENTS MASTER RECORDS (20 STUDENTS AS SPECIFIED)
-// 10 B.Tech CSE + 10 B.Tech CSE AI/ML
+// 1. VERIFIED STUDENTS MASTER RECORDS
+// Includes 30 Demo Students (15 CSE + 15 ECE) + Legacy Records
 // =============================================================================
 export const INITIAL_STUDENTS_MASTER: StudentMaster[] = [
-  // --- Demo Student (Part C & D Specification) ---
-  {
-    id: 'std-cse-2026-001',
-    roll_no: 'HIET-CSE-2026-001',
-    name: 'Aditya Nanda',
-    father_name: 'Sh. Raman Nanda',
-    mother_name: 'Smt. Kavita Nanda',
-    dob: '2004-06-12',
-    course: 'B.Tech',
-    department: 'CSE',
-    branch: 'CSE',
-    semester: 1,
-    section: 'A',
-    college_email: 'student.cse01@hiet.demo',
-    phone: '+91 98160 44001',
-    avatar_url: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80',
-    cgpa: 8.24,
-    sgpa: 8.18,
-    status: 'active',
-    created_at: '2026-08-01T10:00:00Z'
-  },
-  // --- 10 CSE Students (Semester 6) ---
+  // --- 30 Demo Students (15 CSE + 15 ECE) ---
+  ...ALL_DEMO_STUDENT_PROFILES.map(p => p.studentMaster!),
+  // --- Legacy Students (Semester 6) ---
   {
     id: 'std-cse-001',
     roll_no: 'CSE001',
@@ -424,37 +411,8 @@ export const INITIAL_STUDENTS_MASTER: StudentMaster[] = [
 // FAC001 - Teacher, FAC002 - Teacher, FAC003 - HOD
 // =============================================================================
 export const INITIAL_TEACHERS_MASTER: TeacherMaster[] = [
-  // --- Demo Faculty & HOD (Part C & D Specification) ---
-  {
-    id: 'tch-fac-cse-001',
-    faculty_id: 'HIET-FAC-CSE-001',
-    full_name: 'Dr. Anuj Sharma',
-    name: 'Dr. Anuj Sharma',
-    department: 'CSE',
-    designation: 'Associate Professor',
-    college_email: 'faculty.cse01@hiet.demo',
-    phone: '+91 98160 55001',
-    role: 'teacher',
-    is_hod: false,
-    avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-    status: 'active',
-    created_at: '2021-01-15T09:00:00Z'
-  },
-  {
-    id: 'tch-hod-cse-001',
-    faculty_id: 'HIET-HOD-CSE-001',
-    full_name: 'Dr. Anuj Sharma (HOD)',
-    name: 'Dr. Anuj Sharma (HOD)',
-    department: 'CSE',
-    designation: 'Professor & Head',
-    college_email: 'hod.cse@hiet.demo',
-    phone: '+91 98160 55002',
-    role: 'hod',
-    is_hod: true,
-    avatar_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
-    status: 'active',
-    created_at: '2019-03-10T09:00:00Z'
-  },
+  // --- 5 Multi-Role Faculty Members (2 HODs, 1 Class In-Charge, 2 Wardens) ---
+  ...ALL_DEMO_FACULTY_PROFILES.map(p => p.teacherMaster!),
   {
     id: 'tch-01',
     faculty_id: 'FAC001',
@@ -521,35 +479,11 @@ export const INITIAL_TEACHERS_MASTER: TeacherMaster[] = [
 // 3. SUBJECTS MASTER
 // =============================================================================
 export const INITIAL_SUBJECTS: Subject[] = [
-  // --- Semester 1 Core Subjects (Part D Specification) ---
+  // --- CSE Semester 1 Core Subjects (Academic Year 2026-2027) ---
   {
     id: 'sub-btph101',
     subject_code: 'BTPH101',
     subject_name: 'Applied Physics',
-    department: 'CSE',
-    branch: 'CSE',
-    semester: 1,
-    credits: 4,
-    subject_type: 'Theory',
-    teacher_id: 'tch-fac-cse-001',
-    teacher_name: 'Dr. Anuj Sharma'
-  },
-  {
-    id: 'sub-btma102',
-    subject_code: 'BTMA102',
-    subject_name: 'Engineering Mathematics-I',
-    department: 'CSE',
-    branch: 'CSE',
-    semester: 1,
-    credits: 4,
-    subject_type: 'Theory',
-    teacher_id: 'tch-fac-cse-001',
-    teacher_name: 'Dr. Anuj Sharma'
-  },
-  {
-    id: 'sub-btee103',
-    subject_code: 'BTEE103',
-    subject_name: 'Basic Electrical Engineering',
     department: 'CSE',
     branch: 'CSE',
     semester: 1,
@@ -571,6 +505,30 @@ export const INITIAL_SUBJECTS: Subject[] = [
     teacher_name: 'Dr. Anuj Sharma'
   },
   {
+    id: 'sub-btma102',
+    subject_code: 'BTMA102',
+    subject_name: 'Engineering Mathematics-I',
+    department: 'CSE',
+    branch: 'CSE',
+    semester: 1,
+    credits: 4,
+    subject_type: 'Theory',
+    teacher_id: 'tch-fac-cse-003',
+    teacher_name: 'Ms. Neha Kapoor'
+  },
+  {
+    id: 'sub-btee103',
+    subject_code: 'BTEE103',
+    subject_name: 'Basic Electrical Engineering',
+    department: 'CSE',
+    branch: 'CSE',
+    semester: 1,
+    credits: 4,
+    subject_type: 'Theory',
+    teacher_id: 'tch-fac-cse-002',
+    teacher_name: 'Mr. Rohit Mehta'
+  },
+  {
     id: 'sub-bthm105',
     subject_code: 'BTHM105',
     subject_name: 'Communication Skills',
@@ -579,8 +537,69 @@ export const INITIAL_SUBJECTS: Subject[] = [
     semester: 1,
     credits: 3,
     subject_type: 'Theory',
+    teacher_id: 'tch-02',
+    teacher_name: 'Er. Neha Sharma'
+  },
+  {
+    id: 'sub-btcs106',
+    subject_code: 'BTCS106',
+    subject_name: 'Programming Lab',
+    department: 'CSE',
+    branch: 'CSE',
+    semester: 1,
+    credits: 2,
+    subject_type: 'Practical',
     teacher_id: 'tch-fac-cse-001',
     teacher_name: 'Dr. Anuj Sharma'
+  },
+  // --- ECE Semester 1 Core Subjects (Academic Year 2026-2027) ---
+  {
+    id: 'sub-ecph101',
+    subject_code: 'ECPH101',
+    subject_name: 'Engineering Physics',
+    department: 'ECE',
+    branch: 'ECE',
+    semester: 1,
+    credits: 4,
+    subject_type: 'Theory',
+    teacher_id: 'tch-fac-ece-001',
+    teacher_name: 'Dr. Kavita Joshi'
+  },
+  {
+    id: 'sub-ecma102',
+    subject_code: 'ECMA102',
+    subject_name: 'Engineering Mathematics-I',
+    department: 'ECE',
+    branch: 'ECE',
+    semester: 1,
+    credits: 4,
+    subject_type: 'Theory',
+    teacher_id: 'tch-fac-ece-001',
+    teacher_name: 'Dr. Kavita Joshi'
+  },
+  {
+    id: 'sub-ecec103',
+    subject_code: 'ECEC103',
+    subject_name: 'Basic Electronics',
+    department: 'ECE',
+    branch: 'ECE',
+    semester: 1,
+    credits: 4,
+    subject_type: 'Theory',
+    teacher_id: 'tch-fac-ece-002',
+    teacher_name: 'Ms. Pooja Thakur'
+  },
+  {
+    id: 'sub-ecpr104',
+    subject_code: 'ECPR104',
+    subject_name: 'Electronics Lab',
+    department: 'ECE',
+    branch: 'ECE',
+    semester: 1,
+    credits: 2,
+    subject_type: 'Practical',
+    teacher_id: 'tch-fac-ece-002',
+    teacher_name: 'Ms. Pooja Thakur'
   },
   {
     id: 'sub-cs601',
@@ -957,6 +976,187 @@ export const INITIAL_SESSIONAL_RESULTS: SessionalResult[] = [
 // 6. TIMETABLE SLOTS (With Time Bounds for Auto-Highlighting "Active / NOW" Class)
 // =============================================================================
 export const INITIAL_TIMETABLE: TimetableSlot[] = [
+  // --- CSE Semester 1 Section A (Academic Year 2026-2027) ---
+  // Monday
+  {
+    id: 'tt-cse1a-mon-1',
+    day: 'Monday',
+    start_time: '09:00 AM',
+    end_time: '10:00 AM',
+    start_hour_24: 9,
+    start_minute: 0,
+    end_hour_24: 10,
+    end_minute: 0,
+    subject_name: 'Applied Physics',
+    subject_code: 'BTPH101',
+    room_number: 'C-101',
+    teacher_id: 'HIET-FAC-CSE-001',
+    teacher_name: 'Dr. Anuj Sharma',
+    branch: 'CSE',
+    semester: 1,
+    section: 'A',
+    room_lat: 32.2190,
+    room_long: 76.2708,
+    geofence_radius_meters: 30,
+    academic_year: '2026-2027'
+  },
+  {
+    id: 'tt-cse1a-mon-2',
+    day: 'Monday',
+    start_time: '10:00 AM',
+    end_time: '11:00 AM',
+    start_hour_24: 10,
+    start_minute: 0,
+    end_hour_24: 11,
+    end_minute: 0,
+    subject_name: 'Engineering Mathematics-I',
+    subject_code: 'BTMA102',
+    room_number: 'C-102',
+    teacher_id: 'HIET-FAC-CSE-003',
+    teacher_name: 'Ms. Neha Kapoor',
+    branch: 'CSE',
+    semester: 1,
+    section: 'A',
+    academic_year: '2026-2027'
+  },
+  {
+    id: 'tt-cse1a-mon-3',
+    day: 'Monday',
+    start_time: '11:00 AM',
+    end_time: '12:00 PM',
+    start_hour_24: 11,
+    start_minute: 0,
+    end_hour_24: 12,
+    end_minute: 0,
+    subject_name: 'Programming for Problem Solving',
+    subject_code: 'BTCS104',
+    room_number: 'C-103',
+    teacher_id: 'HIET-FAC-CSE-001',
+    teacher_name: 'Dr. Anuj Sharma',
+    branch: 'CSE',
+    semester: 1,
+    section: 'A',
+    academic_year: '2026-2027'
+  },
+  {
+    id: 'tt-cse1a-mon-4',
+    day: 'Monday',
+    start_time: '12:00 PM',
+    end_time: '01:00 PM',
+    start_hour_24: 12,
+    start_minute: 0,
+    end_hour_24: 13,
+    end_minute: 0,
+    subject_name: 'Basic Electrical Engineering',
+    subject_code: 'BTEE103',
+    room_number: 'C-104',
+    teacher_id: 'HIET-FAC-CSE-002',
+    teacher_name: 'Mr. Rohit Mehta',
+    branch: 'CSE',
+    semester: 1,
+    section: 'A',
+    academic_year: '2026-2027'
+  },
+  {
+    id: 'tt-cse1a-mon-5',
+    day: 'Monday',
+    start_time: '02:00 PM',
+    end_time: '03:00 PM',
+    start_hour_24: 14,
+    start_minute: 0,
+    end_hour_24: 15,
+    end_minute: 0,
+    subject_name: 'Communication Skills',
+    subject_code: 'BTHM105',
+    room_number: 'C-105',
+    teacher_id: 'tch-02',
+    teacher_name: 'Er. Neha Sharma',
+    branch: 'CSE',
+    semester: 1,
+    section: 'A',
+    academic_year: '2026-2027'
+  },
+  // Tuesday
+  {
+    id: 'tt-cse1a-tue-1',
+    day: 'Tuesday',
+    start_time: '09:00 AM',
+    end_time: '10:00 AM',
+    start_hour_24: 9,
+    start_minute: 0,
+    end_hour_24: 10,
+    end_minute: 0,
+    subject_name: 'Programming Lab',
+    subject_code: 'BTCS106',
+    room_number: 'C-LAB-1',
+    teacher_id: 'HIET-FAC-CSE-001',
+    teacher_name: 'Dr. Anuj Sharma',
+    branch: 'CSE',
+    semester: 1,
+    section: 'A',
+    academic_year: '2026-2027'
+  },
+  {
+    id: 'tt-cse1a-tue-2',
+    day: 'Tuesday',
+    start_time: '10:00 AM',
+    end_time: '11:00 AM',
+    start_hour_24: 10,
+    start_minute: 0,
+    end_hour_24: 11,
+    end_minute: 0,
+    subject_name: 'Applied Physics',
+    subject_code: 'BTPH101',
+    room_number: 'C-101',
+    teacher_id: 'HIET-FAC-CSE-001',
+    teacher_name: 'Dr. Anuj Sharma',
+    branch: 'CSE',
+    semester: 1,
+    section: 'A',
+    room_lat: 32.2190,
+    room_long: 76.2708,
+    geofence_radius_meters: 30,
+    academic_year: '2026-2027'
+  },
+  {
+    id: 'tt-cse1a-tue-3',
+    day: 'Tuesday',
+    start_time: '11:00 AM',
+    end_time: '12:00 PM',
+    start_hour_24: 11,
+    start_minute: 0,
+    end_hour_24: 12,
+    end_minute: 0,
+    subject_name: 'Engineering Mathematics-I',
+    subject_code: 'BTMA102',
+    room_number: 'C-102',
+    teacher_id: 'HIET-FAC-CSE-003',
+    teacher_name: 'Ms. Neha Kapoor',
+    branch: 'CSE',
+    semester: 1,
+    section: 'A',
+    academic_year: '2026-2027'
+  },
+  {
+    id: 'tt-cse1a-tue-4',
+    day: 'Tuesday',
+    start_time: '12:00 PM',
+    end_time: '01:00 PM',
+    start_hour_24: 12,
+    start_minute: 0,
+    end_hour_24: 13,
+    end_minute: 0,
+    subject_name: 'Basic Electrical Engineering',
+    subject_code: 'BTEE103',
+    room_number: 'C-104',
+    teacher_id: 'HIET-FAC-CSE-002',
+    teacher_name: 'Mr. Rohit Mehta',
+    branch: 'CSE',
+    semester: 1,
+    section: 'A',
+    academic_year: '2026-2027'
+  },
+  // --- Legacy Slots ---
   {
     id: 'tt-01',
     day: 'Monday',
@@ -1461,7 +1661,7 @@ export const INITIAL_LEAVES: LeaveRequest[] = [
     document_path: 'leaves/medical_dental_slip.pdf',
     status: 'pending_faculty',
     current_stage: 'faculty',
-    current_assignee_user_id: 'prof-tch-fac-cse-003',
+    current_assignee_user_id: 'prof-tch-fac-cse-002',
     current_assignee_role_key: 'class_incharge',
     current_assignee_name: 'Mr. Rohit Mehta (Class In-Charge)',
     submitted_by_user_id: 'prof-std-cse-2026-001',
@@ -1494,17 +1694,44 @@ export const INITIAL_LEAVES: LeaveRequest[] = [
     current_assignee_name: 'Dr. Anuj Sharma (HOD CSE)',
     submitted_by_user_id: 'prof-std-cse-2026-002',
     submitted_at: '2026-10-06T11:00:00Z',
-    reviewed_by: 'prof-tch-fac-cse-003',
+    reviewed_by: 'prof-tch-fac-cse-002',
     reviewed_by_name: 'Mr. Rohit Mehta',
     approval_remarks: 'Recommended by Class In-Charge. Forwarded to HOD for department clearance.',
     remarks: 'Recommended by Class In-Charge. Forwarded to HOD for department clearance.',
     created_at: '2026-10-06T11:00:00Z',
     updated_at: '2026-10-06T14:20:00Z'
   },
-  // Test 3 — Principal Leave (7+ days): Student Priya Verma -> Faculty + HOD approved -> Pending with Dr. Rajesh Kumar (Principal)
+  // Test 3 — Approved Short Leave: Student Ananya Verma -> Approved by Mr. Rohit Mehta
   {
     id: 'lv-test-03',
     leave_id: 'lv-test-03',
+    student_id: 'std-cse-2026-006',
+    student_name: 'Ananya Verma',
+    student_roll: 'HIET-CSE-2026-006',
+    student_branch: 'CSE',
+    student_semester: 1,
+    student_section: 'A',
+    start_date: '2026-10-08',
+    end_date: '2026-10-09',
+    from_date: '2026-10-08',
+    to_date: '2026-10-09',
+    total_days: 2,
+    reason: 'Attending elder sister marriage ceremony in Shimla.',
+    status: 'approved',
+    current_stage: 'completed',
+    reviewed_by: 'prof-tch-fac-cse-002',
+    reviewed_by_name: 'Mr. Rohit Mehta',
+    approval_remarks: 'Approved by Class In-Charge (within 2-day threshold).',
+    remarks: 'Approved by Class In-Charge (within 2-day threshold).',
+    submitted_by_user_id: 'prof-std-cse-2026-006',
+    submitted_at: '2026-10-04T09:00:00Z',
+    created_at: '2026-10-04T09:00:00Z',
+    updated_at: '2026-10-04T11:30:00Z'
+  },
+  // Test 4 — Principal Leave (7+ days): Student Priya Verma -> Faculty + HOD approved -> Pending with Dr. Rajesh Kumar (Principal)
+  {
+    id: 'lv-test-04',
+    leave_id: 'lv-test-04',
     student_id: 'std-cse-2026-003',
     student_name: 'Priya Verma',
     student_roll: 'HIET-CSE-2026-003',
@@ -1516,9 +1743,9 @@ export const INITIAL_LEAVES: LeaveRequest[] = [
     from_date: '2026-10-15',
     to_date: '2026-10-22',
     total_days: 8,
-    reason: 'Hospitalization and post-operative surgical recovery period at Zonal Hospital.',
-    document_url: 'https://hiet.ac.in/documents/hospital_discharge_summary.pdf',
-    document_path: 'leaves/hospital_discharge_summary.pdf',
+    reason: 'National-level coding competition and training boot-camp.',
+    document_url: 'https://hiet.ac.in/documents/coding_bootcamp_letter.pdf',
+    document_path: 'leaves/coding_bootcamp_letter.pdf',
     status: 'pending_principal',
     current_stage: 'principal',
     current_assignee_user_id: 'prof-principal-01',
@@ -1528,8 +1755,8 @@ export const INITIAL_LEAVES: LeaveRequest[] = [
     submitted_at: '2026-10-05T08:15:00Z',
     reviewed_by: 'prof-tch-fac-cse-001',
     reviewed_by_name: 'Dr. Anuj Sharma (HOD)',
-    approval_remarks: 'Recommended by Faculty & HOD CSE. Requires Principal sanction for > 7 days.',
-    remarks: 'Recommended by Faculty & HOD CSE. Requires Principal sanction for > 7 days.',
+    approval_remarks: 'Recommended by Class In-Charge (Mr. Rohit Mehta) and HOD CSE (Dr. Anuj Sharma). Requires Principal sanction for > 7 days.',
+    remarks: 'Recommended by Class In-Charge (Mr. Rohit Mehta) and HOD CSE (Dr. Anuj Sharma). Requires Principal sanction for > 7 days.',
     created_at: '2026-10-05T08:15:00Z',
     updated_at: '2026-10-05T12:00:00Z'
   },
@@ -1738,74 +1965,171 @@ export const INITIAL_LEAVE_HISTORY: LeaveRequestHistory[] = [
 // Categories: Academic, Hostel, Infrastructure, Faculty, Transport, Other
 // =============================================================================
 export const INITIAL_COMPLAINTS: Complaint[] = [
+  // 1. Karan Thakur (CSE) — Infrastructure
   {
-    id: 'cmp-ai-demo-01',
-    student_id: 'std-cse-2026-001',
-    student_name: 'Aditya Nanda',
-    student_roll: 'HIET-CSE-2026-001',
+    id: 'cmp-demo-karan-01',
+    student_id: 'std-cse-011',
+    student_name: 'Karan Thakur',
+    student_roll: 'HIET-CSE-2026-011',
     student_branch: 'CSE',
     student_semester: 1,
     student_section: 'A',
+    department: 'CSE',
     is_anonymous: false,
     category: 'Infrastructure',
-    title: 'Defective ceiling fan in classroom C-101',
-    description: 'The fan in C-101 is not working and the classroom becomes too hot.',
+    title: 'C-101 fan is not working',
+    description: 'Ceiling fan #2 in classroom C-101 has stopped rotating and produces buzzing noise.',
     priority: 'Medium',
     status: 'Submitted',
+    assigned_to: 'maintenance_staff',
+    assigned_to_name: 'Maintenance Staff',
     ai_suggested_category: 'infrastructure',
     ai_suggested_assignee_role: 'maintenance_staff',
     ai_suggested_priority: 'normal',
-    ai_confidence: 91,
-    ai_routing_reason: 'The description refers to a classroom equipment/facility issue.',
+    ai_confidence: 93,
+    ai_routing_reason: 'Classroom electrical fixture problem.',
     ai_suggestion_confirmed: true,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   },
+  // 2. Aarav Sharma (CSE) — Academic
   {
-    id: 'cmp-ai-demo-02',
-    student_id: 'std-cse-2026-002',
+    id: 'cmp-demo-aarav-01',
+    student_id: 'std-cse-002',
     student_name: 'Aarav Sharma',
     student_roll: 'HIET-CSE-2026-002',
     student_branch: 'CSE',
     student_semester: 1,
     student_section: 'A',
-    is_anonymous: true,
-    category: 'Other',
-    title: 'Workstation #12 power failure in programming lab',
-    description: 'Computer number 12 in the programming lab does not start.',
+    department: 'CSE',
+    is_anonymous: false,
+    category: 'Academic',
+    title: 'Internal Mathematics marks not visible',
+    description: 'My sessional exam scores for Engineering Mathematics-I are blank on the student portal.',
     priority: 'Medium',
-    status: 'Submitted',
-    ai_suggested_category: 'lab',
-    ai_suggested_assignee_role: 'lab_staff',
+    status: 'Under Review',
+    assigned_to: 'HIET-FAC-CSE-003',
+    assigned_to_name: 'Ms. Neha Kapoor (Faculty Maths)',
+    ai_suggested_category: 'academic',
+    ai_suggested_assignee_role: 'faculty',
     ai_suggested_priority: 'normal',
-    ai_confidence: 89,
-    ai_routing_reason: 'The issue concerns computer equipment inside the programming laboratory.',
+    ai_confidence: 96,
+    ai_routing_reason: 'Internal assessment marks update issue.',
     ai_suggestion_confirmed: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
+    created_at: new Date(Date.now() - 12 * 3600 * 1000).toISOString(),
+    updated_at: new Date(Date.now() - 4 * 3600 * 1000).toISOString()
   },
+  // 3. Priya Verma (CSE) — Lab
   {
-    id: 'cmp-ai-demo-03',
-    student_id: 'std-cse-2026-003',
+    id: 'cmp-demo-priya-01',
+    student_id: 'std-cse-003',
     student_name: 'Priya Verma',
     student_roll: 'HIET-CSE-2026-003',
     student_branch: 'CSE',
     student_semester: 1,
     student_section: 'A',
+    department: 'CSE',
     is_anonymous: false,
-    category: 'Academic',
-    title: 'Missing internal assessment marks for Mathematics',
-    description: 'My internal marks have not been updated for Engineering Mathematics-I.',
+    category: 'Infrastructure',
+    title: 'Programming lab computer 12 does not start',
+    description: 'Workstation 12 in C-LAB-1 CPU power button is broken and monitor shows no signal.',
+    priority: 'Medium',
+    status: 'Submitted',
+    assigned_to: 'lab_staff',
+    assigned_to_name: 'Lab Staff (Mohit Kumar)',
+    ai_suggested_category: 'lab',
+    ai_suggested_assignee_role: 'lab_staff',
+    ai_suggested_priority: 'normal',
+    ai_confidence: 91,
+    ai_routing_reason: 'Laboratory desktop hardware problem.',
+    ai_suggestion_confirmed: true,
+    created_at: new Date(Date.now() - 6 * 3600 * 1000).toISOString(),
+    updated_at: new Date(Date.now() - 6 * 3600 * 1000).toISOString()
+  },
+  // 4. Aditya Nanda (CSE) — Hostel
+  {
+    id: 'cmp-demo-aditya-01',
+    student_id: 'std-cse-001',
+    student_name: 'Aditya Nanda',
+    student_roll: 'HIET-CSE-2026-001',
+    student_branch: 'CSE',
+    student_semester: 1,
+    student_section: 'A',
+    department: 'CSE',
+    is_anonymous: false,
+    category: 'Hostel',
+    title: 'Hostel Wi-Fi issue',
+    description: 'Wi-Fi access point in Boys Hostel Block B 2nd floor disconnects intermittently.',
     priority: 'Medium',
     status: 'Under Review',
-    ai_suggested_category: 'academic',
-    ai_suggested_assignee_role: 'faculty',
+    assigned_to: 'it_staff',
+    assigned_to_name: 'IT Support (Vikram Singh)',
+    ai_suggested_category: 'it_staff',
+    ai_suggested_assignee_role: 'it_staff',
     ai_suggested_priority: 'normal',
     ai_confidence: 94,
-    ai_routing_reason: 'The complaint relates to academic marks update and course evaluation.',
+    ai_routing_reason: 'Hostel network connectivity grievance.',
     ai_suggestion_confirmed: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
+    created_at: new Date(Date.now() - 18 * 3600 * 1000).toISOString(),
+    updated_at: new Date(Date.now() - 2 * 3600 * 1000).toISOString()
+  },
+  // 5. Nitin Kumar (ECE) — Classroom
+  {
+    id: 'cmp-demo-nitin-01',
+    student_id: 'std-ece-014',
+    student_name: 'Nitin Kumar',
+    student_roll: 'HIET-ECE-2026-014',
+    student_branch: 'ECE',
+    student_semester: 1,
+    student_section: 'A',
+    department: 'ECE',
+    is_anonymous: false,
+    category: 'Infrastructure',
+    title: 'Projector in ECE classroom is not working',
+    description: 'Ceiling projector lamp in ECE Hall 202 is flickering and fails to project HDMI video.',
+    priority: 'Medium',
+    status: 'Submitted',
+    assigned_to: 'maintenance_staff',
+    assigned_to_name: 'Maintenance Staff',
+    ai_suggested_category: 'infrastructure',
+    ai_suggested_assignee_role: 'maintenance_staff',
+    ai_suggested_priority: 'normal',
+    ai_confidence: 90,
+    ai_routing_reason: 'Audio-visual hardware issue in classroom.',
+    ai_suggestion_confirmed: true,
+    created_at: new Date(Date.now() - 8 * 3600 * 1000).toISOString(),
+    updated_at: new Date(Date.now() - 8 * 3600 * 1000).toISOString()
+  },
+  // 6. SLA Escalated Ticket (> 48 Hours Unresolved) — Visible to HOD CSE (Dr. Anuj Sharma) & Principal
+  {
+    id: 'cmp-demo-sla-48h',
+    student_id: 'std-cse-001',
+    student_name: 'Aditya Nanda',
+    student_roll: 'HIET-CSE-2026-001',
+    student_branch: 'CSE',
+    student_semester: 1,
+    student_section: 'A',
+    department: 'CSE',
+    is_anonymous: false,
+    category: 'Infrastructure',
+    title: 'C-101 main electrical switchboard sparking and trip failure',
+    description: 'Main distribution breaker near C-101 smart podium sparked loudly and trips teaching equipment continuously. Safety hazard requiring urgent electrician replacement.',
+    priority: 'Urgent',
+    status: 'Escalated to MD',
+    escalated_to_md: true,
+    escalation_reason: '48h SLA Breach: High-voltage infrastructure hazard unresolved within institutional limit.',
+    escalated_at: new Date(Date.now() - 4 * 3600 * 1000).toISOString(),
+    assigned_to: 'maintenance_staff',
+    assigned_to_name: 'Maintenance & Estate Staff',
+    admin_response: 'Automated 48-Hour SLA Escalation Triggered. Escalated to Dr. Anuj Sharma (HOD CSE) and Principal for emergency action.',
+    ai_suggested_category: 'infrastructure',
+    ai_suggested_assignee_role: 'maintenance_staff',
+    ai_suggested_priority: 'urgent',
+    ai_confidence: 98,
+    ai_routing_reason: 'Severe electrical safety hazard.',
+    ai_suggestion_confirmed: true,
+    created_at: new Date(Date.now() - 56 * 3600 * 1000).toISOString(), // 56 hours ago (> 48h SLA)
+    updated_at: new Date(Date.now() - 4 * 3600 * 1000).toISOString()
   },
   {
     id: 'cmp-01',
@@ -2247,6 +2571,42 @@ export const INITIAL_CAMPUS_LOCATIONS: CampusLocation[] = [
 ];
 
 // =============================================================================
+// 17B. HOSTELS MASTER (Girls Hostel Block A & Boys Hostel Block B)
+// =============================================================================
+export const INITIAL_HOSTELS: Hostel[] = [
+  {
+    id: 'hst-girls-01',
+    code: 'GIRLS-HOSTEL-A',
+    hostel_code: 'GIRLS-HOSTEL-A',
+    name: 'Girls Hostel Block A',
+    hostel_name: 'Girls Hostel Block A',
+    type: 'girls',
+    gender_type: 'girls',
+    warden_user_id: 'auth-tch-fac-cse-003',
+    warden_name: 'Ms. Neha Kapoor',
+    warden_employee_code: 'HIET-FAC-CSE-003',
+    capacity: 120,
+    is_active: true,
+    created_at: '2026-07-01T00:00:00Z'
+  },
+  {
+    id: 'hst-boys-01',
+    code: 'BOYS-HOSTEL-B',
+    hostel_code: 'BOYS-HOSTEL-B',
+    name: 'Boys Hostel Block B',
+    hostel_name: 'Boys Hostel Block B',
+    type: 'boys',
+    gender_type: 'boys',
+    warden_user_id: 'auth-tch-fac-ece-002',
+    warden_name: 'Ms. Pooja Thakur',
+    warden_employee_code: 'HIET-FAC-ECE-002',
+    capacity: 150,
+    is_active: true,
+    created_at: '2026-07-01T00:00:00Z'
+  }
+];
+
+// =============================================================================
 // 18. COLLEGE SOCIAL LINKS (Official College Platforms)
 // =============================================================================
 export const INITIAL_SOCIAL_LINKS: CollegeSocialLink[] = [
@@ -2325,6 +2685,8 @@ export const INITIAL_GATE_ENTRIES: GateEntry[] = [
 // 21. PROFILES MASTER (Links Supabase auth.users to College Records)
 // =============================================================================
 export const INITIAL_PROFILES: Profile[] = [
+  // --- 35 Multi-Role Demo Profiles (5 Faculty, 30 Students, Institutional Staff) ---
+  ...ALL_DEMO_PROFILES,
   {
     id: 'prof-std-cse-001',
     auth_user_id: 'auth-std-cse-001',
@@ -2957,7 +3319,7 @@ export const INITIAL_SMARTBOARD_LESSONS: SmartBoardLesson[] = [
     id: 'sb-demo-anuj-01',
     teacher_id: 'HIET-FAC-CSE-001',
     teacher_name: 'Dr. Anuj Sharma',
-    subject_id: 'sub-btph-101',
+    subject_id: 'sub-btph101',
     subject_name: 'Applied Physics',
     subject_code: 'BTPH101',
     department: 'CSE',
@@ -2989,10 +3351,35 @@ export const INITIAL_SMARTBOARD_LESSONS: SmartBoardLesson[] = [
     created_at: new Date().toISOString()
   },
   {
+    id: 'sb-demo-anuj-02',
+    teacher_id: 'HIET-FAC-CSE-001',
+    teacher_name: 'Dr. Anuj Sharma',
+    subject_id: 'sub-btcs104',
+    subject_name: 'Programming for Problem Solving',
+    subject_code: 'BTCS104',
+    department: 'CSE',
+    semester: 1,
+    section: 'A',
+    room_number: 'C-103',
+    class_date: new Date().toISOString().slice(0, 10),
+    start_time: '11:00',
+    end_time: '11:50',
+    duration_minutes: 50,
+    unit: 'Unit 1: Introduction to Programming',
+    topic: 'Introduction to C Programming',
+    syllabus_topic_id: 'topic-pps-01',
+    lesson_file_url: '/lessons/c_programming_intro.pdf',
+    file_name: 'Intro_to_C_Whiteboard.pdf',
+    file_type: 'pdf',
+    notes_summary: 'C tokens, compilation pipeline (preprocessor, compiler, assembler, linker), and variable declarations.',
+    sync_status: 'Synced',
+    created_at: new Date().toISOString()
+  },
+  {
     id: 'sb-demo-neha-01',
-    teacher_id: 'HIET-FAC-CSE-002',
-    teacher_name: 'Dr. Neha Kapoor',
-    subject_id: 'sub-btma-102',
+    teacher_id: 'HIET-FAC-CSE-003',
+    teacher_name: 'Ms. Neha Kapoor',
+    subject_id: 'sub-btma102',
     subject_name: 'Engineering Mathematics-I',
     subject_code: 'BTMA102',
     department: 'CSE',
@@ -3015,15 +3402,15 @@ export const INITIAL_SMARTBOARD_LESSONS: SmartBoardLesson[] = [
   },
   {
     id: 'sb-demo-rohit-01',
-    teacher_id: 'HIET-FAC-CSE-003',
+    teacher_id: 'HIET-FAC-CSE-002',
     teacher_name: 'Mr. Rohit Mehta',
-    subject_id: 'sub-btee-103',
+    subject_id: 'sub-btee103',
     subject_name: 'Basic Electrical Engineering',
     subject_code: 'BTEE103',
     department: 'CSE',
     semester: 1,
     section: 'A',
-    room_number: 'C-LAB-1',
+    room_number: 'C-104',
     class_date: new Date().toISOString().slice(0, 10),
     start_time: '12:00',
     end_time: '12:45',
@@ -3035,6 +3422,54 @@ export const INITIAL_SMARTBOARD_LESSONS: SmartBoardLesson[] = [
     file_name: 'Transformer_Basics_Notes.pdf',
     file_type: 'pdf',
     notes_summary: 'Core construction, mutual induction principle, EMF equation, and equivalent circuit parameter reflection.',
+    sync_status: 'Synced',
+    created_at: new Date().toISOString()
+  },
+  {
+    id: 'sb-demo-kavita-01',
+    teacher_id: 'HIET-FAC-ECE-001',
+    teacher_name: 'Dr. Kavita Joshi',
+    subject_id: 'sub-ecph101',
+    subject_name: 'Engineering Physics',
+    subject_code: 'ECPH101',
+    department: 'ECE',
+    semester: 1,
+    section: 'A',
+    room_number: 'ECE-201',
+    class_date: new Date().toISOString().slice(0, 10),
+    start_time: '09:00',
+    end_time: '09:50',
+    duration_minutes: 50,
+    unit: 'Unit 1: Wave Optics',
+    topic: 'Wave Optics',
+    lesson_file_url: '/lessons/wave_optics_notes.pdf',
+    file_name: 'Wave_Optics_Whiteboard.pdf',
+    file_type: 'pdf',
+    notes_summary: 'Interference in thin films, Newton rings experiment, diffraction grating wavelength measurements.',
+    sync_status: 'Synced',
+    created_at: new Date().toISOString()
+  },
+  {
+    id: 'sb-demo-pooja-01',
+    teacher_id: 'HIET-FAC-ECE-002',
+    teacher_name: 'Ms. Pooja Thakur',
+    subject_id: 'sub-ecec103',
+    subject_name: 'Basic Electronics',
+    subject_code: 'ECEC103',
+    department: 'ECE',
+    semester: 1,
+    section: 'A',
+    room_number: 'ECE-202',
+    class_date: new Date().toISOString().slice(0, 10),
+    start_time: '10:00',
+    end_time: '10:45',
+    duration_minutes: 45,
+    unit: 'Unit 1: Semiconductor Diodes',
+    topic: 'Semiconductor Diodes',
+    lesson_file_url: '/lessons/semiconductor_diodes.pdf',
+    file_name: 'Semiconductor_Diodes_Notes.pdf',
+    file_type: 'pdf',
+    notes_summary: 'PN junction barrier potential, forward/reverse bias IV curves, and zener breakdown mechanics.',
     sync_status: 'Synced',
     created_at: new Date().toISOString()
   },
@@ -3513,9 +3948,25 @@ class DataStore {
     setLocalItem('campus_presence', data);
   }
 
-  // Feature 13: Class In-Charges & HOD Assignments
+  // Feature 13: Class In-Charges & HOD Assignments & Hostels
+  getHostels(): Hostel[] {
+    return getLocalItem('hostels', INITIAL_HOSTELS);
+  }
+  setHostels(data: Hostel[]): void {
+    setLocalItem('hostels', data);
+  }
+
   getClassIncharges(): ClassInchargeRecord[] {
     return getLocalItem('class_incharges', [
+      {
+        id: 'cic-cse-1a',
+        department_code: 'CSE',
+        semester: 1,
+        section: 'A',
+        academic_year: '2026-2027',
+        employee_code: 'HIET-FAC-CSE-002',
+        created_at: '2026-07-01T00:00:00Z'
+      },
       {
         id: 'cic-01',
         department_code: 'CSE',
@@ -3543,12 +3994,20 @@ class DataStore {
   getHodAssignments(): HodAssignmentRecord[] {
     return getLocalItem('hod_assignments', [
       {
-        id: 'hod-01',
+        id: 'hod-cse-01',
         department_code: 'CSE',
-        employee_code: 'FAC-001',
-        effective_from: '2026-01-01',
+        employee_code: 'HIET-FAC-CSE-001',
+        effective_from: '2026-07-01',
         remarks: 'Appointed HOD Computer Science & Engineering',
-        created_at: '2026-01-01T00:00:00Z'
+        created_at: '2026-07-01T00:00:00Z'
+      },
+      {
+        id: 'hod-ece-01',
+        department_code: 'ECE',
+        employee_code: 'HIET-FAC-ECE-001',
+        effective_from: '2026-07-01',
+        remarks: 'Appointed HOD Electronics & Communication Engineering',
+        created_at: '2026-07-01T00:00:00Z'
       }
     ]);
   }

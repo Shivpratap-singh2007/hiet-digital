@@ -23,6 +23,7 @@ import { AiFeatureConfig, isAiPreviewMode } from '../../config/aiFeatures';
 import { PageHeader } from '../../components/common/PageHeader';
 import { FeatureStatusBadge } from '../../components/common/FeatureStatusBadge';
 import { NavTab } from '../../components/common/Sidebar';
+import { CampusAssistant } from '../../components/ai/CampusAssistant';
 
 interface Props {
   feature: AiFeatureConfig;
@@ -169,8 +170,24 @@ export const AiFeatureComingSoonPage: React.FC<Props> = ({
 
       </div>
 
-      {/* 3. Development Mode Preview Panel (Visible ONLY in Development / Preview mode) */}
-      {isDevPreview && (
+      {/* 3. Interactive Campus Assistant Console (when inspecting Campus Assistant) */}
+      {feature.key === 'campus_ai_assistant' && (
+        <div className="bg-white dark:bg-[#141414] border border-slate-200 dark:border-[#2a2a2a] rounded-2xl overflow-hidden shadow-2xs">
+          <div className="px-5 py-3.5 bg-slate-50 dark:bg-[#181818] border-b border-slate-200 dark:border-[#262626] flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-amber-500" />
+              <h3 className="font-bold text-xs text-slate-800 dark:text-neutral-200">Interactive Assistant Console</h3>
+            </div>
+            <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
+              Live Verified
+            </span>
+          </div>
+          <CampusAssistant onNavigateTab={onNavigateTab} />
+        </div>
+      )}
+
+      {/* 3b. Development Mode Preview Panel (Visible ONLY in Development / Preview mode for other features) */}
+      {isDevPreview && feature.key !== 'campus_ai_assistant' && (
         <div className="bg-slate-50 dark:bg-[#101010] border border-dashed border-blue-300 dark:border-blue-900/60 rounded-2xl p-5 sm:p-6 space-y-4 transition">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-blue-100 dark:border-[#202020]">
             <div className="flex items-center gap-2">

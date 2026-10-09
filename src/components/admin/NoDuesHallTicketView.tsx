@@ -274,6 +274,30 @@ export const NoDuesHallTicketView: React.FC = () => {
               <div className="flex items-center gap-2">
                 <button
                   type="button"
+                  onClick={async () => {
+                    try {
+                      const { isSupabaseConfigured, supabase } = await import('../../lib/supabase');
+                      if (isSupabaseConfigured && supabase) {
+                        const { data } = await supabase.functions.invoke('generate-hall-ticket', {
+                          body: { student_id: hallTicket.student_id, exam_session: hallTicket.exam_session }
+                        });
+                        if (data?.signed_url) {
+                          window.open(data.signed_url, '_blank');
+                          return;
+                        }
+                      }
+                    } catch (err) {
+                      console.warn('Direct PDF generator invocation notice:', err);
+                    }
+                    window.print();
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Download PDF</span>
+                </button>
+                <button
+                  type="button"
                   onClick={() => window.print()}
                   className="px-3 py-1.5 rounded-xl bg-[#0f2942] text-white hover:bg-[#0a1c2e] text-xs font-bold transition flex items-center gap-1.5 shadow-xs"
                 >

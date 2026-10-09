@@ -38,12 +38,6 @@ export const DemoDataManagementModal: React.FC<DemoDataManagementModalProps> = (
 
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
 
-  useEffect(() => {
-    if (isOpen) {
-      loadStats();
-    }
-  }, [isOpen]);
-
   const loadStats = () => {
     try {
       const s = apiService.getDemoStats();
@@ -52,6 +46,12 @@ export const DemoDataManagementModal: React.FC<DemoDataManagementModalProps> = (
       console.error('Error fetching demo stats:', err);
     }
   };
+
+  useEffect(() => {
+    if (isOpen) {
+      loadStats();
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 

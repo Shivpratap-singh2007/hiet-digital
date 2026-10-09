@@ -184,7 +184,7 @@ export async function queryCollegeAi(
   if (q.includes('cgpa') || q.includes('sgpa') || q.includes('marks') || q.includes('result') || q.includes('grade')) {
     if (user?.role === 'student') {
       return {
-        answer: `🏆 **Academic Performance for ${user.name}**:\n\n• Cumulative CGPA: **8.42 / 10.0**\n• Latest SGPA (Semester 5): **8.65**\n• Classification: **First Class with Distinction**\n• University Exam Standing: Clear (No active backlogs)`,
+        answer: `🏆 **Academic Performance for ${user.name}**:\n\n• Cumulative CGPA: **8.42 / 10.0**\n• Latest SGPA (Semester 1): **8.65**\n• Classification: **First Class with Distinction**\n• University Exam Standing: Clear (No active backlogs)`,
         sourceDocuments: ['HPTU Examination Results Records'],
         actionCard: {
           type: 'cgpa',
@@ -194,6 +194,56 @@ export async function queryCollegeAi(
         suggestedFollowUps: ['View sessional exam marks', 'Exam dates and timetable']
       };
     }
+  }
+
+  // Timetable / Next Class Intent
+  if (q.includes('timetable') || q.includes('next class') || q.includes('next lecture') || q.includes('schedule') || q.includes('aaj class') || q.includes('class kab')) {
+    const slots = dataStore.getTimetable().filter(t => t.branch === 'CSE' && t.day === 'Monday');
+    const scheduleList = slots.length > 0
+      ? slots.slice(0, 3).map(s => `• ${s.start_time} - ${s.end_time}: **${s.subject_name || s.subject_code}** (${s.room_no || s.room_number})`).join('\n')
+      : '• 09:30 AM: Applied Physics (C-101)\n• 10:30 AM: Programming Lab (Lab-3)';
+
+    return {
+      answer: `📅 **Today\'s Class Schedule (CSE 1-A)**:\n\n${scheduleList}`,
+      sourceDocuments: ['Campus Timetable System - Mon & Tue CSE 1-A'],
+      actionCard: {
+        type: 'timetable',
+        title: 'Class Timetable',
+        data: { slots }
+      },
+      suggestedFollowUps: ['Check attendance for these classes', 'Classroom locations', 'Exam dates']
+    };
+  }
+
+  // Assignments Intent
+  if (q.includes('assignment') || q.includes('submission') || q.includes('homework') || q.includes('pending work')) {
+    const list = [
+      '• **Calculus Problem Set 3** (Engineering Mathematics-I) — Due: Tomorrow, 5:00 PM',
+      '• **Laser Applications & Interference Lab Report** (Applied Physics) — Due: Friday, 11:59 PM'
+    ].join('\n');
+    return {
+      answer: `📝 **Pending LMS Assignments**:\n\n${list}`,
+      sourceDocuments: ['HIET LMS Assignment Registry'],
+      suggestedFollowUps: ['View assignment questions', 'Check submission guidelines']
+    };
+  }
+
+  // Leave Status Intent
+  if (q.includes('leave') || q.includes('chutti') || q.includes('chhutti') || q.includes('application')) {
+    const leaves = dataStore.getLeaves();
+    const latest = leaves[0];
+    return {
+      answer: latest
+        ? `📋 **Leave Application Status**:\n\n• Reason: **${latest.reason}** (${latest.start_date} to ${latest.end_date})\n• Status: **${latest.status}**\n• Stage: Class Incharge Review`
+        : `📋 You have no active leave applications on file.`,
+      sourceDocuments: ['HIET Student Leave Management Records'],
+      actionCard: {
+        type: 'leave',
+        title: 'Leave Portal',
+        data: { hasActive: !!latest }
+      },
+      suggestedFollowUps: ['Apply for medical leave', 'Hostel outpass status']
+    };
   }
 
   // 3. Grounded Knowledge Retrieval from Verified College Documents

@@ -69,22 +69,6 @@ export const SmartBoardTeachingView: React.FC<Props> = ({ roleMode }) => {
   const timetable = dataStore.getTimetable();
   const subjects = dataStore.getSubjects();
 
-  // Load Lessons
-  useEffect(() => {
-    loadLessons();
-  }, [user, effectiveRole]);
-
-  // Active Session Timer
-  useEffect(() => {
-    let interval: any;
-    if (isSessionActive) {
-      interval = setInterval(() => {
-        setActiveSessionTimer(prev => prev + 1);
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [isSessionActive]);
-
   const loadLessons = async () => {
     setLoading(true);
     try {
@@ -103,6 +87,22 @@ export const SmartBoardTeachingView: React.FC<Props> = ({ roleMode }) => {
       setLoading(false);
     }
   };
+
+  // Load Lessons
+  useEffect(() => {
+    loadLessons();
+  }, [user, effectiveRole]);
+
+  // Active Session Timer
+  useEffect(() => {
+    let interval: any;
+    if (isSessionActive) {
+      interval = setInterval(() => {
+        setActiveSessionTimer(prev => prev + 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isSessionActive]);
 
   const formatTimer = (seconds: number) => {
     const mins = Math.floor(seconds / 60);

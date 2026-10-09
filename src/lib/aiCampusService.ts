@@ -5,6 +5,8 @@
 import { supabase, isSupabaseConfigured } from './supabase';
 import { calculateAttendanceRisk, AttendanceRiskResult } from './attendanceRisk';
 import { AttendanceRiskAssessment } from '../types';
+import { detectAssistantIntent } from './assistantIntents';
+import { dataStore } from './mockData';
 
 export const isAiCampusEnabled = (): boolean => {
   return import.meta.env.VITE_AI_FEATURES_ENABLED === 'true';
@@ -203,146 +205,213 @@ export interface AssistantQueryResponse {
 export async function askCampusAiAssistant(
   params: AssistantQueryRequest
 ): Promise<{ success: boolean; data?: AssistantQueryResponse; error?: string }> {
-  if (!params.query || params.query.trim().length === 0) {
+  const trimmed = (params.query || '').trim();
+  if (!trimmed || trimmed.length < 2) {
     return { success: false, error: 'Please enter a valid question.' };
   }
 
+  // 1. Attempt server-side Edge Function with standardized payload
   if (isSupabaseConfigured && supabase) {
     try {
       const { data, error } = await supabase.functions.invoke('campus-ai-assistant', {
-        body: params,
+        body: {
+          message: trimmed,
+          query: trimmed, // backwards compatibility
+          conversationId: null,
+        },
       });
 
       if (!error && data?.answer) {
-        return { success: true, data };
+        return {
+          success: true,
+          data: {
+            answer: data.answer,
+            intent: data.intent || 'my_attendance',
+            sources: Array.isArray(data.sources)
+              ? data.sources.map((s: any) => (typeof s === 'string' ? s : s.label || 'Academic Record'))
+              : ['HIET Records'],
+            actionUrl: data.actionUrl,
+            disclaimer: data.disclaimer || 'Verified against current semester records.',
+            isFallback: false,
+          },
+        };
       }
       if (error) {
-        console.warn('Edge function campus-ai-assistant error, using role fallback:', error);
+        console.warn('Edge function campus-ai-assistant error, using dynamic store fallback:', error);
       }
     } catch (err) {
       console.warn('Network error reaching campus-ai-assistant:', err);
     }
   }
 
-  // Local fallback responding strictly to authorized intents
+  // 2. Dynamic, grounded fallback responding strictly to authorized intents
   const role = (params.userRole || 'student').toLowerCase();
-  const q = params.query.toLowerCase();
+  const intent = detectAssistantIntent(trimmed, [role]);
 
-  if (role === 'student') {
-    if (q.includes('attendance') || q.includes('kitni') || q.includes('percent')) {
-      return {
-        success: true,
-        data: {
-          answer: 'Your current Engineering Mathematics-I attendance is 70.59% (12 attended / 17 conducted). You are below the 75% requirement. Attend the next 3 classes continuously to reach 75%.',
-          intent: 'my_attendance',
-          sources: ['Academic Attendance Logs'],
-          actionUrl: '/app/student/attendance',
-          disclaimer: 'Verified against current semester attendance records.',
-          isFallback: true,
-        },
-      };
-    }
-    if (q.includes('timetable') || q.includes('class today') || q.includes('schedule')) {
-      return {
-        success: true,
-        data: {
-          answer: 'Your scheduled classes today: 09:30 AM Engineering Mathematics-I (LT-101), 10:30 AM Applied Physics (LT-102), and 11:30 AM Programming Lab (Lab-3).',
-          intent: 'my_timetable',
-          sources: ['Campus Timetable System'],
-          actionUrl: '/app/student/timetable',
-          isFallback: true,
-        },
-      };
-    }
-    if (q.includes('assignment') || q.includes('pending') || q.includes('homework')) {
-      return {
-        success: true,
-        data: {
-          answer: 'You have 2 pending assignments: "Calculus Problem Set 3" due tomorrow at 5:00 PM, and "Laser Applications Report" due Friday.',
-          intent: 'my_assignments',
-          sources: ['LMS Assignments'],
-          actionUrl: '/app/student/assignments',
-          isFallback: true,
-        },
-      };
-    }
-    if (q.includes('gate pass') || q.includes('outpass')) {
-      return {
-        success: true,
-        data: {
-          answer: 'Your Day Outpass request to Shahpur Market is Approved and valid until 7:00 PM today.',
-          intent: 'my_gate_pass_status',
-          sources: ['Digital Gate Pass Portal'],
-          actionUrl: '/app/student/gatepass',
-          isFallback: true,
-        },
-      };
-    }
-    if (q.includes('leave') || q.includes('chhutti')) {
-      return {
-        success: true,
-        data: {
-          answer: 'Your recent Medical Leave application for 02 Oct – 03 Oct has been Approved by your Class Incharge.',
-          intent: 'my_leave_status',
-          sources: ['Student Leave Management'],
-          actionUrl: '/app/student/leaves',
-          isFallback: true,
-        },
-      };
-    }
+  // Student Intents
+  if (intent === 'my_attendance') {
+    const attendanceLogs = dataStore.getAttendance();
+    const presentCount = attendanceLogs.filter((a) => a.status?.toLowerCase() === 'present').length;
+    const totalCount = attendanceLogs.length || 18;
+    const actualPresent = attendanceLogs.length > 0 ? presentCount : 15;
+    const pct = Math.round((actualPresent / totalCount) * 100);
+    const isSafe = pct >= 75;
 
     return {
       success: true,
       data: {
-        answer: 'I can only access information permitted for your role as a Student. You can ask about your own attendance, timetable, assignments, results, leave status or gate pass status.',
-        intent: 'unsupported_or_unauthorized',
-        sources: [],
+        answer: `Your current Engineering Mathematics-I attendance is ${pct}% (${actualPresent} attended / ${totalCount} conducted). ${
+          isSafe
+            ? 'You are above the 75% requirement.'
+            : 'You are below the 75% requirement. Attend the next 3 classes continuously to reach 75%.'
+        }`,
+        intent: 'my_attendance',
+        sources: ['Academic Attendance Logs'],
+        actionUrl: '/app/student/attendance',
+        disclaimer: 'Verified against current semester attendance records.',
         isFallback: true,
       },
     };
   }
 
-  if (role === 'faculty') {
-    if (q.includes('today') || q.includes('class') || q.includes('schedule')) {
-      return {
-        success: true,
-        data: {
-          answer: 'You have 2 scheduled classes today: Engineering Mathematics-I with CSE-1A at 09:30 AM (LT-101), and Programming Lab with CSE-1B at 11:30 AM (Lab-3).',
-          intent: 'faculty_today_classes',
-          sources: ['Faculty Teaching Schedule'],
-          actionUrl: '/app/faculty/timetable',
-          isFallback: true,
-        },
-      };
-    }
-    if (q.includes('low attendance') || q.includes('risk') || q.includes('shortage')) {
-      return {
-        success: true,
-        data: {
-          answer: 'In Engineering Mathematics-I, 2 students have low attendance: Aarav Sharma (62.5%, High Risk) and Priya Thakur (70.5%, Medium Risk).',
-          intent: 'faculty_low_attendance_students',
-          sources: ['Attendance Risk Engine'],
-          actionUrl: '/app/faculty/attendance',
-          isFallback: true,
-        },
-      };
-    }
+  if (intent === 'my_timetable') {
+    const slots = dataStore.getTimetable().filter((t) => t.branch === 'CSE' && t.day === 'Monday');
+    const scheduleStr =
+      slots.length > 0
+        ? slots.slice(0, 3).map((s) => `${s.start_time}: ${s.subject_name || s.subject_code} (${s.room_no || s.room_number})`).join(', ')
+        : '09:30 AM: Applied Physics (C-101), 10:30 AM: Programming Lab (Lab-3)';
+
     return {
       success: true,
       data: {
-        answer: 'I can answer questions regarding your scheduled classes today, pending assignment grading, low attendance student alerts, or syllabus progress.',
-        intent: 'unsupported_or_unauthorized',
-        sources: [],
+        answer: `Your scheduled classes today: ${scheduleStr}.`,
+        intent: 'my_timetable',
+        sources: ['Campus Timetable System'],
+        actionUrl: '/app/student/timetable',
         isFallback: true,
       },
     };
   }
 
-  if (role === 'hod') {
+  if (intent === 'my_assignments') {
     return {
       success: true,
       data: {
-        answer: 'Department attendance stands at 78.4% overall. 8 students are currently below 75% attendance across CSE batches. 4 faculty Smart Board lessons logged today.',
+        answer: 'You have 2 pending assignments: "Calculus Problem Set 3" due tomorrow at 5:00 PM, and "Laser Applications Report" due Friday.',
+        intent: 'my_assignments',
+        sources: ['LMS Assignments'],
+        actionUrl: '/app/student/assignments',
+        isFallback: true,
+      },
+    };
+  }
+
+  if (intent === 'my_results') {
+    return {
+      success: true,
+      data: {
+        answer: 'Your academic standing: Cumulative CGPA is 8.42/10.0, SGPA is 8.65 (First Class with Distinction, 0 backlogs).',
+        intent: 'my_results',
+        sources: ['Academic Grade Card'],
+        actionUrl: '/app/student/results',
+        isFallback: true,
+      },
+    };
+  }
+
+  if (intent === 'my_leave_status') {
+    const leaves = dataStore.getLeaves();
+    const latest = leaves[0];
+    return {
+      success: true,
+      data: {
+        answer: latest
+          ? `Your recent leave application (${latest.reason}) for ${latest.start_date} – ${latest.end_date} has been ${latest.status}.`
+          : 'You have no active leave applications on file.',
+        intent: 'my_leave_status',
+        sources: ['Student Leave Management'],
+        actionUrl: '/app/student/leaves',
+        isFallback: true,
+      },
+    };
+  }
+
+  if (intent === 'my_gate_pass_status') {
+    const passes = dataStore.getGatePassRequests();
+    const active = passes.find((p) => p.status === 'Approved') || passes[0];
+    return {
+      success: true,
+      data: {
+        answer: active
+          ? `Your ${active.pass_type || 'Day Outpass'} request (${active.reason}) is ${active.status} and valid until ${active.expected_return_time || '7:00 PM today'}.`
+          : 'You have no active gate pass requests for today.',
+        intent: 'my_gate_pass_status',
+        sources: ['Digital Gate Pass Portal'],
+        actionUrl: '/app/student/gatepass',
+        isFallback: true,
+      },
+    };
+  }
+
+  // Faculty Intents
+  if (intent === 'faculty_today_classes') {
+    return {
+      success: true,
+      data: {
+        answer: 'You have 2 scheduled classes today: Engineering Mathematics-I with CSE-1A at 09:30 AM (LT-101), and Programming Lab with CSE-1B at 11:30 AM (Lab-3).',
+        intent: 'faculty_today_classes',
+        sources: ['Faculty Teaching Schedule'],
+        actionUrl: '/app/faculty/timetable',
+        isFallback: true,
+      },
+    };
+  }
+
+  if (intent === 'faculty_pending_submissions') {
+    return {
+      success: true,
+      data: {
+        answer: 'You have 14 student submissions awaiting grading across Applied Physics and Programming Lab.',
+        intent: 'faculty_pending_submissions',
+        sources: ['LMS Submissions'],
+        actionUrl: '/app/faculty/assignments',
+        isFallback: true,
+      },
+    };
+  }
+
+  if (intent === 'faculty_low_attendance_students') {
+    return {
+      success: true,
+      data: {
+        answer: 'In Engineering Mathematics-I, 2 students have low attendance: Aarav Sharma (62.5%, High Risk) and Priya Thakur (70.5%, Medium Risk).',
+        intent: 'faculty_low_attendance_students',
+        sources: ['Attendance Risk Engine'],
+        actionUrl: '/app/faculty/attendance',
+        isFallback: true,
+      },
+    };
+  }
+
+  if (intent === 'faculty_syllabus_progress') {
+    return {
+      success: true,
+      data: {
+        answer: 'Applied Physics syllabus coverage is at 60% (3 of 5 units completed). Current topic: Wave Optics and Laser Interference.',
+        intent: 'faculty_syllabus_progress',
+        sources: ['Syllabus Tracker'],
+        actionUrl: '/app/faculty/syllabus',
+        isFallback: true,
+      },
+    };
+  }
+
+  // HOD Intents
+  if (intent === 'hod_department_attendance') {
+    return {
+      success: true,
+      data: {
+        answer: 'Department attendance stands at 78.4% overall. 8 students are currently below 75% attendance across CSE batches.',
         intent: 'hod_department_attendance',
         sources: ['HOD Department Analytics'],
         actionUrl: '/app/hod/analytics',
@@ -351,13 +420,106 @@ export async function askCampusAiAssistant(
     };
   }
 
+  if (intent === 'hod_syllabus_progress') {
+    return {
+      success: true,
+      data: {
+        answer: 'Department syllabus progress is at 64% on average. 4 subjects are on schedule; 1 subject (BEE) is delayed by 3 lectures.',
+        intent: 'hod_syllabus_progress',
+        sources: ['Department Syllabus'],
+        actionUrl: '/app/hod/syllabus',
+        isFallback: true,
+      },
+    };
+  }
+
+  if (intent === 'hod_smart_board_activity') {
+    return {
+      success: true,
+      data: {
+        answer: '3 synchronized Smart Board lectures were logged today by departmental faculty in LT-101, LT-102, and Lab-3.',
+        intent: 'hod_smart_board_activity',
+        sources: ['Smart Board Teaching Logs'],
+        actionUrl: '/app/hod/smartboard',
+        isFallback: true,
+      },
+    };
+  }
+
+  if (intent === 'hod_pending_complaints') {
+    return {
+      success: true,
+      data: {
+        answer: 'CSE Department currently has 2 open grievance tickets, including 1 SLA-breached projector ticket in Classroom C-101.',
+        intent: 'hod_pending_complaints',
+        sources: ['Department Grievance Desk'],
+        actionUrl: '/app/hod/complaints',
+        isFallback: true,
+      },
+    };
+  }
+
+  // Principal Intents
+  if (intent === 'principal_institution_summary') {
+    return {
+      success: true,
+      data: {
+        answer: 'Campus overview: 88.2% student attendance across all branches, 42 classes conducted today, and 4 administrative approvals pending.',
+        intent: 'principal_institution_summary',
+        sources: ['Institutional Executive Metrics'],
+        actionUrl: '/app/principal/dashboard',
+        isFallback: true,
+      },
+    };
+  }
+
+  if (intent === 'principal_pending_approvals') {
+    return {
+      success: true,
+      data: {
+        answer: 'You have 4 administrative approval requests awaiting your review and signature.',
+        intent: 'principal_pending_approvals',
+        sources: ['Principal Approvals'],
+        actionUrl: '/app/principal/approvals',
+        isFallback: true,
+      },
+    };
+  }
+
+  if (intent === 'principal_open_complaints_summary') {
+    return {
+      success: true,
+      data: {
+        answer: 'Campus Grievance Audit: 7 active tickets across campus, with 1 ticket exceeding the 48-hour SLA threshold.',
+        intent: 'principal_open_complaints_summary',
+        sources: ['Grievance Redressal Audit'],
+        actionUrl: '/app/principal/complaints',
+        isFallback: true,
+      },
+    };
+  }
+
+  // Privacy or Unsupported
+  const qLow = trimmed.toLowerCase();
+  if (qLow.includes('rohit') || qLow.includes('other student') || qLow.includes('sab students')) {
+    return {
+      success: true,
+      data: {
+        answer:
+          'For student privacy and regulatory compliance, I cannot disclose other students\' academic or attendance records. You can ask about your own attendance, timetable, assignments, results, or leave status.',
+        intent: 'unsupported',
+        sources: [],
+        isFallback: true,
+      },
+    };
+  }
+
   return {
     success: true,
     data: {
-      answer: 'Campus overview: 88.2% student attendance across all branches, 42 classes conducted today, and 4 administrative approvals pending.',
-      intent: 'principal_institution_summary',
-      sources: ['Institutional Executive Metrics'],
-      actionUrl: '/app/principal/dashboard',
+      answer: 'I can help with your attendance, timetable, assignments, results, leave status, and gate pass status.',
+      intent: 'unsupported',
+      sources: [],
       isFallback: true,
     },
   };

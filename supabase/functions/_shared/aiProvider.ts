@@ -19,7 +19,7 @@ export interface AiProviderConfig {
 export function getAiConfig(): AiProviderConfig | null {
   const provider = (Deno.env.get("AI_PROVIDER") || "openai").toLowerCase();
   const openaiKey = Deno.env.get("OPENAI_API_KEY");
-  const geminiKey = Deno.env.get("GEMINI_API_KEY");
+  const geminiKey = Deno.env.get("GOOGLE_GENERATIVE_AI_API_KEY") || Deno.env.get("GEMINI_API_KEY");
 
   if (provider === "gemini" && geminiKey) {
     return {

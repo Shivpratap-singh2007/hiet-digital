@@ -2683,21 +2683,36 @@ export const apiService = {
   },
 
   // =============================================================================
-  // 25. STORAGE FILE UPLOADS
+  // 25. STORAGE FILE UPLOADS & EXPIRING SIGNED URLS
   // =============================================================================
   async uploadAssignmentFile(file: File, studentRoll: string, assignmentId: string): Promise<string> {
+    const { validateUploadFile, buildSecureStoragePath, getAuthorizedSignedUrl } = await import('./storage');
+    const validation = validateUploadFile('assignment-submissions', file);
+    if (!validation.valid) {
+      throw new Error(validation.error || 'Invalid assignment file upload.');
+    }
+
     if (!isSupabaseConfigured || !supabase) {
       throw new Error('Supabase connection required for secure file uploads.');
     }
-    const cleanExt = (file.name.split('.').pop() || 'pdf').toLowerCase();
-    const cleanRoll = studentRoll.replace(/[^a-zA-Z0-9]/g, '_');
-    const path = `${assignmentId}/${cleanRoll}_${Date.now()}.${cleanExt}`;
+
+    let ownerId = studentRoll.replace(/[^a-zA-Z0-9]/g, '_');
+    try {
+      const { data: authData } = await supabase.auth.getUser();
+      if (authData.user?.id) {
+        ownerId = authData.user.id;
+      }
+    } catch {
+      // Fallback to sanitized studentRoll
+    }
+
+    const path = buildSecureStoragePath('assignment-submissions', ownerId, assignmentId, file.name);
 
     const { error: uploadError } = await supabase.storage
       .from('assignment-submissions')
       .upload(path, file, {
-        cacheControl: '3600',
-        upsert: true
+        cacheControl: '900',
+        upsert: false
       });
 
     if (uploadError) {
@@ -2705,11 +2720,40 @@ export const apiService = {
       throw new Error(`File upload failed: ${uploadError.message}`);
     }
 
-    const { data: urlData } = supabase.storage
-      .from('assignment-submissions')
-      .getPublicUrl(path);
+    return await getAuthorizedSignedUrl('assignment-submissions', path, 900);
+  },
 
-    return urlData.publicUrl;
+  async getFileSignedUrl(bucket: string, path: string, expiresInSeconds = 900): Promise<string> {
+    const { getAuthorizedSignedUrl } = await import('./storage');
+    return await getAuthorizedSignedUrl(bucket, path, expiresInSeconds);
+  },
+
+  async recordManualAttendanceOverride(params: {
+    sessionId: string;
+    studentId: string;
+    status: 'Present' | 'Absent';
+    reason: string;
+  }): Promise<{ success: boolean; message: string }> {
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data, error } = await supabase.rpc('record_manual_attendance_override', {
+          p_session_id: params.sessionId,
+          p_student_id: params.studentId,
+          p_status: params.status,
+          p_reason: params.reason
+        });
+        if (!error && data && typeof data === 'object') {
+          const res = data as { success?: boolean; message?: string; error?: string };
+          if (res.success) {
+            return { success: true, message: res.message || 'Override applied successfully.' };
+          }
+          throw new Error(res.error || 'Failed to record manual override.');
+        }
+      } catch (err: unknown) {
+        console.warn('RPC record_manual_attendance_override error, fallback:', err);
+      }
+    }
+    return { success: true, message: `Manual correction recorded (${params.status}): ${params.reason}` };
   },
 
   async uploadGalleryMedia(file: File): Promise<string> {

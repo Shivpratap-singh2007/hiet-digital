@@ -616,6 +616,34 @@ export const AttendanceView: React.FC = () => {
                   </div>
                 </div>
               )}
+
+              {/* Development Attendance Diagnostics (Dev-Only) */}
+              {(Boolean(import.meta.env.DEV) || Boolean(import.meta.env.VITE_ATTENDANCE_TEST_MODE === 'true')) && scannerResult && (
+                <div className="p-3 bg-neutral-900 text-neutral-100 rounded-xl border border-neutral-700 text-[11px] font-mono space-y-1">
+                  <div className="flex items-center justify-between font-bold text-amber-400 border-b border-neutral-800 pb-1">
+                    <span>Development Attendance Diagnostics</span>
+                    <span className="text-[9px] uppercase px-1.5 py-0.5 bg-neutral-800 text-neutral-300 rounded font-sans">Dev Only</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 pt-1 text-[10px]">
+                    <div>Session: <span className="text-emerald-400 font-bold">active</span></div>
+                    <div>QR Token: <span className="text-emerald-400 font-bold">{scannerResult.status !== 'invalid' ? 'valid' : 'checked'}</span></div>
+                    <div>Student: <span className="text-emerald-400 font-bold">eligible</span></div>
+                    <div>Distance: <span className="font-bold">{scannerResult.distanceMeters.toFixed(1)}m</span></div>
+                    <div>Allowed Radius: <span className="font-bold">30.0m</span></div>
+                    <div>GPS Accuracy: <span className="font-bold">±{scannerResult.accuracyMeters.toFixed(1)}m</span></div>
+                    <div>Max Accuracy: <span className="font-bold">±20.0m</span></div>
+                    <div>Location Age: <span className="font-bold">&lt; 4s</span></div>
+                    <div className="col-span-2 pt-1 border-t border-neutral-800 mt-0.5">
+                      Result: <span className={`font-bold uppercase ${
+                        scannerResult.status === 'verified' ? 'text-emerald-400' : scannerResult.status === 'flagged' ? 'text-amber-400' : 'text-rose-400'
+                      }`}>{scannerResult.status}</span>
+                      {scannerResult.status !== 'verified' && (
+                        <span className="block text-rose-300 text-[9px] truncate mt-0.5">Failure Reason: {scannerResult.message}</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
