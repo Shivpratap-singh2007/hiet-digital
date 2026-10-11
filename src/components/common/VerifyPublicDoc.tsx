@@ -10,11 +10,9 @@ import {
   User, 
   Hash, 
   Printer, 
-  ArrowLeft,
-  ExternalLink
+  ArrowLeft
 } from 'lucide-react';
 import { apiService } from '../../lib/supabase';
-import { dataStore } from '../../lib/mockData';
 
 interface VerifyPublicDocProps {
   type: 'hall-ticket' | 'certificate';
@@ -32,64 +30,70 @@ export const VerifyPublicDoc: React.FC<VerifyPublicDocProps> = ({ type, token, o
     let isMounted = true;
     async function verifyDoc() {
       setLoading(true);
+      setErrorMsg('');
+      setValid(false);
+      setDocData(null);
+
+      const trimmedToken = (token || '').trim();
+
+      // 1. Invalid or missing token check
+      if (!trimmedToken || trimmedToken.length < 4) {
+        if (isMounted) {
+          setValid(false);
+          setErrorMsg('Document verification token is invalid or missing.');
+          setLoading(false);
+        }
+        return;
+      }
+
       try {
-        if (type === 'hall-ticket') {
-          // Check local or live
-          const res = await apiService.verifyHallTicketPublic?.(token);
+        const verifyFn = type === 'hall-ticket'
+          ? apiService.verifyHallTicketPublic
+          : apiService.verifyCertificatePublic;
+
+        if (!verifyFn) {
           if (isMounted) {
-            if (res && res.is_valid) {
-              setValid(true);
-              setDocData(res);
-            } else if (token.toUpperCase().includes('HT') || token.length > 5) {
-              // Valid mock fallback
-              setValid(true);
-              setDocData({
-                is_valid: true,
-                student_name: 'Aarav Sharma',
-                roll_number: 'CSE001',
-                department: 'Computer Science & Engineering',
-                semester: 6,
-                academic_year: '2025-2026',
-                exam_name: 'End Semester Examination May-June 2026',
-                issued_at: '2026-05-10T10:00:00Z',
-                clearance_status: 'All Departments Cleared (Accounts, Library, Lab, Sports, Hostel)'
-              });
-            } else {
-              setValid(false);
-              setErrorMsg('Hall Ticket with this token does not exist or has been revoked.');
-            }
+            setValid(false);
+            setErrorMsg('Verification service unavailable. Backend endpoint is not configured.');
           }
+          return;
+        }
+
+        const res = await verifyFn(trimmedToken);
+
+        if (!isMounted) return;
+
+        if (res && res.is_valid === true) {
+          setValid(true);
+          setDocData(res);
+        } else if (res?.service_unavailable) {
+          setValid(false);
+          setErrorMsg('Institutional verification service is currently unavailable. Please verify directly with HIET administration.');
+        } else if (res?.is_expired) {
+          setValid(false);
+          setErrorMsg(`This ${type === 'hall-ticket' ? 'Hall Ticket' : 'Certificate'} has expired and is no longer valid.`);
+        } else if (res?.is_revoked) {
+          setValid(false);
+          setErrorMsg(`This ${type === 'hall-ticket' ? 'Hall Ticket' : 'Certificate'} has been revoked by institutional authority.`);
+        } else if (res?.invalid_token) {
+          setValid(false);
+          setErrorMsg('Document verification token is invalid or malformed.');
         } else {
-          // Certificate verification
-          const res = await apiService.verifyCertificatePublic?.(token);
-          if (isMounted) {
-            if (res && res.is_valid) {
-              setValid(true);
-              setDocData(res);
-            } else if (token.toUpperCase().includes('CERT') || token.length > 5) {
-              setValid(true);
-              setDocData({
-                is_valid: true,
-                certificate_number: 'HIET/HACK/2026/042',
-                recipient_name: 'Aarav Sharma',
-                roll_number: 'CSE001',
-                department: 'Computer Science & Engineering',
-                event_name: 'HIET National Smart Campus Hackathon 2026',
-                event_date: '2026-04-18',
-                role: 'Winner - 1st Position',
-                issued_at: '2026-04-19T14:30:00Z',
-                issuer_authority: 'Office of the Principal, HIET Shahpur'
-              });
-            } else {
-              setValid(false);
-              setErrorMsg('Certificate not found or verification token is invalid.');
-            }
-          }
+          setValid(false);
+          setErrorMsg(
+            res?.error ||
+            `${type === 'hall-ticket' ? 'Hall Ticket' : 'Certificate'} not found in official institutional repository.`
+          );
         }
       } catch (err: any) {
         if (isMounted) {
           setValid(false);
-          setErrorMsg(err.message || 'Verification service temporarily unavailable');
+          const isNetwork = err?.message?.toLowerCase().includes('network') || err?.message?.toLowerCase().includes('failed to fetch');
+          if (isNetwork) {
+            setErrorMsg('Network error: Unable to connect to verification service. Please check connection.');
+          } else {
+            setErrorMsg('Institutional verification service is currently unavailable. Please try again later.');
+          }
         }
       } finally {
         if (isMounted) setLoading(false);
@@ -248,7 +252,9 @@ export const VerifyPublicDoc: React.FC<VerifyPublicDocProps> = ({ type, token, o
             <div className="w-14 h-14 bg-rose-50 text-rose-600 rounded-full flex items-center justify-center mx-auto border border-rose-200">
               <AlertTriangle className="w-7 h-7" />
             </div>
-            <h2 className="text-xl font-bold text-slate-900">Document Verification Failed</h2>
+            <h2 className="text-xl font-bold text-slate-900">
+              {errorMsg?.toLowerCase().includes('unavailable') ? 'Verification Unavailable' : 'Document Verification Failed'}
+            </h2>
             <p className="text-xs text-slate-600 max-w-md mx-auto">
               {errorMsg || 'The specified verification token does not match any authenticated record in the HIET institutional database.'}
             </p>

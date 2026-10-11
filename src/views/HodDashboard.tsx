@@ -56,8 +56,6 @@ import { LostAndFoundView } from '../components/common/LostAndFoundView';
 import { MaintenanceGrievanceView } from '../components/common/MaintenanceGrievanceView';
 import { NoDuesHallTicketView } from '../components/admin/NoDuesHallTicketView';
 import { HostelOutpassView } from '../components/student/HostelOutpassView';
-import { StudentManagementView } from '../components/admin/StudentManagementView';
-import { TeacherManagementView } from '../components/admin/TeacherManagementView';
 import { SyllabusProgressTrackerView } from '../components/student/SyllabusProgressTrackerView';
 import { SmartCampusOperationsView } from '../components/operations/SmartCampusOperationsView';
 import { PageHeader } from '../components/common/PageHeader';
@@ -70,7 +68,7 @@ interface Props {
 
 export const HodDashboard: React.FC<Props> = ({ currentTab = 'dashboard', onNavigateTab }) => {
   const { user } = useAuth();
-  const dept = user?.teacherMaster?.department || 'CSE';
+  const dept = user?.teacherMaster?.department || user?.department || '';
 
   // Local state for Department Notice Broadcast
   const [noticeTitle, setNoticeTitle] = useState('');
@@ -181,16 +179,16 @@ export const HodDashboard: React.FC<Props> = ({ currentTab = 'dashboard', onNavi
     }
   };
 
-  // Departmental scoped data (Strictly isolated to HOD's department)
-  const deptStudents = dataStore.getStudentsMaster().filter((s: StudentMaster) => 
+  // Departmental scoped data (Strictly isolated to HOD's verified department)
+  const deptStudents = dept ? dataStore.getStudentsMaster().filter((s: StudentMaster) => 
     s.branch === dept || s.department === dept || (dept === 'CSE' && (s.branch === 'CSE' || s.branch === 'CSE AI & ML'))
-  );
-  const deptTeachers = dataStore.getTeachersMaster().filter((t: TeacherMaster) => 
+  ) : [];
+  const deptTeachers = dept ? dataStore.getTeachersMaster().filter((t: TeacherMaster) => 
     t.department === dept || (dept === 'CSE' && (t.department === 'CSE' || t.department === 'CSE AI & ML'))
-  );
-  const deptSubjects = dataStore.getSubjects().filter((s: Subject) => 
+  ) : [];
+  const deptSubjects = dept ? dataStore.getSubjects().filter((s: Subject) => 
     s.branch === dept || s.department === dept || (dept === 'CSE' && (s.branch === 'CSE' || s.branch === 'CSE AI & ML'))
-  );
+  ) : [];
   const deptAttendance = dataStore.getAttendance();
   const deptAttendanceRecords = deptAttendance.filter(a => deptStudents.some(s => s.id === a.student_id));
   const deptPresentCount = deptAttendanceRecords.filter(a => a.status === 'Present').length;
@@ -272,9 +270,23 @@ export const HodDashboard: React.FC<Props> = ({ currentTab = 'dashboard', onNavi
   };
 
   // Sub-views when sidebar tabs are clicked
-  if (currentTab === 'students_mgmt' as any) return <StudentManagementView />;
-  if (currentTab === 'teachers_mgmt' as any) return <TeacherManagementView />;
-  if (currentTab === 'attendance' as any) return <AttendanceReconciliationView />;
+  // Note: students_mgmt, teachers_mgmt, and attendance render dedicated departmental views below
+
+  // Explicit access restriction if authenticated HOD has no verified department assignment
+  if (!dept) {
+    return (
+      <div className="p-8 max-w-xl mx-auto my-12 bg-white rounded-2xl border border-amber-200 text-center space-y-4 shadow-sm">
+        <div className="w-12 h-12 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center mx-auto border border-amber-200">
+          <AlertCircle className="w-6 h-6" />
+        </div>
+        <h2 className="text-lg font-bold text-slate-900">Department Assignment Required</h2>
+        <p className="text-xs text-slate-600 leading-relaxed">
+          Your faculty profile does not have an active department assigned. Department-scoped academic directories and attendance records are restricted to authenticated Head of Department profiles with a verified departmental assignment. Please contact the Academic Registrar or Administrator to assign your department.
+        </p>
+      </div>
+    );
+  }
+
   if (currentTab === 'syllabus_progress' as any) return <SyllabusProgressTrackerView />;
   if (currentTab === 'gallery') return <CampusGalleryView />;
   if (currentTab === 'department' as any) return <DepartmentStructureView />;

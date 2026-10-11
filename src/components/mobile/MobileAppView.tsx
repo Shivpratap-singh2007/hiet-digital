@@ -8,7 +8,6 @@ import {
   MapPin, 
   MessageSquare, 
   User, 
-  LogIn, 
   ChevronRight, 
   ChevronDown,
   ChevronUp,
@@ -17,20 +16,11 @@ import {
   Trophy,
   CalendarDays,
   PhoneCall,
-  CheckCircle2,
   AlertCircle,
-  ExternalLink,
-  ShieldCheck,
-  Building2,
-  Bus,
-  Users,
-  Briefcase
+  Users
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { useTheme } from '../../context/ThemeContext';
 import { dataStore } from '../../lib/mockData';
-import { isSupabaseConfigured } from '../../lib/supabase';
-import { HietCollegeLogo } from '../common/HietCollegeLogo';
 import { NavTab } from '../common/Sidebar';
 import { calculateAttendanceStats } from '../../lib/utils';
 import { UserRole } from '../../types';
@@ -73,9 +63,8 @@ export const MobileAppView: React.FC<Props> = ({
   onOpenCampus3D
 }) => {
   const { user, role } = useAuth();
-  const isDemoAllowed = import.meta.env.VITE_ENABLE_DEMO_LOGIN === 'true' || import.meta.env.DEV || !isSupabaseConfigured;
   const [activeTab, setActiveTab] = useState<NavTab>('dashboard');
-  const [selectedNoticeIndex, setSelectedNoticeIndex] = useState(0);
+  const selectedNoticeIndex = 0;
   const [showAllModules, setShowAllModules] = useState(false);
 
   const notices = dataStore.getNotices();
@@ -97,7 +86,6 @@ export const MobileAppView: React.FC<Props> = ({
   const dept = teacher?.department || 'CSE';
   const deptStudents = dataStore.getStudentsMaster().filter(s => s.branch === dept);
   const deptTeachers = dataStore.getTeachersMaster().filter(t => t.department === dept);
-  const deptSubjects = dataStore.getSubjects().filter(s => s.branch === dept);
   const mySubjects = dataStore.getSubjects().filter(s => s.teacher_id === teacherId || !s.teacher_id);
   const myDoubts = dataStore.getDoubts().filter(d => d.teacher_id === teacherId || !d.teacher_id);
   const pendingLeaves = dataStore.getLeaves().filter(l => (l.status || '').toLowerCase().startsWith('pending'));

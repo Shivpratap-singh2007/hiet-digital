@@ -67,14 +67,14 @@ interface Props {
 export const StudentDashboard: React.FC<Props> = ({ currentTab, onNavigateTab }) => {
   const { user } = useAuth();
   const student = user?.studentMaster;
-  const studentRoll = student?.roll_no || 'CSE001';
-  const studentId = user?.student_id || 'std-cse-001';
-  const studentBranch = student?.branch || 'CSE';
-  const studentSemester = student?.semester || 6;
-  const studentSection = student?.section || 'A';
+  const studentRoll = student?.roll_no || '';
+  const studentId = user?.student_id || student?.id || '';
+  const studentBranch = student?.branch || '';
+  const studentSemester = student?.semester || 0;
+  const studentSection = student?.section || '';
 
-  // Metrics from dataStore / Supabase
-  const myAttendance = dataStore.getAttendance().filter(a => a.student_id === studentId || a.student_id === 'std-cse-001');
+  // Metrics from dataStore / Supabase (Strictly scoped to authenticated student)
+  const myAttendance = studentId ? dataStore.getAttendance().filter(a => a.student_id === studentId) : [];
   const attendanceStats = calculateAttendanceStats(myAttendance);
 
   // Dynamic Assignments Count
@@ -97,14 +97,18 @@ export const StudentDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
 
   // Real-time Student Leave Tracking & Pending Request Counter
   const [studentLeaves, setStudentLeaves] = useState<LeaveRequest[]>(() =>
-    dataStore.getLeaves().filter(l => l.student_id === studentId || l.submitted_by_user_id === user?.id)
+    dataStore.getLeaves().filter(l => (studentId && l.student_id === studentId) || (user?.id && l.submitted_by_user_id === user?.id))
   );
 
   useEffect(() => {
     let isMounted = true;
     async function loadStudentLeaves() {
+      if (!studentId && !user?.id) {
+        setStudentLeaves([]);
+        return;
+      }
       try {
-        const data = await apiService.getLeaves(studentId);
+        const data = await apiService.getLeaves(studentId || undefined);
         if (isMounted && data) setStudentLeaves(data);
       } catch (e) {
         console.warn('Dashboard leave load error:', e);
@@ -260,8 +264,20 @@ export const StudentDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
         }
       />
 
+      {/* Identity mapping alert when student record is absent */}
+      {!studentId && (
+        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 flex items-center gap-3 text-xs">
+          <AlertCircle className="w-5 h-5 text-amber-600 shrink-0" />
+          <div>
+            <span className="font-bold">Student Record Mapping Unavailable: </span>
+            This account does not have a linked student profile. Private academic and attendance records are withheld.
+          </div>
+        </div>
+      )}
+
       {/* 2. Phase 1 Attendance Risk Intelligence Alert */}
       {(() => {
+        if (!studentId || myAttendance.length === 0) return null;
         // Find subject with lowest attendance or evaluate overall
         const attended = myAttendance.filter(a => a.status === 'Present').length;
         const conducted = myAttendance.length;
@@ -408,11 +424,11 @@ export const StudentDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           label="Attendance"
-          value={`${attendanceStats.percentage || 0}%`}
-          subtext={`${myAttendance.filter(a => a.status === 'Present').length} of ${myAttendance.length} lectures logged`}
+          value={!studentId ? "Unavailable" : myAttendance.length === 0 ? "0%" : `${attendanceStats.percentage}%`}
+          subtext={!studentId ? "Student record not mapped" : myAttendance.length > 0 ? `${myAttendance.filter(a => a.status === 'Present').length} of ${myAttendance.length} lectures logged` : "No attendance records found"}
           icon={CalendarCheck}
-          badge={attendanceStats.percentage >= 75 ? "Eligible" : "Low"}
-          badgeColor={attendanceStats.percentage >= 75 ? "emerald" : "rose"}
+          badge={!studentId ? "Unavailable" : myAttendance.length === 0 ? "No Data" : attendanceStats.percentage >= 75 ? "Eligible" : "Low"}
+          badgeColor={!studentId || myAttendance.length === 0 ? "slate" : attendanceStats.percentage >= 75 ? "emerald" : "rose"}
           onClick={() => onNavigateTab('attendance')}
         />
 

@@ -3,7 +3,6 @@ import {
   CalendarCheck, 
   Award, 
   Clock, 
-  BookOpen, 
   FileQuestion, 
   Sliders, 
   ArrowRight, 
@@ -23,11 +22,10 @@ interface Props {
 export const AcademicsHubView: React.FC<Props> = ({ onNavigate }) => {
   const { user } = useAuth();
   const student = user?.studentMaster;
-  const studentRoll = student?.roll_no || 'CSE001';
-  const studentId = user?.student_id || 'std-cse-001';
+  const studentId = user?.student_id || student?.id || '';
 
-  // Attendance stats
-  const myAttendance = dataStore.getAttendance().filter(a => a.student_id === studentId || a.student_id === 'std-cse-001');
+  // Attendance stats (Strictly scoped to authenticated student)
+  const myAttendance = studentId ? dataStore.getAttendance().filter(a => a.student_id === studentId) : [];
   const stats = calculateAttendanceStats(myAttendance);
 
   // Timetable
@@ -39,9 +37,6 @@ export const AcademicsHubView: React.FC<Props> = ({ onNavigate }) => {
     const end = t.end_hour_24 * 60 + t.end_minute;
     return currentMinutes >= start && currentMinutes < end;
   }) || timetable[0];
-
-  // Sessional sample
-  const sessionalResults = dataStore.getSessionalResults().filter(r => r.student_roll === studentRoll);
 
   // Syllabus progress
   const progressList = dataStore.getSyllabusProgress();

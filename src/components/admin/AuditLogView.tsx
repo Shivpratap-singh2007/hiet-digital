@@ -1,16 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  ShieldCheck, 
-  Search, 
-  Filter, 
-  Calendar, 
-  FileSpreadsheet, 
-  CheckCircle2, 
-  AlertCircle, 
-  User, 
-  Clock, 
-  Download 
-} from 'lucide-react';
+import { Search } from 'lucide-react';
 import { PageHeader } from '../common/PageHeader';
 import { StatusBadge } from '../common/StatusBadge';
 import { EmptyState } from '../common/EmptyState';
@@ -36,7 +25,6 @@ export const AuditLogView: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   const loadAuditTrail = async () => {
-    setLoading(true);
     try {
       // 1. Fetch import jobs from API / Supabase
       const importJobs: ImportJob[] = await apiService.getImportAuditJobs();

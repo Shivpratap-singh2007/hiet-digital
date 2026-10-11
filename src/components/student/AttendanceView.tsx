@@ -11,12 +11,10 @@ import {
   MapPin, 
   X, 
   ShieldCheck, 
-  Radio, 
   PlayCircle,
   Camera,
   RotateCcw,
-  Sparkles,
-  ShieldAlert
+  Sparkles
 } from 'lucide-react';
 import { Html5Qrcode } from 'html5-qrcode';
 import { dataStore } from '../../lib/mockData';
@@ -34,11 +32,11 @@ import {
 
 export const AttendanceView: React.FC = () => {
   const { user } = useAuth();
-  const studentId = user?.student_id || 'std-210101';
+  const studentId = user?.student_id || user?.studentMaster?.id || '';
   const subjects = dataStore.getSubjects().filter(s => s.branch === (user?.studentMaster?.branch || 'CSE'));
   
   const [allAttendance, setAllAttendance] = useState<AttendanceRecord[]>(() => 
-    dataStore.getAttendance().filter(a => a.student_id === studentId)
+    studentId ? dataStore.getAttendance().filter(a => a.student_id === studentId) : []
   );
   const [selectedSubject, setSelectedSubject] = useState<string>('all');
   const [page, setPage] = useState(1);
@@ -61,8 +59,12 @@ export const AttendanceView: React.FC = () => {
   const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
 
   const fetchRecords = () => {
+    if (!studentId) {
+      setAllAttendance([]);
+      return;
+    }
     apiService.getAttendance({ studentId }).then(records => {
-      if (records && records.length > 0) {
+      if (records) {
         setAllAttendance(records);
       }
     }).catch(console.warn);
@@ -70,8 +72,9 @@ export const AttendanceView: React.FC = () => {
 
   useEffect(() => {
     let isMounted = true;
+    if (!studentId) return;
     apiService.getAttendance({ studentId }).then(records => {
-      if (isMounted && records && records.length > 0) {
+      if (isMounted && records) {
         setAllAttendance(records);
       }
     }).catch(console.warn);

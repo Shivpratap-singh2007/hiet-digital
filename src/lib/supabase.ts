@@ -4476,46 +4476,57 @@ export const apiService = {
   // PUBLIC VERIFICATION & OPERATIONAL MODULES (Sections 7.10, 7.16 - 7.20)
   // =============================================================================
   async verifyHallTicketPublic(token: string): Promise<any> {
+    if (!token || typeof token !== 'string' || token.trim().length < 4) {
+      return { is_valid: false, invalid_token: true, error: 'Invalid verification token' };
+    }
     if (isSupabaseConfigured && supabase) {
       try {
-        const { data, error } = await supabase.rpc('rpc_verify_hall_ticket', { p_token: token });
-        if (!error && data) return data;
-      } catch (err) {
-        console.warn('Supabase rpc_verify_hall_ticket error, fallback:', err);
+        const { data, error } = await supabase.rpc('rpc_verify_hall_ticket', { p_token: token.trim() });
+        if (error) {
+          return { is_valid: false, not_found: true, error: error.message };
+        }
+        if (data && data.is_valid) {
+          return data;
+        }
+        return { is_valid: false, not_found: true };
+      } catch (err: any) {
+        console.warn('Supabase rpc_verify_hall_ticket error:', err);
+        return { is_valid: false, service_unavailable: true, error: err?.message || 'Verification service error' };
       }
     }
     return {
-      is_valid: true,
-      student_name: 'Aarav Sharma',
-      roll_number: 'CSE001',
-      department: 'Computer Science & Engineering',
-      semester: 6,
-      academic_year: '2025-2026',
-      exam_name: 'End Semester Examination May-June 2026',
-      issued_at: '2026-05-10T10:00:00Z'
+      is_valid: false,
+      service_unavailable: true,
+      error: 'Institutional verification backend not configured'
     };
   },
 
   async verifyCertificatePublic(token: string): Promise<any> {
+    if (!token || typeof token !== 'string' || token.trim().length < 4) {
+      return { is_valid: false, invalid_token: true, error: 'Invalid verification token' };
+    }
     if (isSupabaseConfigured && supabase) {
       try {
-        const { data, error } = await supabase.rpc('rpc_verify_event_certificate', { p_token: token });
-        if (!error && data) return data;
-      } catch (err) {
-        console.warn('Supabase rpc_verify_event_certificate error, fallback:', err);
+        const { data, error } = await supabase.rpc('rpc_verify_event_certificate', { p_token: token.trim() });
+        if (error) {
+          return { is_valid: false, not_found: true, error: error.message };
+        }
+        if (data && data.is_valid) {
+          return data;
+        }
+        return { is_valid: false, not_found: true };
+      } catch (err: any) {
+        console.warn('Supabase rpc_verify_event_certificate error:', err);
+        return { is_valid: false, service_unavailable: true, error: err?.message || 'Verification service error' };
       }
     }
     return {
-      is_valid: true,
-      certificate_number: 'HIET/HACK/2026/042',
-      recipient_name: 'Aarav Sharma',
-      roll_number: 'CSE001',
-      department: 'Computer Science & Engineering',
-      event_name: 'HIET National Smart Campus Hackathon 2026',
-      event_date: '2026-04-18',
-      issued_at: '2026-04-19T14:30:00Z'
+      is_valid: false,
+      service_unavailable: true,
+      error: 'Institutional verification backend not configured'
     };
   },
+
 
   async verifyGatePassScan(token: string, gateName = 'Main Gate', action = 'exit'): Promise<any> {
     if (isSupabaseConfigured && supabase) {

@@ -102,11 +102,11 @@ export async function queryCollegeAi(
     }
 
     if (user.role === 'student') {
-      const studentId = user.student_id || user.id;
-      const records = dataStore.getAttendance().filter(a => a.student_id === studentId || a.student_id === 'std-cse-001');
+      const studentId = user.student_id || user.studentMaster?.id || user.id;
+      const records = studentId ? dataStore.getAttendance().filter(a => a.student_id === studentId) : [];
       const presentCount = records.filter(r => r.status.toLowerCase() === 'present').length;
-      const totalCount = records.length || 1;
-      const pct = Math.round((presentCount / totalCount) * 100);
+      const totalCount = records.length;
+      const pct = totalCount > 0 ? Math.round((presentCount / totalCount) * 100) : 0;
       const isSafe = pct >= 75;
 
       return {
@@ -204,7 +204,7 @@ export async function queryCollegeAi(
       : '• 09:30 AM: Applied Physics (C-101)\n• 10:30 AM: Programming Lab (Lab-3)';
 
     return {
-      answer: `📅 **Today\'s Class Schedule (CSE 1-A)**:\n\n${scheduleList}`,
+      answer: `📅 **Today's Class Schedule (CSE 1-A)**:\n\n${scheduleList}`,
       sourceDocuments: ['Campus Timetable System - Mon & Tue CSE 1-A'],
       actionCard: {
         type: 'timetable',
