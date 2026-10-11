@@ -153,7 +153,6 @@ export const MobileAppView: React.FC<Props> = ({
           showLogoEmblem: true,
           showLogoText: true,
           showGallery: false,
-          showThemeToggle: true,
           showLoginBtn: true,
           showNotifications: true,
           showSearch: false,

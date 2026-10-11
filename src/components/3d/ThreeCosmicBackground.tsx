@@ -1,15 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
-import { useTheme } from '../../context/ThemeContext';
 
 export const ThreeCosmicBackground: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { theme } = useTheme();
-  const themeRef = useRef(theme);
-
-  useEffect(() => {
-    themeRef.current = theme;
-  }, [theme]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -26,8 +19,6 @@ export const ThreeCosmicBackground: React.FC = () => {
     container.appendChild(renderer.domElement);
 
     // 2. Cosmic Constellation Network Particles & Connections
-    const isDark = () => themeRef.current === 'dark' || document.documentElement.classList.contains('dark');
-
     const particleCount = 120;
     const positions = new Float32Array(particleCount * 3);
     const velocities: { x: number; y: number; z: number }[] = [];
@@ -53,7 +44,7 @@ export const ThreeCosmicBackground: React.FC = () => {
 
     const particlesMat = new THREE.PointsMaterial({
       size: 0.28,
-      color: isDark() ? 0x60a5fa : 0x2563eb,
+      color: 0x2563eb,
       transparent: true,
       opacity: 0.65,
       blending: THREE.AdditiveBlending
@@ -69,9 +60,9 @@ export const ThreeCosmicBackground: React.FC = () => {
     lineGeo.setAttribute('position', new THREE.BufferAttribute(linePositions, 3));
 
     const lineMat = new THREE.LineBasicMaterial({
-      color: isDark() ? 0x38bdf8 : 0x60a5fa,
+      color: 0x60a5fa,
       transparent: true,
-      opacity: isDark() ? 0.22 : 0.14,
+      opacity: 0.14,
       blending: THREE.AdditiveBlending
     });
 
@@ -100,10 +91,10 @@ export const ThreeCosmicBackground: React.FC = () => {
     for (let i = 0; i < crystalCount; i++) {
       const geo = geometries[i % geometries.length];
       const wireMat = new THREE.MeshBasicMaterial({
-        color: i % 2 === 0 ? (isDark() ? 0x38bdf8 : 0x2563eb) : (isDark() ? 0xf59e0b : 0xd97706),
+        color: i % 2 === 0 ? 0x2563eb : 0xd97706,
         wireframe: true,
         transparent: true,
-        opacity: isDark() ? 0.35 : 0.22
+        opacity: 0.22
       });
 
       const mesh = new THREE.Mesh(geo, wireMat);
@@ -265,7 +256,7 @@ export const ThreeCosmicBackground: React.FC = () => {
   return (
     <div
       ref={containerRef}
-      className="fixed inset-0 pointer-events-none z-0 overflow-hidden opacity-60 dark:opacity-80 transition-opacity duration-700"
+      className="fixed inset-0 pointer-events-none z-0 overflow-hidden opacity-60 transition-opacity duration-700"
       aria-hidden="true"
     />
   );

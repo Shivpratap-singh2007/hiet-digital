@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { ThemeProvider } from './context/ThemeContext';
 import { Navbar } from './components/common/Navbar';
 import { Sidebar, NavTab } from './components/common/Sidebar';
 import { MobileBottomNav } from './components/common/MobileBottomNav';
@@ -235,7 +234,7 @@ const MainLayout: React.FC = () => {
   // 1. Unauthenticated Experience: Clean Institutional Portal & Login Screen
   if (!user && !devPreviewActive) {
     return (
-      <div className="min-h-screen bg-[#f8fafc] dark:bg-[#0b0f19] text-slate-800 dark:text-slate-100 flex flex-col font-sans relative overflow-x-hidden selection:bg-[#0f2942] selection:text-white transition-colors duration-200">
+      <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex flex-col font-sans relative overflow-x-hidden selection:bg-[#0f2942] selection:text-white">
         <StudentRegisterModal
           isOpen={showStudentRegModal}
           onClose={() => setShowStudentRegModal(false)}
@@ -282,7 +281,7 @@ const MainLayout: React.FC = () => {
 
   // 2. Authenticated Experience: Responsive shell with Sticky Top Header, Left Sidebar & Main Content
   return (
-    <div className="min-h-screen bg-[#f8fafc] dark:bg-[#0b0f19] text-slate-800 dark:text-slate-100 flex flex-col font-sans relative overflow-x-hidden selection:bg-[#0f2942] selection:text-white transition-colors duration-200">
+    <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex flex-col font-sans relative overflow-x-hidden selection:bg-[#0f2942] selection:text-white">
       {/* Sticky Top Header */}
       <Navbar
         onToggleSidebar={() => setIsMobileSidebarOpen(prev => !prev)}
@@ -357,10 +356,8 @@ const MainLayout: React.FC = () => {
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <MainLayout />
-      </AuthProvider>
-    </ThemeProvider>
+    <AuthProvider>
+      <MainLayout />
+    </AuthProvider>
   );
 }

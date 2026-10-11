@@ -12,7 +12,6 @@ import {
   Sparkles
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { ThemeToggle } from '../../context/ThemeContext';
 import { dataStore } from '../../lib/mockData';
 import { getAppEnvironment, isProduction } from '../../lib/envConfig';
 
@@ -140,11 +139,8 @@ export const Navbar: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* Right: Theme Toggle, Notifications, Profile Pill, Workspace Switcher, Logout */}
+        {/* Right: Notifications, Profile Pill, Workspace Switcher, Logout */}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-          {/* Top-Right Theme Toggle for all users (Section 8) */}
-          <ThemeToggle />
-
           {/* AI Campus Assistant Header Trigger (Phase 1) */}
           <button
             type="button"

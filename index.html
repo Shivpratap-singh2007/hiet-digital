@@ -14,28 +14,16 @@
     <script>
       (function () {
         try {
-          const storageKey = "hiet-digital-campus-theme";
-          const savedTheme = localStorage.getItem(storageKey) || localStorage.getItem("hiet_theme_mode") || "system";
-          const systemDark = window.matchMedia &&
-            window.matchMedia("(prefers-color-scheme: dark)").matches;
-          const resolvedTheme =
-            savedTheme === "dark" ||
-            (savedTheme === "system" && systemDark)
-              ? "dark"
-              : "light";
-
-          document.documentElement.classList.remove("light", "dark");
-          document.documentElement.classList.add(resolvedTheme);
-          document.documentElement.style.colorScheme = resolvedTheme;
-        } catch (error) {
-          document.documentElement.classList.remove("dark");
-          document.documentElement.classList.add("light");
-          document.documentElement.style.colorScheme = "light";
-        }
+          localStorage.removeItem("hiet-digital-campus-theme");
+          localStorage.removeItem("hiet_theme_mode");
+        } catch (e) {}
+        document.documentElement.classList.remove("dark");
+        document.documentElement.classList.add("light");
+        document.documentElement.style.colorScheme = "light";
       })();
     </script>
   </head>
-  <body class="bg-[#f8fafc] dark:bg-[#0a0a0a] min-h-screen text-slate-800 dark:text-[#f5f5f5] antialiased selection:bg-[#0f2942] selection:text-white transition-colors duration-200">
+  <body class="bg-[#f8fafc] min-h-screen text-slate-800 antialiased selection:bg-[#0f2942] selection:text-white">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

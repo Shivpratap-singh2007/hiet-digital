@@ -1,8 +1,6 @@
 import React from 'react';
 import { 
   Camera, 
-  Sun, 
-  Moon, 
   Bell, 
   LogIn, 
   Search, 
@@ -13,7 +11,6 @@ import {
   GraduationCap
 } from 'lucide-react';
 import { HietCollegeLogo } from './HietCollegeLogo';
-import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { dataStore } from '../../lib/mockData';
 
@@ -21,7 +18,6 @@ export interface PhoneHeaderConfig {
   showLogoEmblem: boolean;
   showLogoText: boolean;
   showGallery: boolean;
-  showThemeToggle: boolean;
   showLoginBtn: boolean;
   showNotifications: boolean;
   showSearch: boolean;
@@ -48,7 +44,6 @@ export const CustomPhoneHeader: React.FC<Props> = ({
     showLogoEmblem: true,
     showLogoText: true,
     showGallery: false,
-    showThemeToggle: true,
     showLoginBtn: true,
     showNotifications: true,
     showSearch: false,
@@ -61,7 +56,6 @@ export const CustomPhoneHeader: React.FC<Props> = ({
   onOpenNotifications,
   onToggleSidebar
 }) => {
-  const { theme, toggleTheme } = useTheme();
   const { user, role } = useAuth();
 
   const notifications = dataStore.getNotifications();
@@ -168,21 +162,6 @@ export const CustomPhoneHeader: React.FC<Props> = ({
                 </span>
               ) : (
                 <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-[#404040]" />
-              )}
-            </button>
-          )}
-
-          {/* 5. Theme Toggle (Dark / Light mode) */}
-          {config.showThemeToggle && (
-            <button
-              onClick={toggleTheme}
-              className="p-1.5 rounded-lg text-slate-500 dark:text-amber-300 hover:text-slate-800 dark:hover:text-amber-200 hover:bg-slate-100 dark:hover:bg-[#282828] transition shrink-0 cursor-pointer"
-              title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-            >
-              {theme === 'dark' ? (
-                <Sun className="w-4 h-4 text-amber-400" />
-              ) : (
-                <Moon className="w-4 h-4 text-slate-600" />
               )}
             </button>
           )}
