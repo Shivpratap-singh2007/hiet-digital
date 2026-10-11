@@ -125,13 +125,13 @@ export const ManagingDirectorDashboard: React.FC<Props> = ({ currentTab, onNavig
       {/* 2. SECTION: INSTITUTION OVERVIEW (6 Key Macro Indicators) */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-xs font-extrabold uppercase tracking-wider text-slate-700">
+          <h2 className="text-xs font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300">
             Institution Overview
           </h2>
-          <span className="text-[11px] font-semibold text-slate-500">HIET Institutional Baseline</span>
+          <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">HIET Institutional Baseline</span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3.5">
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-3.5">
           <StatCard
             label="Total Students"
             value={students.length}
@@ -195,19 +195,19 @@ export const ManagingDirectorDashboard: React.FC<Props> = ({ currentTab, onNavig
       </div>
 
       {/* 3. SECTION: INSTITUTIONAL PERFORMANCE (Department Breakdown Table) */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800/80 pb-3">
           <div>
-            <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
+            <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
               Institutional Performance by Department
             </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               Comprehensive student strength, faculty allocation, attendance compliance and academic results
             </p>
           </div>
           <button
             onClick={() => onNavigateTab('principal_analytics')}
-            className="text-xs text-[#0f2942] font-semibold hover:underline self-start sm:self-auto"
+            className="text-xs text-[#0f2942] dark:text-sky-400 font-semibold hover:underline self-start sm:self-auto"
           >
             View Full Trends →
           </button>
@@ -215,7 +215,7 @@ export const ManagingDirectorDashboard: React.FC<Props> = ({ currentTab, onNavig
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50/80 text-slate-600 uppercase tracking-wider font-bold border-b border-slate-200">
+            <thead className="bg-slate-50/80 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 uppercase tracking-wider font-bold border-b border-slate-200 dark:border-slate-800">
               <tr>
                 <th className="px-4 py-3">Department</th>
                 <th className="px-4 py-3">Est. Year</th>
@@ -226,7 +226,7 @@ export const ManagingDirectorDashboard: React.FC<Props> = ({ currentTab, onNavig
                 <th className="px-4 py-3 text-right">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/70">
               {departmentList.map(dept => {
                 const deptStudents = students.filter(s => s.branch?.includes(dept.code) || s.department?.includes(dept.code));
                 const deptFaculty = teachers.filter(t => t.department?.includes(dept.code));
@@ -236,25 +236,25 @@ export const ManagingDirectorDashboard: React.FC<Props> = ({ currentTab, onNavig
                 const passRate = dept.code === 'CSE' ? '92%' : dept.code === 'CSE AI & ML' ? '94%' : '88%';
 
                 return (
-                  <tr key={dept.code} className="hover:bg-slate-50/80 transition">
+                  <tr key={dept.code} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition">
                     <td className="px-4 py-3">
-                      <div className="font-bold text-slate-900">{dept.name}</div>
-                      <div className="text-[11px] text-slate-500 font-mono">Code: {dept.code}</div>
+                      <div className="font-bold text-slate-900 dark:text-slate-100">{dept.name}</div>
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">Code: {dept.code}</div>
                     </td>
-                    <td className="px-4 py-3 text-slate-600 font-mono">{dept.established}</td>
-                    <td className="px-4 py-3 font-semibold text-slate-800">
+                    <td className="px-4 py-3 text-slate-600 dark:text-slate-300 font-mono">{dept.established}</td>
+                    <td className="px-4 py-3 font-semibold text-slate-800 dark:text-slate-200">
                       {studentCount} Students
                     </td>
-                    <td className="px-4 py-3 font-semibold text-slate-800">
+                    <td className="px-4 py-3 font-semibold text-slate-800 dark:text-slate-200">
                       {facultyCount} Professors
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <span className="font-extrabold text-slate-900">{attendanceRate}%</span>
+                        <span className="font-extrabold text-slate-900 dark:text-slate-100">{attendanceRate}%</span>
                         <span className={`w-2 h-2 rounded-full ${attendanceRate >= 80 ? 'bg-emerald-500' : 'bg-amber-500'}`} />
                       </div>
                     </td>
-                    <td className="px-4 py-3 font-extrabold text-[#0f2942]">{passRate}</td>
+                    <td className="px-4 py-3 font-extrabold text-[#0f2942] dark:text-sky-400">{passRate}</td>
                     <td className="px-4 py-3 text-right">
                       <StatusBadge status="Operating Normal" variant="active" />
                     </td>
@@ -269,46 +269,46 @@ export const ManagingDirectorDashboard: React.FC<Props> = ({ currentTab, onNavig
       {/* 4. SECTION: STRATEGIC OVERVIEW (Major Institutional Alerts & High-Level Decisions) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Major Institutional Alerts */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs space-y-3">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-2xs space-y-3">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-3">
             <div className="flex items-center gap-2">
-              <ShieldAlert className="w-4 h-4 text-amber-600" />
-              <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+              <ShieldAlert className="w-4 h-4 text-amber-500" />
+              <h3 className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
                 Major Institutional Alerts
               </h3>
             </div>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-500/25">
               Active Monitoring
             </span>
           </div>
 
           <div className="space-y-2.5 text-xs">
-            <div className="p-3 rounded-xl border border-slate-100 bg-slate-50/70 space-y-1">
-              <div className="flex items-center justify-between font-bold text-slate-900">
+            <div className="p-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50 space-y-1">
+              <div className="flex items-center justify-between font-bold text-slate-900 dark:text-slate-100">
                 <span>HPTU 75% Attendance Compliance</span>
-                <span className="text-emerald-700">Satisfactory</span>
+                <span className="text-emerald-700 dark:text-emerald-400">Satisfactory</span>
               </div>
-              <p className="text-[11px] text-slate-500">
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
                 Overall campus attendance is {overallAttendanceRate}%. 14 individual semester warnings issued across 5 branches.
               </p>
             </div>
 
-            <div className="p-3 rounded-xl border border-slate-100 bg-slate-50/70 space-y-1">
-              <div className="flex items-center justify-between font-bold text-slate-900">
+            <div className="p-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50 space-y-1">
+              <div className="flex items-center justify-between font-bold text-slate-900 dark:text-slate-100">
                 <span>Pending Redressal Grievances</span>
-                <span className="text-amber-700">{openComplaints} In Review</span>
+                <span className="text-amber-700 dark:text-amber-400">{openComplaints} In Review</span>
               </div>
-              <p className="text-[11px] text-slate-500">
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
                 Grievances are actively under committee review. Zero escalated disciplinary proceedings.
               </p>
             </div>
 
-            <div className="p-3 rounded-xl border border-slate-100 bg-slate-50/70 space-y-1">
-              <div className="flex items-center justify-between font-bold text-slate-900">
+            <div className="p-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50 space-y-1">
+              <div className="flex items-center justify-between font-bold text-slate-900 dark:text-slate-100">
                 <span>Faculty Workload Equilibrium</span>
-                <span className="text-blue-700">Optimal</span>
+                <span className="text-blue-700 dark:text-sky-400">Optimal</span>
               </div>
-              <p className="text-[11px] text-slate-500">
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
                 Average faculty teaching workload is 16 credit hours/week adhering to AICTE statutory norms.
               </p>
             </div>
@@ -316,56 +316,56 @@ export const ManagingDirectorDashboard: React.FC<Props> = ({ currentTab, onNavig
         </div>
 
         {/* Pending High-Level Decisions */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs space-y-3">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-2xs space-y-3">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-3">
             <div className="flex items-center gap-2">
-              <Scale className="w-4 h-4 text-[#0f2942]" />
-              <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+              <Scale className="w-4 h-4 text-[#0f2942] dark:text-sky-400" />
+              <h3 className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
                 Pending High-Level Decisions
               </h3>
             </div>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-sky-500/10 text-blue-700 dark:text-sky-400 border border-blue-200 dark:border-sky-500/25">
               Executive
             </span>
           </div>
 
           <div className="space-y-2.5 text-xs">
-            <div className="p-3 rounded-xl border border-slate-100 bg-slate-50/70 space-y-1">
-              <div className="font-bold text-slate-900">NBA Accreditation Documentation</div>
-              <p className="text-[11px] text-slate-500">
+            <div className="p-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50 space-y-1">
+              <div className="font-bold text-slate-900 dark:text-slate-100">NBA Accreditation Documentation</div>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
                 Pre-qualifier documentation compiled by CSE department awaiting Managing Director review for submission.
               </p>
-              <div className="pt-1 flex items-center justify-between text-[10px] text-slate-400">
+              <div className="pt-1 flex items-center justify-between text-[10px] text-slate-400 dark:text-slate-500">
                 <span>Target: Current Academic Session</span>
-                <span className="font-bold text-[#0f2942]">Ready for Sign-off</span>
+                <span className="font-bold text-[#0f2942] dark:text-sky-400">Ready for Sign-off</span>
               </div>
             </div>
 
-            <div className="p-3 rounded-xl border border-slate-100 bg-slate-50/70 space-y-1">
-              <div className="font-bold text-slate-900">Campus Infrastructure Expansion</div>
-              <p className="text-[11px] text-slate-500">
+            <div className="p-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50 space-y-1">
+              <div className="font-bold text-slate-900 dark:text-slate-100">Campus Infrastructure Expansion</div>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
                 Proposal for new high-performance computing AI Lab equipment procurement in Block B.
               </p>
-              <div className="pt-1 flex items-center justify-between text-[10px] text-slate-400">
+              <div className="pt-1 flex items-center justify-between text-[10px] text-slate-400 dark:text-slate-500">
                 <span>Budget: ₹24,50,000</span>
-                <span className="font-bold text-amber-700">Under Review</span>
+                <span className="font-bold text-amber-700 dark:text-amber-400">Under Review</span>
               </div>
             </div>
           </div>
         </div>
 
         {/* Important Circulars & Notices */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs space-y-3">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-2xs space-y-3">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-3">
             <div className="flex items-center gap-2">
-              <Bell className="w-4 h-4 text-[#0f2942]" />
-              <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+              <Bell className="w-4 h-4 text-[#0f2942] dark:text-sky-400" />
+              <h3 className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
                 Institutional Circulars
               </h3>
             </div>
             <button
               onClick={() => onNavigateTab('notices')}
-              className="text-xs text-[#0f2942] font-semibold hover:underline"
+              className="text-xs text-[#0f2942] dark:text-sky-400 font-semibold hover:underline"
             >
               All Notices →
             </button>
@@ -373,14 +373,14 @@ export const ManagingDirectorDashboard: React.FC<Props> = ({ currentTab, onNavig
 
           <div className="space-y-2.5">
             {notices.slice(0, 3).map(n => (
-              <div key={n.id} className="p-3 rounded-xl border border-slate-100 bg-slate-50/70 text-xs space-y-1">
+              <div key={n.id} className="p-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50 text-xs space-y-1">
                 <div className="flex items-center justify-between gap-2">
-                  <h4 className="font-bold text-slate-900 truncate">{n.title}</h4>
-                  <span className="text-[10px] text-slate-400 font-mono shrink-0">
+                  <h4 className="font-bold text-slate-900 dark:text-slate-100 truncate">{n.title}</h4>
+                  <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono shrink-0">
                     {n.created_at ? new Date(n.created_at).toLocaleDateString() : 'Recent'}
                   </span>
                 </div>
-                <p className="text-slate-500 text-[11px] line-clamp-1">{n.content}</p>
+                <p className="text-slate-500 dark:text-slate-400 text-[11px] line-clamp-1">{n.content}</p>
               </div>
             ))}
           </div>
@@ -388,19 +388,19 @@ export const ManagingDirectorDashboard: React.FC<Props> = ({ currentTab, onNavig
       </div>
 
       {/* 5. SECTION: RECENT INSTITUTIONAL ACTIVITY (Audit Log & Administrative Updates) */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
+        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80 pb-3">
           <div>
-            <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
+            <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
               Recent Institutional Activity & Administrative Actions
             </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               Real-time audit log of institutional administrative transactions across campus
             </p>
           </div>
           <button
             onClick={() => onNavigateTab('audit_log')}
-            className="text-xs text-[#0f2942] font-semibold hover:underline"
+            className="text-xs text-[#0f2942] dark:text-sky-400 font-semibold hover:underline"
           >
             Audit Log Ledger →
           </button>
@@ -410,20 +410,20 @@ export const ManagingDirectorDashboard: React.FC<Props> = ({ currentTab, onNavig
           {auditLogs.slice(0, 5).map((log: any) => (
             <div
               key={log.id}
-              className="p-3 rounded-xl border border-slate-100 bg-slate-50/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs"
+              className="p-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs"
             >
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-[#0f2942] flex items-center justify-center shrink-0">
+                <div className="w-8 h-8 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[#0f2942] dark:text-sky-400 flex items-center justify-center shrink-0">
                   <Activity className="w-4 h-4" />
                 </div>
                 <div>
-                  <span className="font-bold text-slate-900">{log.action || 'Administrative Event'}</span>
-                  <div className="text-[11px] text-slate-500">
+                  <span className="font-bold text-slate-900 dark:text-slate-100">{log.action || 'Administrative Event'}</span>
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400">
                     By {log.performed_by || 'Central Administration'} • Target: {log.target || log.details || 'Campus Record'}
                   </div>
                 </div>
               </div>
-              <div className="text-[11px] text-slate-400 font-mono sm:text-right">
+              <div className="text-[11px] text-slate-400 dark:text-slate-500 font-mono sm:text-right">
                 {log.created_at ? new Date(log.created_at).toLocaleString() : 'Today'}
               </div>
             </div>

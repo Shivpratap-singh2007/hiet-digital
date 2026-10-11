@@ -1,8 +1,5 @@
 import React, { useState } from 'react';
 import {
-  Sun,
-  Moon,
-  Laptop,
   User,
   KeyRound,
   ShieldCheck,
@@ -13,19 +10,19 @@ import {
   QrCode
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { useTheme } from '../../context/ThemeContext';
 import { PageHeader } from './PageHeader';
 import { PasswordInput, PasswordRules } from '../auth/PasswordInput';
 
 interface Props {
-  initialTab?: 'appearance' | 'profile' | 'security' | 'notifications';
+  initialTab?: 'profile' | 'security' | 'notifications';
 }
 
-export const SettingsView: React.FC<Props> = ({ initialTab = 'appearance' }) => {
+export const SettingsView: React.FC<Props> = ({ initialTab = 'profile' }) => {
   const { user, role, logout, changePassword } = useAuth();
-  const { themeMode, setThemeMode } = useTheme();
 
-  const [activeTab, setActiveTab] = useState<'appearance' | 'profile' | 'security' | 'notifications'>(initialTab);
+  const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'notifications'>(
+    initialTab === ('appearance' as any) ? 'profile' : initialTab
+  );
 
   // Password state
   const [newPassword, setNewPassword] = useState('');
@@ -114,13 +111,13 @@ export const SettingsView: React.FC<Props> = ({ initialTab = 'appearance' }) => 
           { label: 'Account & Settings', active: true }
         ]}
         title="Settings & Institutional Profile"
-        description="Appearance preferences, institutional identity verification, security credentials, and alerts"
+        description="Institutional identity verification, security credentials, and alerts"
         badge={getRoleDisplay()}
         actions={
           <button
             type="button"
             onClick={() => setShowLogoutConfirm(true)}
-            className="px-3.5 py-2 rounded-xl bg-white border border-rose-300 hover:border-rose-600 text-xs font-bold text-rose-700 transition flex items-center gap-1.5 shadow-2xs"
+            className="px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-rose-300 dark:border-rose-900/60 hover:border-rose-600 text-xs font-bold text-rose-700 dark:text-rose-400 transition flex items-center gap-1.5 shadow-2xs cursor-pointer"
           >
             <LogOut className="w-4 h-4" />
             <span>Sign Out</span>
@@ -129,27 +126,14 @@ export const SettingsView: React.FC<Props> = ({ initialTab = 'appearance' }) => 
       />
 
       {/* 2. Settings Tab Navigation */}
-      <div className="flex border-b border-slate-200 dark:border-[#2a2a2a] overflow-x-auto gap-2">
-        <button
-          type="button"
-          onClick={() => setActiveTab('appearance')}
-          className={`py-3 px-4 font-bold text-xs flex items-center gap-2 border-b-2 transition whitespace-nowrap ${
-            activeTab === 'appearance'
-              ? 'border-[#0f2942] dark:border-white text-[#0f2942] dark:text-white'
-              : 'border-transparent text-slate-500 dark:text-[#a3a3a3] hover:text-slate-800 dark:hover:text-[#f5f5f5]'
-          }`}
-        >
-          <Sun className="w-4 h-4" />
-          <span>Appearance</span>
-        </button>
-
+      <div className="flex border-b border-slate-200 dark:border-slate-800 overflow-x-auto gap-2">
         <button
           type="button"
           onClick={() => setActiveTab('profile')}
-          className={`py-3 px-4 font-bold text-xs flex items-center gap-2 border-b-2 transition whitespace-nowrap ${
+          className={`py-3 px-4 font-bold text-xs flex items-center gap-2 border-b-2 transition whitespace-nowrap cursor-pointer ${
             activeTab === 'profile'
-              ? 'border-[#0f2942] dark:border-white text-[#0f2942] dark:text-white'
-              : 'border-transparent text-slate-500 dark:text-[#a3a3a3] hover:text-slate-800 dark:hover:text-[#f5f5f5]'
+              ? 'border-[#0f2942] dark:border-sky-400 text-[#0f2942] dark:text-sky-300'
+              : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
           }`}
         >
           <User className="w-4 h-4" />
@@ -159,10 +143,10 @@ export const SettingsView: React.FC<Props> = ({ initialTab = 'appearance' }) => 
         <button
           type="button"
           onClick={() => setActiveTab('security')}
-          className={`py-3 px-4 font-bold text-xs flex items-center gap-2 border-b-2 transition whitespace-nowrap ${
+          className={`py-3 px-4 font-bold text-xs flex items-center gap-2 border-b-2 transition whitespace-nowrap cursor-pointer ${
             activeTab === 'security'
-              ? 'border-[#0f2942] dark:border-white text-[#0f2942] dark:text-white'
-              : 'border-transparent text-slate-500 dark:text-[#a3a3a3] hover:text-slate-800 dark:hover:text-[#f5f5f5]'
+              ? 'border-[#0f2942] dark:border-sky-400 text-[#0f2942] dark:text-sky-300'
+              : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
           }`}
         >
           <KeyRound className="w-4 h-4" />
@@ -172,123 +156,16 @@ export const SettingsView: React.FC<Props> = ({ initialTab = 'appearance' }) => 
         <button
           type="button"
           onClick={() => setActiveTab('notifications')}
-          className={`py-3 px-4 font-bold text-xs flex items-center gap-2 border-b-2 transition whitespace-nowrap ${
+          className={`py-3 px-4 font-bold text-xs flex items-center gap-2 border-b-2 transition whitespace-nowrap cursor-pointer ${
             activeTab === 'notifications'
-              ? 'border-[#0f2942] dark:border-white text-[#0f2942] dark:text-white'
-              : 'border-transparent text-slate-500 dark:text-[#a3a3a3] hover:text-slate-800 dark:hover:text-[#f5f5f5]'
+              ? 'border-[#0f2942] dark:border-sky-400 text-[#0f2942] dark:text-sky-300'
+              : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
           }`}
         >
           <Bell className="w-4 h-4" />
           <span>Notifications</span>
         </button>
       </div>
-
-      {/* 3. Appearance Tab (Section 5, 54) */}
-      {activeTab === 'appearance' && (
-        <div className="bg-white dark:bg-[#141414] rounded-2xl border border-slate-200 dark:border-[#303030] p-6 shadow-xs space-y-6">
-          <div>
-            <h2 className="text-base font-bold text-[#0f2942] dark:text-[#f5f5f5]">Display Appearance</h2>
-            <p className="text-xs text-slate-500 dark:text-[#a3a3a3] mt-0.5">
-              Choose your interface theme. HIET Digital Campus defaults to Light Mode with accessible contrast.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {/* Light Mode Card */}
-            <button
-              type="button"
-              onClick={() => setThemeMode('light')}
-              className={`p-4 rounded-xl border text-left transition relative flex flex-col justify-between ${
-                themeMode === 'light'
-                  ? 'border-[#0f2942] dark:border-white ring-2 ring-[#0f2942]/20 dark:ring-white/20 bg-blue-50/30 dark:bg-[#1f1f1f]'
-                  : 'border-slate-200 dark:border-[#303030] hover:border-slate-300 dark:hover:border-[#4a4a4a] bg-white dark:bg-[#181818]'
-              }`}
-            >
-              <div className="space-y-3">
-                <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 flex items-center justify-center">
-                  <Sun className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-sm text-slate-900 dark:text-[#f5f5f5]">Light Mode</span>
-                    {themeMode === 'light' && (
-                      <CheckCircle2 className="w-4 h-4 text-[#0f2942] dark:text-white" />
-                    )}
-                  </div>
-                  <p className="text-xs text-slate-500 dark:text-[#a3a3a3] mt-1">
-                    Official HIET Light Theme. High contrast navy & clean white surfaces. Recommended for everyday campus operations.
-                  </p>
-                </div>
-              </div>
-              <span className="mt-4 text-[10px] font-bold uppercase tracking-wider text-[#0f2942] dark:text-[#ededed] bg-blue-100/70 dark:bg-[#242424] px-2 py-0.5 rounded-md inline-block w-fit">
-                Default Theme
-              </span>
-            </button>
-
-            {/* Dark Mode Card */}
-            <button
-              type="button"
-              onClick={() => setThemeMode('dark')}
-              className={`p-4 rounded-xl border text-left transition relative flex flex-col justify-between ${
-                themeMode === 'dark'
-                  ? 'border-[#0f2942] dark:border-white ring-2 ring-[#0f2942]/20 dark:ring-white/20 bg-slate-50 dark:bg-[#282828]'
-                  : 'border-slate-200 dark:border-[#303030] hover:border-slate-300 dark:hover:border-[#4a4a4a] bg-white dark:bg-[#181818]'
-              }`}
-            >
-              <div className="space-y-3">
-                <div className="w-10 h-10 rounded-xl bg-slate-900 dark:bg-[#1a1a1a] text-slate-200 dark:text-white border border-slate-700 dark:border-[#3a3a3a] flex items-center justify-center">
-                  <Moon className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-sm text-slate-900 dark:text-[#f5f5f5]">Dark Mode</span>
-                    {themeMode === 'dark' && (
-                      <CheckCircle2 className="w-4 h-4 text-[#0f2942] dark:text-white" />
-                    )}
-                  </div>
-                  <p className="text-xs text-slate-500 dark:text-[#a3a3a3] mt-1">
-                    Neutral black, charcoal, and gray dark theme. Pure contrast without blue or navy cast.
-                  </p>
-                </div>
-              </div>
-              <span className="mt-4 text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-[#f5f5f5] bg-slate-100 dark:bg-[#333333] px-2 py-0.5 rounded-md inline-block w-fit">
-                Neutral Dark
-              </span>
-            </button>
-
-            {/* System Default Card */}
-            <button
-              type="button"
-              onClick={() => setThemeMode('system')}
-              className={`p-4 rounded-xl border text-left transition relative flex flex-col justify-between ${
-                themeMode === 'system'
-                  ? 'border-[#0f2942] dark:border-white ring-2 ring-[#0f2942]/20 dark:ring-white/20 bg-blue-50/30 dark:bg-[#282828]'
-                  : 'border-slate-200 dark:border-[#303030] hover:border-slate-300 dark:hover:border-[#4a4a4a] bg-white dark:bg-[#181818]'
-              }`}
-            >
-              <div className="space-y-3">
-                <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-[#242424] text-[#0f2942] dark:text-white flex items-center justify-center">
-                  <Laptop className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-sm text-slate-900 dark:text-[#f5f5f5]">System Preference</span>
-                    {themeMode === 'system' && (
-                      <CheckCircle2 className="w-4 h-4 text-[#0f2942] dark:text-white" />
-                    )}
-                  </div>
-                  <p className="text-xs text-slate-500 dark:text-[#a3a3a3] mt-1">
-                    Automatically synchronizes with your operating system or mobile device display preference.
-                  </p>
-                </div>
-              </div>
-              <span className="mt-4 text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-[#f5f5f5] bg-slate-100 dark:bg-[#333333] px-2 py-0.5 rounded-md inline-block w-fit">
-                Auto Detect
-              </span>
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* 4. My Institutional Profile Tab (Section 53) */}
       {activeTab === 'profile' && (

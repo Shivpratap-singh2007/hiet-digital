@@ -179,28 +179,28 @@ export const Sidebar: React.FC<Props> = ({
 
       {/* Sidebar Shell */}
       <aside
-        className={`fixed top-16 bottom-0 left-0 z-40 w-64 bg-white dark:bg-[#050505] border-r border-slate-200 dark:border-[#242424] flex flex-col transition-transform duration-200 ease-in-out lg:translate-x-0 ${
+        className={`fixed top-16 bottom-0 left-0 z-40 w-64 bg-white dark:bg-[#0b0f19] border-r border-slate-200 dark:border-slate-800 flex flex-col transition-transform duration-200 ease-in-out lg:translate-x-0 ${
           isOpenMobile ? 'translate-x-0 shadow-2xl' : '-translate-x-full'
         }`}
       >
         {/* User Card in Sidebar Header */}
-        <div className="p-4 border-b border-slate-200 dark:border-[#242424] bg-slate-50/70 dark:bg-[#141414] flex items-center justify-between">
+        <div className="p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/90 flex items-center justify-between">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-xl bg-[#0f2942] dark:bg-[#282828] text-white font-extrabold flex items-center justify-center text-sm shrink-0 shadow-2xs">
+            <div className="w-10 h-10 rounded-xl bg-[#0f2942] dark:bg-sky-900/60 text-white font-extrabold flex items-center justify-center text-sm shrink-0 shadow-2xs">
               {user?.name?.charAt(0) || 'H'}
             </div>
             <div className="overflow-hidden min-w-0">
-              <h4 className="text-xs font-bold text-slate-900 dark:text-[#f0f0f0] truncate">
+              <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">
                 {user?.name || 'Verified User'}
               </h4>
-              <p className="text-[11px] text-[#0f2942] dark:text-[#969696] truncate font-semibold">
+              <p className="text-[11px] text-[#0f2942] dark:text-sky-400 truncate font-semibold">
                 {getRoleDisplayName()}
               </p>
             </div>
           </div>
           <button
             onClick={onCloseMobile}
-            className="p-1.5 rounded-lg text-slate-400 dark:text-[#969696] hover:text-slate-700 dark:hover:text-[#f0f0f0] hover:bg-slate-200 dark:hover:bg-[#171717] lg:hidden transition"
+            className="p-1.5 rounded-lg text-slate-400 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-800 lg:hidden transition"
             aria-label="Close Navigation"
           >
             <X className="w-5 h-5" />
@@ -218,20 +218,20 @@ export const Sidebar: React.FC<Props> = ({
                 onClick={() => handleItemClick(item.id)}
                 className={`group w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all text-left ${
                   isActive
-                    ? 'bg-[#0f2942] dark:bg-[#282828] text-white shadow-xs'
-                    : 'text-slate-600 dark:text-[#969696] hover:text-slate-900 dark:hover:text-[#f0f0f0] hover:bg-slate-100/80 dark:hover:bg-[#171717]'
+                    ? 'bg-[#0f2942] dark:bg-sky-500/15 text-white dark:text-sky-300 dark:border dark:border-sky-500/30 shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/80 dark:hover:bg-slate-800/60'
                 }`}
               >
                 <div className={`p-1 rounded-lg transition-colors ${
                   isActive 
-                    ? 'text-white' 
-                    : 'text-slate-400 dark:text-[#969696] group-hover:text-slate-700 dark:group-hover:text-white'
+                    ? 'text-white dark:text-sky-300' 
+                    : 'text-slate-400 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-200'
                 }`}>
                   <Icon className="w-4 h-4 shrink-0" />
                 </div>
                 <span className="truncate flex-1">{item.label}</span>
                 {isActive && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-white shrink-0" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-white dark:bg-sky-400 shrink-0" />
                 )}
               </button>
             );
@@ -239,9 +239,9 @@ export const Sidebar: React.FC<Props> = ({
         </div>
 
         {/* Institutional Footer */}
-        <div className="p-3 border-t border-slate-200 dark:border-[#242424] bg-slate-50/50 dark:bg-[#050505] flex items-center justify-center gap-2 text-[11px] text-slate-500 dark:text-[#969696]">
+        <div className="p-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-[#0b0f19] flex items-center justify-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
           <img src="/images/hiet_crest.png" alt="HIET" className="w-4 h-4 object-contain rounded-full bg-white p-0.5" />
-          <span className="font-semibold text-slate-700 dark:text-[#d4d4d4]">HIET GROUP OF INSTITUTIONS</span>
+          <span className="font-semibold text-slate-700 dark:text-slate-300">HIET GROUP OF INSTITUTIONS</span>
         </div>
       </aside>
     </>
