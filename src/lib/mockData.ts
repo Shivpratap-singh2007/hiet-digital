@@ -61,7 +61,7 @@ export const INITIAL_STUDENTS_MASTER: StudentMaster[] = [
   ...ALL_DEMO_STUDENT_PROFILES.map(p => p.studentMaster!),
   // --- Legacy Students (Semester 6) ---
   {
-    id: 'std-cse-001',
+    id: 'std-cse-sem6-001',
     roll_no: 'CSE001',
     name: 'Aarav Sharma',
     father_name: 'Sh. Rajesh Sharma',
@@ -79,7 +79,7 @@ export const INITIAL_STUDENTS_MASTER: StudentMaster[] = [
     created_at: '2023-08-01T10:00:00Z'
   },
   {
-    id: 'std-cse-002',
+    id: 'std-cse-sem6-002',
     roll_no: 'CSE002',
     name: 'Aditya Verma',
     father_name: 'Sh. Sunil Verma',
@@ -96,7 +96,7 @@ export const INITIAL_STUDENTS_MASTER: StudentMaster[] = [
     created_at: '2023-08-01T10:00:00Z'
   },
   {
-    id: 'std-cse-003',
+    id: 'std-cse-sem6-003',
     roll_no: 'CSE003',
     name: 'Rahul Thakur',
     father_name: 'Sh. Kuldeep Thakur',
@@ -113,7 +113,7 @@ export const INITIAL_STUDENTS_MASTER: StudentMaster[] = [
     created_at: '2023-08-01T10:00:00Z'
   },
   {
-    id: 'std-cse-004',
+    id: 'std-cse-sem6-004',
     roll_no: 'CSE004',
     name: 'Arjun Kumar',
     father_name: 'Sh. Vijay Kumar',
@@ -130,7 +130,7 @@ export const INITIAL_STUDENTS_MASTER: StudentMaster[] = [
     created_at: '2023-08-01T10:00:00Z'
   },
   {
-    id: 'std-cse-005',
+    id: 'std-cse-sem6-005',
     roll_no: 'CSE005',
     name: 'Rohit Sharma',
     father_name: 'Sh. Anil Sharma',
@@ -147,7 +147,7 @@ export const INITIAL_STUDENTS_MASTER: StudentMaster[] = [
     created_at: '2023-08-01T10:00:00Z'
   },
   {
-    id: 'std-cse-006',
+    id: 'std-cse-sem6-006',
     roll_no: 'CSE006',
     name: 'Karan Singh',
     father_name: 'Sh. Daljit Singh',
@@ -164,7 +164,7 @@ export const INITIAL_STUDENTS_MASTER: StudentMaster[] = [
     created_at: '2023-08-01T10:00:00Z'
   },
   {
-    id: 'std-cse-007',
+    id: 'std-cse-sem6-007',
     roll_no: 'CSE007',
     name: 'Aman Verma',
     father_name: 'Sh. Ramesh Verma',
@@ -181,7 +181,7 @@ export const INITIAL_STUDENTS_MASTER: StudentMaster[] = [
     created_at: '2023-08-01T10:00:00Z'
   },
   {
-    id: 'std-cse-008',
+    id: 'std-cse-sem6-008',
     roll_no: 'CSE008',
     name: 'Yash Thakur',
     father_name: 'Sh. Jagdish Thakur',
@@ -198,7 +198,7 @@ export const INITIAL_STUDENTS_MASTER: StudentMaster[] = [
     created_at: '2023-08-01T10:00:00Z'
   },
   {
-    id: 'std-cse-009',
+    id: 'std-cse-sem6-009',
     roll_no: 'CSE009',
     name: 'Shiv Kumar',
     father_name: 'Sh. Prem Chand',
@@ -215,7 +215,7 @@ export const INITIAL_STUDENTS_MASTER: StudentMaster[] = [
     created_at: '2023-08-01T10:00:00Z'
   },
   {
-    id: 'std-cse-010',
+    id: 'std-cse-sem6-010',
     roll_no: 'CSE010',
     name: 'Harshit Sharma',
     father_name: 'Sh. Suresh Sharma',
@@ -3580,7 +3580,14 @@ function setLocalItem<T>(key: string, val: T): void {
 
 class DataStore {
   getStudentsMaster(): StudentMaster[] {
-    return getLocalItem('students_master', INITIAL_STUDENTS_MASTER);
+    const raw = getLocalItem('students_master', INITIAL_STUDENTS_MASTER);
+    const map = new Map<string, StudentMaster>();
+    raw.forEach(s => {
+      if (s && s.id && !map.has(s.id)) {
+        map.set(s.id, s);
+      }
+    });
+    return Array.from(map.values());
   }
   setStudentsMaster(data: StudentMaster[]): void {
     setLocalItem('students_master', data);
