@@ -16,7 +16,8 @@ import {
   Phone,
   Calendar,
   Lock,
-  ExternalLink
+  ExternalLink,
+  WifiOff
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { dataStore } from '../../lib/mockData';
@@ -29,15 +30,36 @@ export const DigitalGatePassView: React.FC = () => {
   const student = user?.studentMaster;
   const currentRoll = student?.roll_no || 'CSE001';
 
-  // Requests state
-  const [requests, setRequests] = useState<GatePassRequest[]>(() =>
-    dataStore.getGatePassRequests()
-  );
+  const [isOnline, setIsOnline] = useState(() => typeof navigator !== 'undefined' ? navigator.onLine : true);
 
-  // Passes state
-  const [passes, setPasses] = useState<GatePass[]>(() =>
-    dataStore.getGatePasses()
-  );
+  React.useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  // Requests state (Offline cached for low-connectivity campus gates)
+  const [requests, setRequests] = useState<GatePassRequest[]>(() => {
+    try {
+      const cached = localStorage.getItem('hiet_cached_gate_requests');
+      if (cached) return JSON.parse(cached);
+    } catch {}
+    return dataStore.getGatePassRequests();
+  });
+
+  // Passes state (Offline cached for low-connectivity campus gates)
+  const [passes, setPasses] = useState<GatePass[]>(() => {
+    try {
+      const cached = localStorage.getItem('hiet_cached_gate_passes');
+      if (cached) return JSON.parse(cached);
+    } catch {}
+    return dataStore.getGatePasses();
+  });
 
   // Load from Supabase on mount
   React.useEffect(() => {
@@ -50,11 +72,17 @@ export const DigitalGatePassView: React.FC = () => {
           apiService.getSignedGatePasses(studentId)
         ]);
         if (isMounted) {
-          if (liveRequests && liveRequests.length > 0) setRequests(liveRequests);
-          if (livePasses && livePasses.length > 0) setPasses(livePasses);
+          if (liveRequests && liveRequests.length > 0) {
+            setRequests(liveRequests);
+            try { localStorage.setItem('hiet_cached_gate_requests', JSON.stringify(liveRequests)); } catch {}
+          }
+          if (livePasses && livePasses.length > 0) {
+            setPasses(livePasses);
+            try { localStorage.setItem('hiet_cached_gate_passes', JSON.stringify(livePasses)); } catch {}
+          }
         }
       } catch (err) {
-        console.warn('Error fetching live gate pass records:', err);
+        console.warn('Error fetching live gate pass records, using cache:', err);
       }
     }
     loadGateData();
@@ -253,6 +281,12 @@ export const DigitalGatePassView: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-2">
+              {!isOnline && (
+                <span className="inline-flex items-center gap-1 text-[10px] bg-slate-800 text-cyan-300 px-2.5 py-0.5 rounded-full border border-cyan-500/30 font-bold">
+                  <WifiOff className="w-3 h-3 text-cyan-400" />
+                  <span>Offline Cached Pass</span>
+                </span>
+              )}
               <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${
                 activePass.status === 'Active'
                   ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/40'

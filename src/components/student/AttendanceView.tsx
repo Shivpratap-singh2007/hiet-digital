@@ -14,7 +14,8 @@ import {
   PlayCircle,
   Camera,
   RotateCcw,
-  Sparkles
+  Sparkles,
+  Calculator
 } from 'lucide-react';
 import { Html5Qrcode } from 'html5-qrcode';
 import { dataStore } from '../../lib/mockData';
@@ -51,6 +52,10 @@ export const AttendanceView: React.FC = () => {
   const [studentCoords, setStudentCoords] = useState<{ lat: number; lng: number; accuracy: number } | null>(null);
   const [manualToken, setManualToken] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Statutory 75% What-If Calculator States
+  const [calcTarget, setCalcTarget] = useState<number>(75);
+  const [calcSubject, setCalcSubject] = useState<string>('overall');
 
   // Development Test Mode Panel Toggle
   const [showDevPanel, setShowDevPanel] = useState(false);
@@ -259,6 +264,45 @@ export const AttendanceView: React.FC = () => {
       records
     };
   });
+
+  // Statutory 75% What-If Attendance Predictor Data
+  const calcData = React.useMemo(() => {
+    let p = overallStats.present;
+    let t = overallStats.total;
+    let title = 'Overall Aggregate Attendance';
+    if (calcSubject !== 'overall') {
+      const found = subjectStats.find(s => s.subject.id === calcSubject || s.subject.subject_code === calcSubject);
+      if (found) {
+        p = found.present;
+        t = found.total;
+        title = found.subject.subject_name;
+      }
+    }
+    const currentPct = t > 0 ? (p / t) * 100 : 0;
+    const targetFrac = calcTarget / 100;
+    let needed = 0;
+    let canMiss = 0;
+
+    if (currentPct < calcTarget) {
+      if (targetFrac < 1) {
+        needed = Math.ceil((targetFrac * t - p) / (1 - targetFrac));
+        if (needed < 0) needed = 0;
+      }
+    } else if (targetFrac > 0) {
+      canMiss = Math.floor((p / targetFrac) - t);
+      if (canMiss < 0) canMiss = 0;
+    }
+
+    return {
+      title,
+      present: p,
+      total: t,
+      percentage: Math.round(currentPct * 10) / 10,
+      needed,
+      canMiss,
+      isAboveTarget: currentPct >= calcTarget
+    };
+  }, [overallStats, subjectStats, calcSubject, calcTarget]);
 
   const filteredRecords = selectedSubject === 'all'
     ? allAttendance
@@ -842,6 +886,99 @@ export const AttendanceView: React.FC = () => {
               </div>
             );
           })}
+        </div>
+      </div>
+
+      {/* Statutory Attendance Target & What-If Planner Card */}
+      <div className="bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl p-5 shadow-xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-neutral-800 pb-3">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 bg-blue-50 dark:bg-blue-950/50 text-[#0f2942] dark:text-blue-400 rounded-xl">
+              <Calculator className="w-5 h-5 text-blue-600" />
+            </div>
+            <div>
+              <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">
+                Statutory Attendance Target & What-If Planner
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-neutral-400">
+                Calculate how many classes you must attend or can safely miss to satisfy the 75% rule
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <select
+              value={calcSubject}
+              onChange={e => setCalcSubject(e.target.value)}
+              className="text-xs bg-slate-50 dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 rounded-xl px-2.5 py-1.5 font-semibold text-slate-800 dark:text-white focus:outline-none"
+            >
+              <option value="overall">All Courses (Aggregate)</option>
+              {subjects.map(s => (
+                <option key={s.id} value={s.id}>{s.subject_code} - {s.subject_name}</option>
+              ))}
+            </select>
+
+            <div className="flex items-center gap-1 bg-slate-100 dark:bg-neutral-800 p-1 rounded-xl">
+              {[75, 80, 85].map(target => (
+                <button
+                  key={target}
+                  type="button"
+                  onClick={() => setCalcTarget(target)}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
+                    calcTarget === target
+                      ? 'bg-[#0f2942] text-white shadow-2xs'
+                      : 'text-slate-600 dark:text-neutral-400 hover:text-slate-900'
+                  }`}
+                >
+                  {target}%
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="p-3.5 bg-slate-50 dark:bg-neutral-850 rounded-xl border border-slate-200/80 dark:border-neutral-800">
+            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Scope & Current Level</span>
+            <div className="mt-1 flex items-baseline gap-2">
+              <span className={`text-2xl font-black ${calcData.isAboveTarget ? 'text-emerald-600' : 'text-amber-600'}`}>
+                {calcData.percentage}%
+              </span>
+              <span className="text-xs text-slate-400">({calcData.present}/{calcData.total} classes)</span>
+            </div>
+            <p className="text-[11px] text-slate-500 truncate mt-0.5">{calcData.title}</p>
+          </div>
+
+          <div className={`p-3.5 rounded-xl border col-span-1 sm:col-span-2 flex items-center justify-between ${
+            calcData.isAboveTarget 
+              ? 'bg-emerald-50/70 border-emerald-200 text-emerald-950' 
+              : 'bg-amber-50/70 border-amber-200 text-amber-950'
+          }`}>
+            <div className="space-y-1">
+              <span className="text-[11px] font-extrabold uppercase tracking-wider block">
+                {calcData.isAboveTarget ? 'Safe Margin Available' : 'Mandatory Recovery Goal'}
+              </span>
+              <p className="text-xs font-medium leading-relaxed">
+                {calcData.isAboveTarget ? (
+                  <>
+                    You are currently <strong>eligible</strong>. You can safely miss up to{' '}
+                    <span className="inline-block px-1.5 py-0.5 rounded bg-emerald-200 text-emerald-900 font-black">
+                      {calcData.canMiss} {calcData.canMiss === 1 ? 'class' : 'classes'}
+                    </span>{' '}
+                    without falling below {calcTarget}%.
+                  </>
+                ) : (
+                  <>
+                    You are currently <strong>below target</strong>. You must attend the next{' '}
+                    <span className="inline-block px-1.5 py-0.5 rounded bg-amber-200 text-amber-900 font-black">
+                      {calcData.needed} consecutive {calcData.needed === 1 ? 'class' : 'classes'}
+                    </span>{' '}
+                    to reach {calcTarget}% eligibility.
+                  </>
+                )}
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 

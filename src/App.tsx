@@ -21,6 +21,7 @@ import { CampusGalleryModal } from './components/common/CampusGalleryModal';
 import { NotificationsModal } from './components/common/NotificationsModal';
 import { CampusAiAssistantModal } from './components/ai/CampusAiAssistantModal';
 import { VerifyPublicDoc } from './components/common/VerifyPublicDoc';
+import { CommandPaletteModal } from './components/common/CommandPaletteModal';
 import { DemoAccountsPage } from './pages/dev/DemoAccountsPage';
 import { AiCampusView } from './pages/ai/AiCampusView';
 import { areDevRoutesEnabled } from './lib/envConfig';
@@ -42,6 +43,19 @@ const MainLayout: React.FC = () => {
   const [showStudentRegModal, setShowStudentRegModal] = useState(false);
   const [showTeacherRegModal, setShowTeacherRegModal] = useState(false);
   const [showGalleryModal, setShowGalleryModal] = useState(false);
+  const [showCommandPalette, setShowCommandPalette] = useState(false);
+
+  // Global Command Palette Shortcut (Ctrl+K or Cmd+K)
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setShowCommandPalette(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
   const isDev = Boolean(import.meta.env.DEV);
@@ -289,10 +303,18 @@ const MainLayout: React.FC = () => {
         onOpenProfile={() => handleTabChange('profile')}
         onOpenLogin={handleOpenLogin}
         onOpenAiAssistant={() => setShowAiAssistantModal(true)}
+        onOpenSearch={() => setShowCommandPalette(true)}
       />
 
       {/* Global Modals */}
       {mustChangePassword && <ChangePasswordModal />}
+
+      <CommandPaletteModal
+        isOpen={showCommandPalette}
+        onClose={() => setShowCommandPalette(false)}
+        onNavigateTab={handleTabChange}
+        onOpenAiAssistant={() => setShowAiAssistantModal(true)}
+      />
 
       <CampusAiAssistantModal
         isOpen={showAiAssistantModal}

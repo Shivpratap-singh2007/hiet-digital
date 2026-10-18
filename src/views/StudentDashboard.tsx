@@ -26,7 +26,7 @@ import { apiService } from '../lib/supabase';
 import { calculateAttendanceStats, formatDate, formatIndiaDateTime } from '../lib/utils';
 import { calculateAttendanceRisk } from '../lib/attendanceRisk';
 import { NavTab } from '../components/common/Sidebar';
-import { TimetableSlot, LeaveRequest } from '../types';
+import { TimetableSlot, LeaveRequest, AttendanceRecord } from '../types';
 import { PageHeader } from '../components/common/PageHeader';
 import { StatCard } from '../components/common/StatCard';
 
@@ -74,7 +74,21 @@ export const StudentDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
   const studentSection = student?.section || '';
 
   // Metrics from dataStore / Supabase (Strictly scoped to authenticated student)
-  const myAttendance = studentId ? dataStore.getAttendance().filter(a => a.student_id === studentId) : [];
+  const [myAttendance, setMyAttendance] = useState<AttendanceRecord[]>(() =>
+    studentId ? dataStore.getAttendance().filter(a => a.student_id === studentId) : []
+  );
+
+  useEffect(() => {
+    let isMounted = true;
+    if (!studentId) return;
+    apiService.getAttendance({ studentId }).then(records => {
+      if (isMounted && records && records.length > 0) {
+        setMyAttendance(records);
+      }
+    }).catch(console.warn);
+    return () => { isMounted = false; };
+  }, [studentId]);
+
   const attendanceStats = calculateAttendanceStats(myAttendance);
 
   // Dynamic Assignments Count
@@ -243,7 +257,23 @@ export const StudentDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
         description={`Welcome, ${student?.name || user?.name || 'Student'} • Roll No: ${studentRoll} • Department: ${student?.department || 'CSE'}`}
         badge="Level 6 • Student"
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => onNavigateTab('attendance')}
+              className="px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
+            >
+              <QrCode className="w-4 h-4" />
+              <span>Scan Attendance</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => onNavigateTab('gate_pass' as any)}
+              className="px-3.5 py-2 rounded-xl bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
+            >
+              <ShieldAlert className="w-4 h-4" />
+              <span>Gate Pass</span>
+            </button>
             <button
               type="button"
               onClick={() => onNavigateTab('leaves')}

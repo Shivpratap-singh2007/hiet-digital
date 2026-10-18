@@ -11,9 +11,11 @@ import {
   GraduationCap
 } from 'lucide-react';
 import { dataStore } from '../../lib/mockData';
+import { apiService } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
 import { calculateAttendanceStats } from '../../lib/utils';
 import { NavTab } from '../common/Sidebar';
+import { AttendanceRecord } from '../../types';
 
 interface Props {
   onNavigate: (tab: NavTab) => void;
@@ -24,19 +26,41 @@ export const AcademicsHubView: React.FC<Props> = ({ onNavigate }) => {
   const student = user?.studentMaster;
   const studentId = user?.student_id || student?.id || '';
 
-  // Attendance stats (Strictly scoped to authenticated student)
-  const myAttendance = studentId ? dataStore.getAttendance().filter(a => a.student_id === studentId) : [];
+  // Attendance stats (Live API with mock fallback)
+  const [myAttendance, setMyAttendance] = React.useState<AttendanceRecord[]>(() =>
+    studentId ? dataStore.getAttendance().filter(a => a.student_id === studentId) : []
+  );
+
+  React.useEffect(() => {
+    let isMounted = true;
+    if (!studentId) return;
+    apiService.getAttendance({ studentId }).then(records => {
+      if (isMounted && records && records.length > 0) {
+        setMyAttendance(records);
+      }
+    }).catch(console.warn);
+    return () => { isMounted = false; };
+  }, [studentId]);
+
   const stats = calculateAttendanceStats(myAttendance);
 
-  // Timetable
-  const timetable = dataStore.getTimetable().filter(t => t.day === 'Monday');
+  // Dynamic Day-aware Timetable
+  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   const now = new Date();
+  const currentDayName = dayNames[now.getDay()];
+  const allTimetable = dataStore.getTimetable().filter(t => 
+    !student?.branch || t.branch === student.branch
+  );
+  let todaySchedule = allTimetable.filter(t => t.day === currentDayName);
+  if (todaySchedule.length === 0) {
+    todaySchedule = allTimetable.filter(t => t.day === 'Monday');
+  }
   const currentMinutes = now.getHours() * 60 + now.getMinutes();
-  const activeClass = timetable.find(t => {
+  const activeClass = todaySchedule.find(t => {
     const start = t.start_hour_24 * 60 + t.start_minute;
     const end = t.end_hour_24 * 60 + t.end_minute;
     return currentMinutes >= start && currentMinutes < end;
-  }) || timetable[0];
+  }) || todaySchedule[0] || allTimetable[0];
 
   // Syllabus progress
   const progressList = dataStore.getSyllabusProgress();

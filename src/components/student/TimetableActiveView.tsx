@@ -12,7 +12,13 @@ export const TimetableActiveView: React.FC = () => {
   const semester = student?.semester || 6;
   const section = student?.section || 'A';
 
-  const [timetable, setTimetable] = useState<TimetableSlot[]>(() => dataStore.getTimetable());
+  const [timetable, setTimetable] = useState<TimetableSlot[]>(() => {
+    try {
+      const cached = localStorage.getItem(`hiet_cached_timetable_${branch}_${semester}_${section}`);
+      if (cached) return JSON.parse(cached);
+    } catch {}
+    return dataStore.getTimetable();
+  });
 
   useEffect(() => {
     let isMounted = true;
@@ -25,9 +31,12 @@ export const TimetableActiveView: React.FC = () => {
         });
         if (isMounted && slots && slots.length > 0) {
           setTimetable(slots);
+          try {
+            localStorage.setItem(`hiet_cached_timetable_${branch}_${semester}_${section}`, JSON.stringify(slots));
+          } catch {}
         }
       } catch (e) {
-        console.warn('Error loading live timetable from Supabase:', e);
+        console.warn('Error loading live timetable, utilizing cached roster:', e);
       }
     }
     loadLiveTimetable();

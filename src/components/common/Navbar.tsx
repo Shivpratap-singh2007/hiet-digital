@@ -9,7 +9,8 @@ import {
   GraduationCap,
   Check,
   ChevronDown,
-  Sparkles
+  Sparkles,
+  Search
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { dataStore } from '../../lib/mockData';
@@ -21,6 +22,7 @@ interface Props {
   onOpenProfile?: () => void;
   onOpenLogin?: () => void;
   onOpenAiAssistant?: () => void;
+  onOpenSearch?: () => void;
 }
 
 export const Navbar: React.FC<Props> = ({
@@ -28,7 +30,8 @@ export const Navbar: React.FC<Props> = ({
   onOpenNotifications,
   onOpenProfile,
   onOpenLogin,
-  onOpenAiAssistant
+  onOpenAiAssistant,
+  onOpenSearch
 }) => {
   const { user, logout, role, workspaceRoles, switchWorkspace, activeWorkspaceRole } = useAuth();
   const [logoError, setLogoError] = useState(false);
@@ -141,6 +144,33 @@ export const Navbar: React.FC<Props> = ({
 
         {/* Right: Notifications, Profile Pill, Workspace Switcher, Logout */}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          {/* Quick Universal Search Trigger (Ctrl + K) */}
+          {user && onOpenSearch && (
+            <button
+              type="button"
+              onClick={onOpenSearch}
+              className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-xs text-slate-500 font-medium transition cursor-pointer"
+              title="Search campus features (Ctrl+K)"
+            >
+              <Search className="w-3.5 h-3.5 text-slate-400" />
+              <span>Search...</span>
+              <kbd className="px-1.5 py-0.5 text-[9px] bg-white border border-slate-300 rounded font-mono text-slate-500 shadow-2xs">
+                Ctrl K
+              </kbd>
+            </button>
+          )}
+          {user && onOpenSearch && (
+            <button
+              type="button"
+              onClick={onOpenSearch}
+              className="sm:hidden w-9 h-9 rounded-xl text-slate-600 hover:bg-slate-100 flex items-center justify-center transition cursor-pointer"
+              title="Search campus features"
+              aria-label="Search"
+            >
+              <Search className="w-4 h-4 text-slate-600" />
+            </button>
+          )}
+
           {/* AI Campus Assistant Header Trigger (Phase 1) */}
           <button
             type="button"
