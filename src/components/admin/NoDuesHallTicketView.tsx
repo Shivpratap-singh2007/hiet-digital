@@ -22,6 +22,7 @@ import { useAuth } from '../../context/AuthContext';
 import { PageHeader } from '../common/PageHeader';
 import { StatCard } from '../common/StatCard';
 import { NoDuesRecord, NoDuesClearance, HallTicket } from '../../types';
+import { isSupabaseConfigured, supabase } from '../../lib/supabase';
 
 export const NoDuesHallTicketView: React.FC = () => {
   const { user, role } = useAuth();
@@ -276,7 +277,6 @@ export const NoDuesHallTicketView: React.FC = () => {
                   type="button"
                   onClick={async () => {
                     try {
-                      const { isSupabaseConfigured, supabase } = await import('../../lib/supabase');
                       if (isSupabaseConfigured && supabase) {
                         const { data } = await supabase.functions.invoke('generate-hall-ticket', {
                           body: { student_id: hallTicket.student_id, exam_session: hallTicket.exam_session }
