@@ -39,6 +39,11 @@ import {
   Library,
   Bus,
   UtensilsCrossed,
+  CreditCard,
+  Calculator,
+  PackageSearch,
+  HeartPulse,
+  HeartHandshake,
   LucideIcon
 } from 'lucide-react';
 import { UserRole } from '../types';
@@ -61,14 +66,20 @@ export interface NavItemConfig {
 
 const STUDENT_NAV: NavItemConfig[] = [
   { id: 'dashboard', label: 'Overview', href: '/app/dashboard', icon: LayoutDashboard, roles: ['student'], enabled: true },
+  { id: 'id_card', label: 'Digital ID Card', href: '/app/id-card', icon: CreditCard, roles: ['student'], enabled: true },
   { id: 'attendance', label: 'Attendance', href: '/app/attendance', icon: CalendarCheck, roles: ['student'], enabled: true },
   { id: 'timetable', label: 'Timetable', href: '/app/timetable', icon: CalendarDays, roles: ['student'], enabled: true },
   { id: 'admit_card', label: 'Admit Card', href: '/app/admit-card', icon: FileCheck, roles: ['student'], enabled: true },
   { id: 'fees', label: 'Fee Receipts', href: '/app/fees', icon: Receipt, roles: ['student'], enabled: true },
+  { id: 'internals', label: 'Internal Calculator', href: '/app/internals', icon: Calculator, roles: ['student'], enabled: true },
   { id: 'library', label: 'Library (OPAC)', href: '/app/library', icon: Library, roles: ['student'], enabled: true },
   { id: 'transport', label: 'Bus Routes', href: '/app/transport', icon: Bus, roles: ['student'], enabled: true },
   { id: 'mess', label: 'Hostel Mess', href: '/app/mess', icon: UtensilsCrossed, roles: ['student'], enabled: true },
   { id: 'placements', label: 'Placements & Alumni', href: '/app/placements', icon: Briefcase, roles: ['student'], enabled: true },
+  { id: 'events', label: 'Events & Fests', href: '/app/events', icon: Trophy, roles: ['student'], enabled: true },
+  { id: 'lost_found', label: 'Lost & Found', href: '/app/lost-found', icon: PackageSearch, roles: ['student'], enabled: true },
+  { id: 'emergency_sos', label: 'Emergency & Dispensary', href: '/app/emergency-sos', icon: HeartPulse, roles: ['student'], enabled: true },
+  { id: 'parent_portal', label: 'Parent Portal', href: '/app/parent-portal', icon: HeartHandshake, roles: ['student'], enabled: true },
   { id: 'syllabus', label: 'Syllabus', href: '/app/syllabus', icon: BookOpen, roles: ['student'], enabled: true },
   { id: 'pyqs', label: 'PYQs', href: '/app/pyqs', icon: FileQuestion, roles: ['student'], enabled: true },
   { id: 'assignments', label: 'Assignments', href: '/app/assignments', icon: FileSpreadsheet, roles: ['student'], enabled: true },

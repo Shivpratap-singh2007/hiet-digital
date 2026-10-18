@@ -161,6 +161,15 @@ const MainLayout: React.FC = () => {
         'hostel-mess': 'mess',
         'placements': 'placements',
         'alumni': 'placements',
+        'id-card': 'id_card',
+        'idcard': 'id_card',
+        'internals': 'internals',
+        'internal-calculator': 'internals',
+        'emergency-sos': 'emergency_sos',
+        'emergency': 'emergency_sos',
+        'dispensary': 'emergency_sos',
+        'parent-portal': 'parent_portal',
+        'parent': 'parent_portal',
         'settings': 'settings'
       };
       if (tabMap[targetSeg]) {

@@ -26,7 +26,12 @@ import {
   Bus,
   UtensilsCrossed,
   Briefcase,
-  Building
+  Building,
+  CreditCard,
+  Calculator,
+  PackageSearch,
+  HeartPulse,
+  HeartHandshake
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { dataStore } from '../lib/mockData';
@@ -72,6 +77,10 @@ import { LibraryCatalogView } from '../components/student/LibraryCatalogView';
 import { TransportTrackerView } from '../components/student/TransportTrackerView';
 import { HostelMessView } from '../components/student/HostelMessView';
 import { PlacementsAlumniView } from '../components/student/PlacementsAlumniView';
+import { DigitalIdCardView } from '../components/student/DigitalIdCardView';
+import { InternalMarksCalculatorView } from '../components/student/InternalMarksCalculatorView';
+import { ParentPortalView } from '../components/student/ParentPortalView';
+import { EmergencyHealthView } from '../components/student/EmergencyHealthView';
 
 interface Props {
   currentTab: NavTab;
@@ -264,6 +273,10 @@ export const StudentDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
   if (currentTab === 'transport' as any) return <TransportTrackerView onNavigate={onNavigateTab} />;
   if (currentTab === 'mess' as any) return <HostelMessView onNavigate={onNavigateTab} />;
   if (currentTab === 'placements' as any) return <PlacementsAlumniView onNavigate={onNavigateTab} />;
+  if (currentTab === 'id_card' as any) return <DigitalIdCardView onNavigate={onNavigateTab} />;
+  if (currentTab === 'internals' as any) return <InternalMarksCalculatorView onNavigate={onNavigateTab} />;
+  if (currentTab === 'parent_portal' as any) return <ParentPortalView onNavigate={onNavigateTab} />;
+  if (currentTab === 'emergency_sos' as any) return <EmergencyHealthView onNavigate={onNavigateTab} />;
 
   // Default Overview / Student Dashboard Home
   return (
@@ -820,6 +833,32 @@ export const StudentDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           <button
+            onClick={() => onNavigateTab('id_card' as any)}
+            className="p-3.5 rounded-xl bg-gradient-to-br from-[#0f2942]/5 to-[#0f2942]/10 border border-[#0f2942]/20 hover:border-[#0f2942] hover:bg-[#0f2942]/15 transition text-left flex flex-col justify-between h-28 group cursor-pointer"
+          >
+            <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-[#0f2942] flex items-center justify-center group-hover:bg-[#0f2942] group-hover:text-white transition">
+              <CreditCard className="w-4 h-4" />
+            </div>
+            <div>
+              <span className="font-bold text-xs text-slate-900 block truncate">Digital ID Card</span>
+              <span className="text-[10px] text-slate-500 block truncate mt-0.5">Live anti-spoof ID</span>
+            </div>
+          </button>
+
+          <button
+            onClick={() => onNavigateTab('internals' as any)}
+            className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 hover:border-[#0f2942] hover:bg-slate-100/80 transition text-left flex flex-col justify-between h-28 group cursor-pointer"
+          >
+            <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-[#0f2942] flex items-center justify-center group-hover:bg-[#0f2942] group-hover:text-white transition">
+              <Calculator className="w-4 h-4" />
+            </div>
+            <div>
+              <span className="font-bold text-xs text-slate-900 block truncate">Internal Calculator</span>
+              <span className="text-[10px] text-slate-500 block truncate mt-0.5">HPTU Pass Predictor</span>
+            </div>
+          </button>
+
+          <button
             onClick={() => onNavigateTab('admit_card' as any)}
             className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 hover:border-[#0f2942] hover:bg-slate-100/80 transition text-left flex flex-col justify-between h-28 group cursor-pointer"
           >
@@ -894,6 +933,58 @@ export const StudentDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
             <div>
               <span className="font-bold text-xs text-slate-900 block truncate">Placements</span>
               <span className="text-[10px] text-slate-500 block truncate mt-0.5">T&P & Alumni</span>
+            </div>
+          </button>
+
+          <button
+            onClick={() => onNavigateTab('events' as any)}
+            className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 hover:border-[#0f2942] hover:bg-slate-100/80 transition text-left flex flex-col justify-between h-28 group cursor-pointer"
+          >
+            <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-[#0f2942] flex items-center justify-center group-hover:bg-[#0f2942] group-hover:text-white transition">
+              <Trophy className="w-4 h-4" />
+            </div>
+            <div>
+              <span className="font-bold text-xs text-slate-900 block truncate">Events & Fests</span>
+              <span className="text-[10px] text-slate-500 block truncate mt-0.5">Passes & certificates</span>
+            </div>
+          </button>
+
+          <button
+            onClick={() => onNavigateTab('lost_found' as any)}
+            className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 hover:border-[#0f2942] hover:bg-slate-100/80 transition text-left flex flex-col justify-between h-28 group cursor-pointer"
+          >
+            <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-[#0f2942] flex items-center justify-center group-hover:bg-[#0f2942] group-hover:text-white transition">
+              <PackageSearch className="w-4 h-4" />
+            </div>
+            <div>
+              <span className="font-bold text-xs text-slate-900 block truncate">Lost & Found</span>
+              <span className="text-[10px] text-slate-500 block truncate mt-0.5">Campus claim desk</span>
+            </div>
+          </button>
+
+          <button
+            onClick={() => onNavigateTab('emergency_sos' as any)}
+            className="p-3.5 rounded-xl bg-rose-50/70 border border-rose-200 hover:border-rose-400 hover:bg-rose-100/70 transition text-left flex flex-col justify-between h-28 group cursor-pointer"
+          >
+            <div className="w-8 h-8 rounded-lg bg-white border border-rose-200 text-rose-600 flex items-center justify-center group-hover:bg-rose-600 group-hover:text-white transition">
+              <HeartPulse className="w-4 h-4" />
+            </div>
+            <div>
+              <span className="font-bold text-xs text-rose-950 block truncate">Emergency SOS</span>
+              <span className="text-[10px] text-rose-700 block truncate mt-0.5">Ambulance & Dispensary</span>
+            </div>
+          </button>
+
+          <button
+            onClick={() => onNavigateTab('parent_portal' as any)}
+            className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 hover:border-[#0f2942] hover:bg-slate-100/80 transition text-left flex flex-col justify-between h-28 group cursor-pointer"
+          >
+            <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-[#0f2942] flex items-center justify-center group-hover:bg-[#0f2942] group-hover:text-white transition">
+              <HeartHandshake className="w-4 h-4" />
+            </div>
+            <div>
+              <span className="font-bold text-xs text-slate-900 block truncate">Parent Portal</span>
+              <span className="text-[10px] text-slate-500 block truncate mt-0.5">Suraksha & Progress</span>
             </div>
           </button>
         </div>

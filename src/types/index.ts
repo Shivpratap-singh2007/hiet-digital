@@ -1573,6 +1573,60 @@ export interface AlumniProfile {
   avatar_url?: string;
 }
 
+export interface CampusEmergencyContact {
+  id: string;
+  title: string;
+  department: string;
+  phone: string;
+  whatsapp?: string;
+  location: string;
+  is_24x7: boolean;
+  priority_level: 'Immediate' | 'Urgent' | 'Standard';
+  description?: string;
+}
 
+export interface DispensaryVisit {
+  id: string;
+  student_id: string;
+  student_roll: string;
+  student_name: string;
+  visit_date: string;
+  symptoms: string;
+  diagnosis: string;
+  prescribed_medicines: string[];
+  rest_advised_hours?: number;
+  medical_exemption_issued: boolean;
+  attending_doctor: string;
+}
 
+export interface HptuInternalScore {
+  subject_code: string;
+  subject_name: string;
+  credits: number;
+  mst1_marks: number; // Max 15
+  mst2_marks: number; // Max 15
+  assignments_marks: number; // Max 10
+  attendance_percentage: number;
+  attendance_marks: number; // Max 5 (calculated based on attendance %)
+  total_internal: number; // Out of 50
+  max_internal: number;
+  min_theory_passing_marks: number; // Target needed in 60-mark external exam to meet 40% aggregate and min 35% theory
+}
 
+export interface DigitalIdCardData {
+  roll_no: string;
+  name: string;
+  branch: string;
+  semester: number;
+  batch: string;
+  blood_group: string;
+  emergency_contact: string;
+  valid_until: string;
+  is_hosteler: boolean;
+  hostel_name?: string;
+  hostel_room?: string;
+  library_card_no: string;
+  barcode_data: string;
+  qr_verification_token: string;
+  avatar_url?: string;
+}

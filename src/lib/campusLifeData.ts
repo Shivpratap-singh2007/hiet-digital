@@ -11,7 +11,10 @@ import {
   MessDayMenu,
   MessFeedbackRecord,
   PlacementDrive,
-  AlumniProfile
+  AlumniProfile,
+  CampusEmergencyContact,
+  DispensaryVisit,
+  HptuInternalScore
 } from '../types';
 
 export const INITIAL_FEE_RECORDS: StudentFeeRecord[] = [
@@ -621,5 +624,239 @@ export const campusLifeStore = {
 
   getAlumniProfiles: (): AlumniProfile[] => {
     return INITIAL_ALUMNI_PROFILES;
+  },
+
+  getEmergencyContacts: (): CampusEmergencyContact[] => {
+    return INITIAL_EMERGENCY_CONTACTS;
+  },
+
+  getDispensaryVisits: (studentRoll?: string): DispensaryVisit[] => {
+    try {
+      const stored = localStorage.getItem(`${STORAGE_PREFIX}dispensary_visits`);
+      const all: DispensaryVisit[] = stored ? JSON.parse(stored) : INITIAL_DISPENSARY_VISITS;
+      if (!studentRoll) return all;
+      return all.filter(v => v.student_roll.toLowerCase() === studentRoll.toLowerCase());
+    } catch {
+      return INITIAL_DISPENSARY_VISITS;
+    }
+  },
+
+  addDispensaryVisit: (visit: DispensaryVisit): void => {
+    try {
+      const all = campusLifeStore.getDispensaryVisits();
+      const updated = [visit, ...all];
+      localStorage.setItem(`${STORAGE_PREFIX}dispensary_visits`, JSON.stringify(updated));
+    } catch (e) {
+      console.warn('Dispensary visit save error:', e);
+    }
+  },
+
+  getHptuInternalScores: (_studentRoll?: string): HptuInternalScore[] => {
+    try {
+      const stored = localStorage.getItem(`${STORAGE_PREFIX}hptu_internals`);
+      return stored ? JSON.parse(stored) : INITIAL_HPTU_INTERNAL_SCORES;
+    } catch {
+      return INITIAL_HPTU_INTERNAL_SCORES;
+    }
+  },
+
+  calculateHptuInternal: (
+    mst1: number,
+    mst2: number,
+    assignment: number,
+    attendancePct: number
+  ): { attendanceMarks: number; totalInternal: number; minPassingTheory: number } => {
+    let attendanceMarks = 0;
+    if (attendancePct >= 85) attendanceMarks = 5;
+    else if (attendancePct >= 80) attendanceMarks = 4;
+    else if (attendancePct >= 75) attendanceMarks = 3;
+    else attendanceMarks = 0;
+
+    const totalInternal = Math.min(50, Math.round(mst1 + mst2 + assignment + attendanceMarks));
+    // HPTU requirement: 40% aggregate in subject (Internal + External >= 40)
+    // AND minimum 35% in external theory (out of 60 marks, 35% = 21 marks)
+    const neededFor40Aggregate = Math.max(0, 40 - totalInternal);
+    const minPassingTheory = Math.max(21, neededFor40Aggregate);
+
+    return {
+      attendanceMarks,
+      totalInternal,
+      minPassingTheory
+    };
   }
 };
+
+export const INITIAL_EMERGENCY_CONTACTS: CampusEmergencyContact[] = [
+  {
+    id: 'em-001',
+    title: 'Campus 24x7 Ambulance & Emergency First-Aid',
+    department: 'Medical Services',
+    phone: '+919816054101',
+    whatsapp: '+919816054101',
+    location: 'Dispensary Block, Ground Floor Admin',
+    is_24x7: true,
+    priority_level: 'Immediate',
+    description: 'Equipped ambulance with oxygen cylinder, stretcher, and on-duty paramedical attendant.'
+  },
+  {
+    id: 'em-002',
+    title: 'Main Security Gate & Control Room',
+    department: 'Campus Security',
+    phone: '+919816054102',
+    whatsapp: '+919816054102',
+    location: 'Main Gate No. 1 (NH-154 Entry)',
+    is_24x7: true,
+    priority_level: 'Immediate',
+    description: 'Chief security officer desk for campus trespass, fire alarm, or perimeter security.'
+  },
+  {
+    id: 'em-003',
+    title: 'Chief Hostel Warden (Hostel Emergencies)',
+    department: 'Hostel Affairs',
+    phone: '+919816054103',
+    whatsapp: '+919816054103',
+    location: 'Boys & Girls Hostel Office, Block A',
+    is_24x7: true,
+    priority_level: 'Urgent',
+    description: 'Immediate warden support for hostel illness, power failure, or outpass issues.'
+  },
+  {
+    id: 'em-004',
+    title: "Women's Safety & Anti-Harassment Cell",
+    department: 'Student Grievance',
+    phone: '+919816054104',
+    whatsapp: '+919816054104',
+    location: 'Academic Block 1, Room 108',
+    is_24x7: true,
+    priority_level: 'Immediate',
+    description: 'Confidential assistance for female students and staff.'
+  },
+  {
+    id: 'em-005',
+    title: 'National Anti-Ragging Helpline (UGC/HPTU)',
+    department: 'Statutory Body',
+    phone: '18001805522',
+    location: 'New Delhi / HPTU Hamirpur',
+    is_24x7: true,
+    priority_level: 'Immediate',
+    description: 'Toll-free 24-hour national helpline for anti-ragging complaints.'
+  },
+  {
+    id: 'em-006',
+    title: 'Police Station Shahpur',
+    department: 'HP Police',
+    phone: '01892238120',
+    location: 'Shahpur Chowk, Kangra, HP',
+    is_24x7: true,
+    priority_level: 'Immediate',
+    description: 'Jurisdictional police station for emergency civil protection.'
+  },
+  {
+    id: 'em-007',
+    title: 'Civil Hospital Shahpur (Emergency & Trauma)',
+    department: 'State Health Dept',
+    phone: '01892238144',
+    location: 'Kangra-Chamba Road, Shahpur',
+    is_24x7: true,
+    priority_level: 'Immediate',
+    description: 'Nearest government trauma and secondary medical care hospital.'
+  }
+];
+
+export const INITIAL_DISPENSARY_VISITS: DispensaryVisit[] = [
+  {
+    id: 'disp-001',
+    student_id: 'prof-std-cse-001',
+    student_roll: '26CSE001',
+    student_name: 'Aarav Sharma',
+    visit_date: '2026-03-22',
+    symptoms: 'High fever (101.4°F), shivering, acute dehydration',
+    diagnosis: 'Acute Viral Febrile Illness',
+    prescribed_medicines: ['Paracetamol 650mg TDS x 3 days', 'ORS Electral solution', 'Levocetirizine 5mg BD'],
+    rest_advised_hours: 24,
+    medical_exemption_issued: true,
+    attending_doctor: 'Dr. R. K. Sharma (Campus Medical Officer)'
+  },
+  {
+    id: 'disp-002',
+    student_id: 'prof-std-cse-001',
+    student_roll: '26CSE001',
+    student_name: 'Aarav Sharma',
+    visit_date: '2026-02-14',
+    symptoms: 'Pain and swelling in right ankle after basketball practice',
+    diagnosis: 'Grade 1 Lateral Ankle Ligament Strain',
+    prescribed_medicines: ['Aceclofenac + Paracetamol BD', 'Thrombophob Gel local application', 'Crepe Bandage support'],
+    rest_advised_hours: 48,
+    medical_exemption_issued: true,
+    attending_doctor: 'Dr. R. K. Sharma (Campus Medical Officer)'
+  }
+];
+
+export const INITIAL_HPTU_INTERNAL_SCORES: HptuInternalScore[] = [
+  {
+    subject_code: 'CS-601',
+    subject_name: 'Compiler Design & Automata',
+    credits: 4,
+    mst1_marks: 13,
+    mst2_marks: 14,
+    assignments_marks: 9,
+    attendance_percentage: 86,
+    attendance_marks: 5,
+    total_internal: 41,
+    max_internal: 50,
+    min_theory_passing_marks: 21
+  },
+  {
+    subject_code: 'CS-602',
+    subject_name: 'Machine Learning & Predictive Modeling',
+    credits: 4,
+    mst1_marks: 14,
+    mst2_marks: 15,
+    assignments_marks: 10,
+    attendance_percentage: 92,
+    attendance_marks: 5,
+    total_internal: 44,
+    max_internal: 50,
+    min_theory_passing_marks: 21
+  },
+  {
+    subject_code: 'CS-603',
+    subject_name: 'Cloud Computing & Microservices',
+    credits: 3,
+    mst1_marks: 12,
+    mst2_marks: 13,
+    assignments_marks: 8,
+    attendance_percentage: 79,
+    attendance_marks: 3,
+    total_internal: 36,
+    max_internal: 50,
+    min_theory_passing_marks: 21
+  },
+  {
+    subject_code: 'CS-604',
+    subject_name: 'Full Stack Web & Distributed Systems',
+    credits: 4,
+    mst1_marks: 15,
+    mst2_marks: 14,
+    assignments_marks: 10,
+    attendance_percentage: 94,
+    attendance_marks: 5,
+    total_internal: 44,
+    max_internal: 50,
+    min_theory_passing_marks: 21
+  },
+  {
+    subject_code: 'CS-605',
+    subject_name: 'Software Testing & Quality Assurance',
+    credits: 3,
+    mst1_marks: 11,
+    mst2_marks: 12,
+    assignments_marks: 9,
+    attendance_percentage: 82,
+    attendance_marks: 4,
+    total_internal: 36,
+    max_internal: 50,
+    min_theory_passing_marks: 21
+  }
+];
+
