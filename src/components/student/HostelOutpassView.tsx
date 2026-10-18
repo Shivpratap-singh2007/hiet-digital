@@ -20,13 +20,67 @@ import { useAuth } from '../../context/AuthContext';
 import { PageHeader } from '../common/PageHeader';
 import { StatCard } from '../common/StatCard';
 import { HostelOutpass } from '../../types';
+import { isStudentHosteler } from '../../lib/utils';
 
-export const HostelOutpassView: React.FC = () => {
+interface Props {
+  onNavigateTab?: (tab: any) => void;
+}
+
+export const HostelOutpassView: React.FC<Props> = ({ onNavigateTab }) => {
   const { user, role } = useAuth();
   const isWarden = role === 'warden' || role === 'principal' || role === 'admin';
   const isSecurity = role === 'security_guard' || role === 'security';
   const student = user?.studentMaster;
   const currentRoll = student?.roll_no || 'CSE001';
+  const isHosteler = isStudentHosteler(student);
+
+  // If accessed by a Day Scholar student, show clear institutional guidance
+  if (role === 'student' && !isHosteler) {
+    return (
+      <div className="p-8 sm:p-12 max-w-xl mx-auto my-10 bg-white rounded-3xl border border-slate-200 text-center shadow-xs space-y-5 animate-fade-in font-sans">
+        <div className="w-16 h-16 rounded-2xl bg-blue-50 text-blue-700 flex items-center justify-center mx-auto border border-blue-100">
+          <Home className="w-8 h-8 text-blue-600" />
+        </div>
+        <div className="space-y-1.5">
+          <span className="px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600">
+            Day Scholar Account
+          </span>
+          <h3 className="text-xl font-black text-slate-900 tracking-tight">
+            Hostel Outpass Not Required
+          </h3>
+          <p className="text-xs text-slate-500 leading-relaxed max-w-md mx-auto">
+            You are enrolled as a <strong>Day Scholar</strong> at HIET. Overnight and weekend hostel outpass clearances are specifically maintained for on-campus residential students.
+          </p>
+        </div>
+
+        <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-left text-xs text-slate-600 space-y-1.5">
+          <div className="font-bold text-slate-800 flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-emerald-600" />
+            <span>Need to leave campus during academic hours?</span>
+          </div>
+          <p className="text-[11px] text-slate-500">
+            For academic, medical, or official transit during college hours, please utilize the <strong>Digital Gate Pass</strong> module.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => {
+            if (onNavigateTab) {
+              onNavigateTab('gate_pass');
+            } else if (typeof window !== 'undefined') {
+              window.history.pushState(null, '', '/app/gate-pass');
+              window.dispatchEvent(new PopStateEvent('popstate'));
+            }
+          }}
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0f2942] hover:bg-[#1a3d60] text-white text-xs font-bold transition shadow-xs cursor-pointer"
+        >
+          <QrCode className="w-4 h-4" />
+          <span>Open Digital Gate Pass</span>
+        </button>
+      </div>
+    );
+  }
 
   const [outpasses, setOutpasses] = useState<HostelOutpass[]>([
     {

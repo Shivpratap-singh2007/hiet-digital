@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { NavTab } from './Sidebar';
 import { useAuth } from '../../context/AuthContext';
+import { isStudentHosteler } from '../../lib/utils';
 
 interface Props {
   isOpen: boolean;
@@ -229,7 +230,9 @@ export const CommandPaletteModal: React.FC<Props> = ({
   onNavigateTab,
   onOpenAiAssistant
 }) => {
-  const { role } = useAuth();
+  const { role, user } = useAuth();
+  const student = user?.studentMaster;
+  const isHosteler = isStudentHosteler(student);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -244,6 +247,8 @@ export const CommandPaletteModal: React.FC<Props> = ({
 
   const filteredCommands = COMMAND_ITEMS.filter(cmd => {
     if (cmd.roles && role && !cmd.roles.includes(role)) return false;
+    // Hide hostel outpass command for day scholars
+    if (role === 'student' && cmd.tab === 'hostel_outpass' && !isHosteler) return false;
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase().trim();
     return (

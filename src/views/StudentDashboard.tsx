@@ -18,12 +18,13 @@ import {
   Camera,
   Compass,
   Trophy,
-  Calendar
+  Calendar,
+  Home
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { dataStore } from '../lib/mockData';
 import { apiService } from '../lib/supabase';
-import { calculateAttendanceStats, formatDate, formatIndiaDateTime } from '../lib/utils';
+import { calculateAttendanceStats, formatDate, formatIndiaDateTime, isStudentHosteler } from '../lib/utils';
 import { calculateAttendanceRisk } from '../lib/attendanceRisk';
 import { NavTab } from '../components/common/Sidebar';
 import { TimetableSlot, LeaveRequest, AttendanceRecord } from '../types';
@@ -72,6 +73,7 @@ export const StudentDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
   const studentBranch = student?.branch || '';
   const studentSemester = student?.semester || 0;
   const studentSection = student?.section || '';
+  const isHosteler = isStudentHosteler(student);
 
   // Metrics from dataStore / Supabase (Strictly scoped to authenticated student)
   const [myAttendance, setMyAttendance] = useState<AttendanceRecord[]>(() =>
@@ -237,7 +239,7 @@ export const StudentDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
   if (currentTab === 'doubts') return <DoubtBoxView />;
   if (currentTab === 'settings') return <SettingsView />;
   if (currentTab === 'profile') return <SettingsView initialTab="profile" />;
-  if (currentTab === 'hostel_outpass' as any) return <HostelOutpassView />;
+  if (currentTab === 'hostel_outpass' as any) return <HostelOutpassView onNavigateTab={onNavigateTab} />;
   if (currentTab === 'no_dues' as any) return <NoDuesHallTicketView />;
   if (currentTab === 'events' as any) return <EventsCertificatesView />;
   if (currentTab === 'lost_found' as any) return <LostAndFoundView />;
@@ -255,7 +257,7 @@ export const StudentDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
         ]}
         title="Student Dashboard"
         description={`Welcome, ${student?.name || user?.name || 'Student'} • Roll No: ${studentRoll} • Department: ${student?.department || 'CSE'}`}
-        badge="Level 6 • Student"
+        badge={isHosteler ? `Hosteler • ${student?.hostel_name || 'Campus Hostel'} (Rm ${student?.room_no || 'TBD'})` : 'Day Scholar • HIET Campus'}
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <button
@@ -274,6 +276,16 @@ export const StudentDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
               <ShieldAlert className="w-4 h-4" />
               <span>Gate Pass</span>
             </button>
+            {isHosteler && (
+              <button
+                type="button"
+                onClick={() => onNavigateTab('hostel_outpass' as any)}
+                className="px-3.5 py-2 rounded-xl bg-indigo-700 hover:bg-indigo-800 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
+              >
+                <Home className="w-4 h-4" />
+                <span>Hostel Outpass</span>
+              </button>
+            )}
             <button
               type="button"
               onClick={() => onNavigateTab('leaves')}
@@ -755,6 +767,21 @@ export const StudentDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
               <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">QR verification for checkpoint exit</p>
             </div>
           </button>
+
+          {isHosteler && (
+            <button
+              onClick={() => onNavigateTab('hostel_outpass' as any)}
+              className="p-4 rounded-xl bg-indigo-50/40 border border-indigo-200 hover:border-[#0f2942] transition text-left flex items-start gap-3 group"
+            >
+              <div className="w-9 h-9 rounded-lg bg-white border border-indigo-200 text-indigo-700 flex items-center justify-center shrink-0 group-hover:bg-[#0f2942] group-hover:text-white transition">
+                <Home className="w-4 h-4" />
+              </div>
+              <div className="min-w-0">
+                <span className="font-bold text-xs text-slate-900 block">Hostel Outpass</span>
+                <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">{student?.hostel_name || 'Residential outpass clearance'}</p>
+              </div>
+            </button>
+          )}
         </div>
       </div>
     </div>

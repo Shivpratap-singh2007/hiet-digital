@@ -1,5 +1,23 @@
 // HIET College Help Desk - General Utility Functions
+import type { StudentMaster } from '../types';
 export { formatIndiaDateTime, formatIndiaDate, formatIndiaTime, formatDateTime, formatDate } from './dateTime';
+
+/**
+ * Determines whether a student is a residential hosteler or a day scholar.
+ * Returns true if student has an active hostel block or room assigned.
+ */
+export function isStudentHosteler(student?: StudentMaster | null): boolean {
+  if (!student) return false;
+  const name = (student.hostel_name || '').trim().toLowerCase();
+  const code = (student.hostel_code || '').trim().toLowerCase();
+  const room = (student.room_no || '').trim();
+
+  if (name === 'day scholar' || code === 'day scholar') return false;
+  if (name.length > 0) return true;
+  if (code.length > 0) return true;
+  if (room.length > 0) return true;
+  return false;
+}
 
 export function calculateAttendanceStats(records: { status: string }[]) {
   const total = records.length;

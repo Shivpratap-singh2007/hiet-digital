@@ -34,6 +34,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { getNavigationForRole } from '../../config/navigation';
+import { isStudentHosteler } from '../../lib/utils';
 
 export type NavTab = 
   | 'dashboard'
@@ -114,11 +115,22 @@ export const Sidebar: React.FC<Props> = ({
   const getMenuItems = () => {
     const configuredItems = getNavigationForRole(role);
     if (configuredItems.length > 0) {
-      return configuredItems.map(item => ({
-        id: item.id as NavTab,
-        label: item.label,
-        icon: item.icon
-      }));
+      const student = user?.studentMaster;
+      const isHosteler = isStudentHosteler(student);
+
+      return configuredItems
+        .filter(item => {
+          // Hide residential hostel outpass from Day Scholar navigation
+          if (role === 'student' && item.id === 'hostel_outpass' && !isHosteler) {
+            return false;
+          }
+          return true;
+        })
+        .map(item => ({
+          id: item.id as NavTab,
+          label: item.label,
+          icon: item.icon
+        }));
     }
     return [
       { id: 'dashboard' as NavTab, label: 'Overview', icon: LayoutDashboard },
