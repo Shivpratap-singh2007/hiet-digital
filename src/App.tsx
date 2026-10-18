@@ -149,8 +149,18 @@ const MainLayout: React.FC = () => {
         'hostel-outpasses': 'hostel_outpass',
         'entry-exit-logs': 'reconciliation',
         'security-alerts': 'fines',
-        'alerts': 'fines',
         'notifications': 'notices',
+        'fees': 'fees',
+        'fee-receipts': 'fees',
+        'admit-card': 'admit_card',
+        'hall-ticket': 'admit_card',
+        'library': 'library',
+        'transport': 'transport',
+        'bus': 'transport',
+        'mess': 'mess',
+        'hostel-mess': 'mess',
+        'placements': 'placements',
+        'alumni': 'placements',
         'settings': 'settings'
       };
       if (tabMap[targetSeg]) {

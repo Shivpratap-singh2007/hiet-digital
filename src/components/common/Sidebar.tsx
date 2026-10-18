@@ -95,6 +95,12 @@ export type NavTab =
   | 'ai_knowledge_search'
   | 'ai_occupancy_analytics'
   | 'ai_smart_waste'
+  | 'fees'
+  | 'admit_card'
+  | 'library'
+  | 'transport'
+  | 'mess'
+  | 'placements'
   | 'settings';
 
 interface Props {

@@ -52,7 +52,7 @@ export const AI_FEATURES: AiFeatureConfig[] = [
     description:
       'AI-assisted attendance risk alerts and actionable guidance based on subject-wise attendance trends.',
     phase: 'phase_1',
-    status: 'coming_soon',
+    status: 'beta',
     roles: ['student', 'faculty', 'teacher', 'hod', 'principal', 'admin', 'managing_director', 'md'],
     route: '/app/ai/attendance-insights',
     icon: 'ChartNoAxesCombined',
@@ -87,7 +87,7 @@ export const AI_FEATURES: AiFeatureConfig[] = [
     description:
       'Generate structured lecture summaries, learning objectives and syllabus insights from faculty lesson notes.',
     phase: 'phase_1',
-    status: 'coming_soon',
+    status: 'beta',
     roles: ['faculty', 'teacher', 'hod', 'principal', 'admin'],
     route: '/app/ai/smart-board-summary',
     icon: 'Sparkles',
@@ -122,7 +122,7 @@ export const AI_FEATURES: AiFeatureConfig[] = [
     description:
       'Suggest the complaint category, priority and appropriate first-response team before submission.',
     phase: 'phase_1',
-    status: 'coming_soon',
+    status: 'beta',
     roles: ['student', 'faculty', 'teacher', 'hod', 'principal', 'admin'],
     route: '/app/ai/complaint-routing',
     icon: 'Route',
@@ -193,7 +193,7 @@ export const AI_FEATURES: AiFeatureConfig[] = [
     description:
       'Voluntary QR-based verification for campus building, floor and zone presence.',
     phase: 'phase_2',
-    status: 'coming_soon',
+    status: 'beta',
     roles: ['student', 'security', 'security_guard', 'hod', 'principal', 'admin'],
     route: '/app/ai/zone-presence',
     icon: 'MapPin',
@@ -263,7 +263,7 @@ export const AI_FEATURES: AiFeatureConfig[] = [
     description:
       'Search published syllabus, PYQs, notices and policies with source-linked answers.',
     phase: 'phase_2',
-    status: 'coming_soon',
+    status: 'beta',
     roles: ['student', 'faculty', 'teacher', 'hod', 'principal', 'admin', 'managing_director', 'md'],
     route: '/app/ai/knowledge-search',
     icon: 'SearchCheck',

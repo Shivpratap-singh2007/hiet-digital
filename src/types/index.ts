@@ -1442,6 +1442,137 @@ export interface WhatsAppSmsDelivery {
   created_at: string;
 }
 
+// -----------------------------------------------------------------------------
+// CAMPUS LIFE & ACCOUNTS TYPES
+// -----------------------------------------------------------------------------
+
+export interface FeeReceiptItem {
+  head: string;
+  amount: number;
+}
+
+export interface StudentFeeRecord {
+  id: string;
+  receipt_no: string;
+  student_id: string;
+  student_roll: string;
+  student_name: string;
+  semester: number;
+  academic_year: string;
+  total_amount: number;
+  paid_amount: number;
+  due_amount: number;
+  payment_status: 'paid' | 'partial' | 'pending';
+  payment_mode?: 'UPI' | 'Netbanking' | 'Demand Draft' | 'Cash' | 'Card';
+  transaction_ref?: string;
+  payment_date?: string;
+  breakdown: FeeReceiptItem[];
+  created_at: string;
+}
+
+export interface LibraryBook {
+  id: string;
+  accession_no: string;
+  title: string;
+  author: string;
+  publisher?: string;
+  edition?: string;
+  isbn?: string;
+  department: string;
+  category: 'Textbook' | 'Reference' | 'Journal' | 'General';
+  shelf_location: string;
+  total_copies: number;
+  available_copies: number;
+}
+
+export interface BorrowedBookRecord {
+  id: string;
+  book_id: string;
+  book_title: string;
+  accession_no: string;
+  student_id: string;
+  issue_date: string;
+  due_date: string;
+  return_date?: string;
+  status: 'issued' | 'returned' | 'overdue';
+  fine_amount: number;
+  renew_count: number;
+}
+
+export interface BusStop {
+  stop_name: string;
+  morning_pickup_time: string;
+  evening_drop_time: string;
+  landmark?: string;
+}
+
+export interface BusRoute {
+  id: string;
+  route_number: string;
+  route_name: string;
+  origin: string;
+  destination: string;
+  bus_number: string;
+  driver_name: string;
+  driver_phone: string;
+  conductor_name?: string;
+  conductor_phone?: string;
+  capacity: number;
+  current_status: 'on_route' | 'arrived' | 'scheduled' | 'delayed';
+  stops: BusStop[];
+}
+
+export interface MessDayMenu {
+  day: 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday';
+  breakfast: string;
+  lunch: string;
+  snacks: string;
+  dinner: string;
+  special_item?: string;
+}
+
+export interface MessFeedbackRecord {
+  id: string;
+  student_id: string;
+  student_name: string;
+  meal_type: 'Breakfast' | 'Lunch' | 'Snacks' | 'Dinner';
+  date: string;
+  rating: number;
+  hygiene_rating: number;
+  comment?: string;
+  created_at: string;
+}
+
+export interface PlacementDrive {
+  id: string;
+  company_name: string;
+  company_logo?: string;
+  role: string;
+  package_lpa: string;
+  eligible_branches: string[];
+  min_cgpa: number;
+  drive_date: string;
+  registration_deadline: string;
+  job_location: string;
+  status: 'upcoming' | 'ongoing' | 'completed';
+  selection_rounds: string[];
+  description: string;
+  total_applicants?: number;
+}
+
+export interface AlumniProfile {
+  id: string;
+  name: string;
+  batch_year: string;
+  branch: string;
+  current_company: string;
+  designation: string;
+  location: string;
+  linkedin_url?: string;
+  available_for_mentorship: boolean;
+  avatar_url?: string;
+}
+
 
 
 
