@@ -111,6 +111,147 @@ describe('WhatsApp & SMS Notification System', () => {
     expect(broadcastResult.dispatchedCount).toBeGreaterThan(0);
     expect(broadcastResult.deliveries.length).toBe(broadcastResult.dispatchedCount);
   });
+
+  describe('Multi-Channel Parent Notification & Daily Student Activity Alerts', () => {
+    const sampleStudent = {
+      name: 'Aarav Sharma',
+      roll_no: '26CSE001',
+      branch: 'Computer Science & Engineering',
+      parent_name: 'Sh. Surender Sharma',
+      parent_phone: '+91 98160 44219'
+    };
+
+    it('generates universal SIM SMS direct link for native phone messenger', () => {
+      const link = whatsappSmsService.getSmsDirectLink('+91 98160 44219', 'Attendance Alert: Bunked Lecture 3');
+      expect(link).toContain('sms:+919816044219');
+      expect(link).toContain('body=Attendance%20Alert%3A%20Bunked%20Lecture%203');
+    });
+
+    it('builds real-time absent/bunk alert message for instant parent dispatch', () => {
+      const msg = whatsappSmsService.buildAbsentAlertMessage(
+        sampleStudent,
+        'Computer Networks',
+        'Period 3 (11:30 AM - 12:30 PM)',
+        '19 Oct 2026'
+      );
+      expect(msg).toContain('⚠️ *HIET CAMPUS • STUDENT ABSENT ALERT*');
+      expect(msg).toContain('Aarav Sharma');
+      expect(msg).toContain('Computer Networks');
+      expect(msg).toContain('Period 3 (11:30 AM - 12:30 PM)');
+      expect(msg).toContain('ABSENT (Missed Lecture)');
+    });
+
+    it('builds campus gate exit alert with security guard sync', () => {
+      const msg = whatsappSmsService.buildGateExitAlertMessage(
+        sampleStudent,
+        'GP-2026-9812',
+        '11:45 AM',
+        'Kangra Market'
+      );
+      expect(msg).toContain('🚪 *HIET CAMPUS • GATE EXIT SURAKSHA ALERT*');
+      expect(msg).toContain('Aarav Sharma');
+      expect(msg).toContain('GP-2026-9812');
+      expect(msg).toContain('11:45 AM');
+      expect(msg).toContain('Kangra Market');
+    });
+
+    it('builds hostel movement & outpass notification', () => {
+      const msg = whatsappSmsService.buildHostelMovementAlertMessage(
+        sampleStudent,
+        'Boys Hostel Block A (Room 204)',
+        'Weekend Home Leave',
+        '2026-10-21 18:00',
+        'Dharamshala'
+      );
+      expect(msg).toContain('🏢 *HIET RESIDENTIAL HOSTEL • MOVEMENT ALERT*');
+      expect(msg).toContain('Boys Hostel Block A (Room 204)');
+      expect(msg).toContain('Weekend Home Leave');
+      expect(msg).toContain('2026-10-21 18:00');
+    });
+
+    it('builds campus medical & dispensary visit alert', () => {
+      const msg = whatsappSmsService.buildDispensaryAlertMessage(
+        sampleStudent,
+        'Mild Fever & Headache',
+        '11:15 AM',
+        24
+      );
+      expect(msg).toContain('🏥 *HIET CAMPUS HEALTH CENTER • MEDICAL ALERT*');
+      expect(msg).toContain('Mild Fever & Headache');
+      expect(msg).toContain('11:15 AM');
+      expect(msg).toContain('24 Hours');
+    });
+
+    it('builds semester fee payment confirmation message', () => {
+      const msg = whatsappSmsService.buildFeeAlertMessage(
+        sampleStudent,
+        52000,
+        'HIET-REC-2026-449',
+        'Paid & Cleared'
+      );
+      expect(msg).toContain('💳 *HIET ACCOUNTS DESK • FEE TRANSACTION ALERT*');
+      expect(msg).toContain('₹52,000');
+      expect(msg).toContain('HIET-REC-2026-449');
+      expect(msg).toContain('PAID & CLEARED');
+    });
+
+    it('builds comprehensive end-of-day daily report card digest', () => {
+      const msg = whatsappSmsService.buildDailyDigestMessage(
+        sampleStudent,
+        '19 Oct 2026',
+        5,
+        6,
+        'Exited Gate 1 at 17:15 IST'
+      );
+      expect(msg).toContain('📊 *HIET DIGITAL CAMPUS • DAILY STUDENT ACTIVITY REPORT*');
+      expect(msg).toContain('Aarav Sharma (26CSE001)');
+      expect(msg).toContain('5 out of 6 (83%)');
+      expect(msg).toContain('Exited Gate 1 at 17:15 IST');
+    });
+
+    it('dispatches dual-channel (WhatsApp + SIM SMS) alert simultaneously and logs both', async () => {
+      const result = await whatsappSmsService.dispatchStudentActivityAlert({
+        student: sampleStudent,
+        templateType: 'absent_alert',
+        channel: 'both',
+        customText: 'Immediate Alert: Ward did not report for morning lab.',
+        recipientPhone: '+919816044219',
+        recipientName: 'Sh. Surender Sharma'
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.whatsappUrl).toContain('https://api.whatsapp.com/send?phone=919816044219');
+      expect(result.smsUrl).toContain('sms:+919816044219');
+      expect(result.deliveries.length).toBe(2);
+
+      const [waDelivery, smsDelivery] = result.deliveries;
+      expect(waDelivery.channel).toBe('whatsapp');
+      expect(waDelivery.template_type).toBe('absent_alert');
+      expect(smsDelivery.channel).toBe('sms');
+      expect(smsDelivery.template_type).toBe('absent_alert');
+
+      // Verify stored audit log
+      const logs = whatsappSmsService.getDeliveryLogs();
+      expect(logs.some(l => l.channel === 'sms' && l.student_roll === '26CSE001')).toBe(true);
+      expect(logs.some(l => l.channel === 'whatsapp' && l.student_roll === '26CSE001')).toBe(true);
+    });
+
+    it('dispatches SIM SMS only for parents without smartphone/WhatsApp', async () => {
+      const result = await whatsappSmsService.dispatchStudentActivityAlert({
+        student: sampleStudent,
+        templateType: 'gate_exit_alert',
+        channel: 'sms',
+        recipientPhone: '9816044219',
+        recipientName: 'Sh. Surender Sharma'
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.whatsappUrl).toBeUndefined();
+      expect(result.smsUrl).toContain('sms:+919816044219');
+      expect(result.deliveries.length).toBe(1);
+      expect(result.deliveries[0].channel).toBe('sms');
+    });
+  });
 });
 
 describe('PWA (Progressive Web App) Manifest Configuration', () => {

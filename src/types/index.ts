@@ -1431,7 +1431,17 @@ export interface WhatsAppSmsDelivery {
   recipient_phone: string;
   recipient_type: 'parent' | 'student' | 'faculty' | 'all';
   channel: 'whatsapp' | 'sms';
-  template_type: 'attendance_warning' | 'emergency_notice' | 'gate_pass_alert' | 'general';
+  template_type: 
+    | 'attendance_warning' 
+    | 'emergency_notice' 
+    | 'gate_pass_alert' 
+    | 'absent_alert' 
+    | 'gate_exit_alert' 
+    | 'hostel_movement_alert' 
+    | 'dispensary_alert' 
+    | 'fee_alert' 
+    | 'daily_digest' 
+    | 'general';
   student_roll?: string;
   title: string;
   message: string;

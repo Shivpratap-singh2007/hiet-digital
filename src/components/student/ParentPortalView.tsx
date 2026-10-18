@@ -21,6 +21,7 @@ import { StatCard } from '../common/StatCard';
 import { NavTab } from '../common/Sidebar';
 import { campusLifeStore } from '../../lib/campusLifeData';
 import { isStudentHosteler } from '../../lib/utils';
+import { ParentNotificationDispatchView } from '../parent/ParentNotificationDispatchView';
 
 interface Props {
   onNavigate?: (tab: NavTab) => void;
@@ -30,6 +31,7 @@ export const ParentPortalView: React.FC<Props> = ({ onNavigate }) => {
   const { user } = useAuth();
   const student = user?.studentMaster;
   const isHosteler = isStudentHosteler(student);
+  const [activeTab, setActiveTab] = useState<'overview' | 'dispatcher'>('overview');
 
   const studentName = student?.name || user?.name || 'Aarav Sharma';
   const studentRoll = student?.roll_no || '26CSE001';
@@ -72,14 +74,35 @@ export const ParentPortalView: React.FC<Props> = ({ onNavigate }) => {
         description="Official institutional transparency portal for real-time attendance, fee clearances, outpasses, and academic performance."
         badge="Direct Parent Transparency"
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={() => setActiveTab(activeTab === 'overview' ? 'dispatcher' : 'overview')}
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs ${
+                activeTab === 'dispatcher'
+                  ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                  : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+              }`}
+            >
+              {activeTab === 'dispatcher' ? (
+                <>
+                  <User className="w-3.5 h-3.5" />
+                  <span>Ward Overview</span>
+                </>
+              ) : (
+                <>
+                  <MessageSquare className="w-3.5 h-3.5" />
+                  <span>Instant SMS/WhatsApp Dispatch</span>
+                </>
+              )}
+            </button>
             <a
               href={`https://wa.me/${mentorPhone.replace('+', '')}?text=Namaste%20Er.%20Rohit%20Thakur,%20I%20am%20calling%20regarding%20my%20ward%20${encodeURIComponent(studentName)}%20(${studentRoll})`}
               target="_blank"
               rel="noopener noreferrer"
-              className="px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs"
+              className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition flex items-center gap-1.5"
             >
-              <MessageSquare className="w-3.5 h-3.5" />
+              <MessageSquare className="w-3.5 h-3.5 text-emerald-600" />
               <span>WhatsApp Mentor</span>
             </a>
             <a
@@ -92,6 +115,42 @@ export const ParentPortalView: React.FC<Props> = ({ onNavigate }) => {
           </div>
         }
       />
+
+      {/* Segmented Tab Navigation */}
+      <div className="flex border-b border-slate-200 gap-2 overflow-x-auto">
+        <button
+          type="button"
+          onClick={() => setActiveTab('overview')}
+          className={`flex items-center gap-2 pb-3 px-3 text-xs sm:text-sm font-bold border-b-2 transition whitespace-nowrap cursor-pointer ${
+            activeTab === 'overview'
+              ? 'border-blue-600 text-blue-600'
+              : 'border-transparent text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          <User className="w-4 h-4" />
+          <span>Ward Academic & Safety Records</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('dispatcher')}
+          className={`flex items-center gap-2 pb-3 px-3 text-xs sm:text-sm font-bold border-b-2 transition whitespace-nowrap cursor-pointer ${
+            activeTab === 'dispatcher'
+              ? 'border-emerald-600 text-emerald-600'
+              : 'border-transparent text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          <MessageSquare className="w-4 h-4 text-emerald-600" />
+          <span>Instant WhatsApp & SIM SMS Alert Dispatcher</span>
+          <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800">
+            Real-time
+          </span>
+        </button>
+      </div>
+
+      {activeTab === 'dispatcher' ? (
+        <ParentNotificationDispatchView onNavigate={onNavigate} />
+      ) : (
+        <>
 
       {/* Ward Profile Banner */}
       <div className="p-5 rounded-2xl bg-gradient-to-r from-[#0f2942] to-[#1e3a5f] text-white shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -309,6 +368,8 @@ export const ParentPortalView: React.FC<Props> = ({ onNavigate }) => {
           </div>
         </div>
       </div>
+      </>
+      )}
     </div>
   );
 };
