@@ -34,6 +34,10 @@ export interface StudentMaster {
   college_email: string;
   email?: string;
   phone: string;
+  parent_phone?: string;
+  parent_name?: string;
+  guardian_phone?: string;
+  whatsapp_notifications_enabled?: boolean;
   avatar_url?: string;
   status: 'active' | 'disabled' | 'graduated' | 'suspended';
   cgpa?: number | string;
@@ -1418,6 +1422,26 @@ export interface ZoneVerificationResult {
   confidence_score?: number;
   detected_at?: string;
 }
+
+export type WhatsAppDeliveryChannel = 'whatsapp' | 'sms' | 'in_app' | 'email';
+
+export interface WhatsAppSmsDelivery {
+  id: string;
+  recipient_name: string;
+  recipient_phone: string;
+  recipient_type: 'parent' | 'student' | 'faculty' | 'all';
+  channel: 'whatsapp' | 'sms';
+  template_type: 'attendance_warning' | 'emergency_notice' | 'gate_pass_alert' | 'general';
+  student_roll?: string;
+  title: string;
+  message: string;
+  status: 'sent' | 'queued' | 'simulated' | 'failed';
+  provider?: string;
+  provider_message_id?: string;
+  sent_at?: string;
+  created_at: string;
+}
+
 
 
 

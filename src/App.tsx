@@ -26,6 +26,8 @@ import { CommandPaletteModal } from './components/common/CommandPaletteModal';
 import { DemoAccountsPage } from './pages/dev/DemoAccountsPage';
 import { AiCampusView } from './pages/ai/AiCampusView';
 import { areDevRoutesEnabled } from './lib/envConfig';
+import { PwaProvider } from './context/PwaContext';
+import { PwaInstallBanner } from './components/common/PwaInstallBanner';
 
 const MainLayout: React.FC = () => {
   const { user, role, mustChangePassword } = useAuth();
@@ -381,7 +383,10 @@ export default function App() {
   return (
     <AuthProvider>
       <ToastProvider>
-        <MainLayout />
+        <PwaProvider>
+          <MainLayout />
+          <PwaInstallBanner />
+        </PwaProvider>
       </ToastProvider>
     </AuthProvider>
   );

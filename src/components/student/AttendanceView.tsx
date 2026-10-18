@@ -15,7 +15,8 @@ import {
   Camera,
   RotateCcw,
   Sparkles,
-  Calculator
+  Calculator,
+  MessageSquare
 } from 'lucide-react';
 import { Html5Qrcode } from 'html5-qrcode';
 import { dataStore } from '../../lib/mockData';
@@ -700,13 +701,19 @@ export const AttendanceView: React.FC = () => {
       {overallStats.isWarning && (
         <div className="p-4 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800/80 rounded-2xl flex items-start gap-3 shadow-xs">
           <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5 animate-icon-wiggle icon-glow-amber" />
-          <div>
-            <h4 className="text-sm font-bold text-amber-900 dark:text-amber-200">
-              Attendance Alert: Below HPTU Mandatory 75% Cut-off
-            </h4>
-            <p className="text-xs text-amber-800 dark:text-amber-300 mt-1 leading-relaxed">
-              Your overall attendance is currently <strong className="underline">{overallStats.percentage}%</strong>. As per Himachal Pradesh Technical University and HIET guidelines, you must maintain at least 75% in each registered course to be eligible to appear for the end-semester examinations. Please contact your respective course coordinator.
-            </p>
+          <div className="space-y-2">
+            <div>
+              <h4 className="text-sm font-bold text-amber-900 dark:text-amber-200">
+                Attendance Alert: Below HPTU Mandatory 75% Cut-off
+              </h4>
+              <p className="text-xs text-amber-800 dark:text-amber-300 mt-1 leading-relaxed">
+                Your overall attendance is currently <strong className="underline">{overallStats.percentage}%</strong>. As per Himachal Pradesh Technical University and HIET guidelines, you must maintain at least 75% in each registered course to be eligible to appear for the end-semester examinations. Please contact your respective course coordinator.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 text-[11px] font-semibold text-emerald-900 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-3 py-1.5 rounded-xl border border-emerald-300/60">
+              <MessageSquare className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+              <span>Parent Advisory: WhatsApp alert has been queued to your registered guardian contact ({user?.studentMaster?.parent_phone || 'Parent on file'}) as required by university rules.</span>
+            </div>
           </div>
         </div>
       )}

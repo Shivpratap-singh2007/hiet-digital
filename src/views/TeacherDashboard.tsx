@@ -53,6 +53,8 @@ import { EventsCertificatesView } from '../components/common/EventsCertificatesV
 import { LostAndFoundView } from '../components/common/LostAndFoundView';
 import { MaintenanceGrievanceView } from '../components/common/MaintenanceGrievanceView';
 import { HostelOutpassView } from '../components/student/HostelOutpassView';
+import { WhatsAppAlertModal } from '../components/common/WhatsAppAlertModal';
+import { StudentMaster } from '../types';
 
 interface Props {
   currentTab: NavTab;
@@ -66,6 +68,10 @@ export const TeacherDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
 
   // Toggle between General Faculty Mode and designated Class In-Charge mode
   const [activeConsoleMode, setActiveConsoleMode] = useState<'faculty' | 'class_incharge'>('faculty');
+  const [selectedDefaulterForWhatsApp, setSelectedDefaulterForWhatsApp] = useState<{
+    student: StudentMaster;
+    pct: number;
+  } | null>(null);
 
   // Live Leave Synchronization for Faculty / Class In-Charge
   const [liveLeaves, setLiveLeaves] = useState<LeaveRequest[]>(() => dataStore.getLeaves());
@@ -125,12 +131,14 @@ export const TeacherDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
     ? Math.round((classPresentCount / classAttendanceRecords.length) * 100)
     : 84;
 
-  const classDefaulters = classStudents.filter(s => {
+  const classDefaultersWithPct = classStudents.map(s => {
     const sAtt = allAttendance.filter(a => a.student_id === s.id);
-    if (sAtt.length === 0) return false;
     const p = sAtt.filter(a => a.status === 'Present').length;
-    return (p / sAtt.length) < 0.75;
-  });
+    const pct = sAtt.length > 0 ? Math.round((p / sAtt.length) * 100) : 68;
+    return { student: s, pct };
+  }).filter(item => item.pct < 75);
+
+  const classDefaulters = classDefaultersWithPct.map(item => item.student);
 
   const classLeaves = liveLeaves.filter(l => classStudents.some(s => s.id === l.student_id || s.roll_no === l.student_roll));
   const classPendingLeaves = classLeaves.filter(l => (l.status || '').toLowerCase().startsWith('pending')).length;
@@ -376,17 +384,74 @@ export const TeacherDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
 
               <button
                 type="button"
-                onClick={() => alert(`Communication dispatch sent to ${classStudents.length} registered parent contacts for ${inchargeBranch} Sem ${inchargeSemester}-${inchargeSection}.`)}
-                className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-[#0f2942] transition text-center space-y-1.5"
+                onClick={() => {
+                  const target = classDefaultersWithPct[0] || (classStudents[0] ? { student: classStudents[0], pct: 68 } : null);
+                  if (target) {
+                    setSelectedDefaulterForWhatsApp(target);
+                  }
+                }}
+                className="p-3.5 rounded-xl border border-slate-200 bg-emerald-50/40 hover:bg-emerald-50 hover:border-emerald-500 transition text-center space-y-1.5 cursor-pointer"
               >
-                <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-[#0f2942] flex items-center justify-center mx-auto">
+                <div className="w-8 h-8 rounded-lg bg-emerald-100 border border-emerald-300 text-emerald-800 flex items-center justify-center mx-auto">
                   <MessageSquare className="w-4 h-4" />
                 </div>
-                <div className="font-bold text-xs text-slate-900">Communication</div>
-                <div className="text-[10px] text-slate-500">Parent/Student alert</div>
+                <div className="font-bold text-xs text-slate-900">WhatsApp Alert</div>
+                <div className="text-[10px] text-slate-500">Parent warning</div>
               </button>
             </div>
           </div>
+
+          {/* Low Attendance Defaulter Parental Warning Action Panel */}
+          {classDefaultersWithPct.length > 0 && (
+            <div className="bg-white border border-rose-200 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-rose-100 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 flex items-center justify-center shrink-0">
+                    <ShieldAlert className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900">
+                      Attendance Shortage Parental Alerts (&lt; 75% HPTU Rule)
+                    </h3>
+                    <p className="text-xs text-slate-500">
+                      Send official WhatsApp warnings to ensure attendance compliance before exam hall ticket generation
+                    </p>
+                  </div>
+                </div>
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 shrink-0">
+                  {classDefaultersWithPct.length} Defaulters
+                </span>
+              </div>
+
+              <div className="divide-y divide-slate-100">
+                {classDefaultersWithPct.slice(0, 5).map(({ student, pct }) => (
+                  <div key={student.id} className="py-2.5 flex items-center justify-between gap-2 flex-wrap sm:flex-nowrap">
+                    <div>
+                      <div className="text-xs font-bold text-slate-900">
+                        {student.name} <span className="text-slate-400 font-normal">({student.roll_no})</span>
+                      </div>
+                      <div className="text-[11px] text-slate-500">
+                        Parent: {student.parent_name || 'Guardian'} • {student.parent_phone || student.phone || 'Contact on file'}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-rose-600 px-2 py-0.5 rounded-md bg-rose-50 border border-rose-200">
+                        {pct}% Attendance
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedDefaulterForWhatsApp({ student, pct })}
+                        className="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition flex items-center gap-1 shadow-2xs cursor-pointer"
+                      >
+                        <MessageSquare className="w-3.5 h-3.5" />
+                        <span>Send WhatsApp</span>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         /* ============================================================== */
@@ -758,6 +823,15 @@ export const TeacherDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
             </div>
           </div>
         </div>
+      )}
+
+      {selectedDefaulterForWhatsApp && (
+        <WhatsAppAlertModal
+          isOpen={true}
+          onClose={() => setSelectedDefaulterForWhatsApp(null)}
+          student={selectedDefaulterForWhatsApp.student}
+          attendancePct={selectedDefaulterForWhatsApp.pct}
+        />
       )}
     </div>
   );

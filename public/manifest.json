@@ -1,17 +1,72 @@
 {
+  "name": "HIET Digital Campus • HIET Group of Institutions",
   "short_name": "HIET Campus",
-  "name": "HIET GROUP OF INSTITUTIONS • HIET Digital Campus",
-  "description": "Official Digital Campus Portal of HIET Group of Institutions, Vidyanagar, Shahpur, Distt. Kangra (H.P.)",
+  "description": "Official Digital Campus ERP & Student Portal of HIET Group of Institutions, Shahpur, Kangra (H.P.)",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "id": "/?source=pwa",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "orientation": "any",
+  "theme_color": "#0f2942",
+  "background_color": "#f8fafc",
+  "lang": "en-IN",
+  "dir": "ltr",
+  "categories": ["education", "productivity", "utilities"],
   "icons": [
     {
+      "src": "/images/hiet_crest.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/hiet_crest.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/hiet_crest.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
       "src": "/favicon.svg",
+      "sizes": "any",
       "type": "image/svg+xml",
-      "sizes": "512x512"
+      "purpose": "any"
     }
   ],
-  "start_url": "/",
-  "background_color": "#ffffff",
-  "theme_color": "#0f2942",
-  "display": "standalone",
-  "orientation": "portrait"
+  "shortcuts": [
+    {
+      "name": "My Attendance",
+      "short_name": "Attendance",
+      "description": "Check subject-wise attendance & shortage alerts",
+      "url": "/?tab=attendance",
+      "icons": [{ "src": "/images/hiet_crest.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Digital Gate Pass",
+      "short_name": "Gate Pass",
+      "description": "Generate QR Gate Pass for campus transit",
+      "url": "/?tab=gate_pass",
+      "icons": [{ "src": "/images/hiet_crest.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Class Timetable",
+      "short_name": "Timetable",
+      "description": "View daily lecture timetable and class schedule",
+      "url": "/?tab=timetable",
+      "icons": [{ "src": "/images/hiet_crest.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Campus Notices",
+      "short_name": "Notices",
+      "description": "Official notices and emergency announcements",
+      "url": "/?tab=notices",
+      "icons": [{ "src": "/images/hiet_crest.png", "sizes": "192x192" }]
+    }
+  ]
 }

@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
-import { Bell, Plus, AlertTriangle, Pin, Search, Filter, Megaphone, FileText } from 'lucide-react';
+import { Bell, Plus, AlertTriangle, Pin, Search, Filter, Megaphone, FileText, MessageSquare } from 'lucide-react';
 import { dataStore } from '../../lib/mockData';
 import { useAuth } from '../../context/AuthContext';
 import { apiService } from '../../lib/supabase';
 import { Notice } from '../../types';
 import { formatDate } from '../../lib/utils';
 import { NoticeBoard3D } from '../3d/NoticeBoard3D';
+import { whatsappSmsService } from '../../lib/whatsappSmsService';
+import { useToast } from '../../context/ToastContext';
 
 export const NoticesView: React.FC = () => {
   const { role, user } = useAuth();
+  const { success } = useToast();
   const [notices, setNotices] = useState<Notice[]>(() => dataStore.getNotices());
   const [selectedAudience, setSelectedAudience] = useState<string>('All');
   const [search, setSearch] = useState('');
@@ -19,6 +22,7 @@ export const NoticesView: React.FC = () => {
   const [content, setContent] = useState('');
   const [audience, setAudience] = useState<Notice['audience']>('All');
   const [priority, setPriority] = useState<Notice['priority']>('Normal');
+  const [broadcastWhatsApp, setBroadcastWhatsApp] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
   const filteredNotices = notices.filter(n => {
@@ -52,6 +56,29 @@ export const NoticesView: React.FC = () => {
       priority,
       created_by_name: user?.name || 'College Administration'
     });
+
+    // If WhatsApp broadcast is enabled or priority is Urgent
+    if (broadcastWhatsApp || priority === 'Urgent') {
+      try {
+        await whatsappSmsService.sendEmergencyNoticeBroadcast({
+          title,
+          content,
+          issuedBy: user?.name || 'Office of the Principal, HIET Shahpur',
+          targetAudience: audience
+        });
+        success(
+          'Notice & WhatsApp Broadcast Sent',
+          'Official circular published and WhatsApp alerts dispatched to registered student & parent contacts.'
+        );
+      } catch (err) {
+        console.warn('WhatsApp broadcast warning:', err);
+      }
+    } else {
+      success(
+        'Notice Published',
+        'Official circular is now live on student & faculty dashboards.'
+      );
+    }
 
     setNotices(prev => [newNotice, ...prev]);
     setSubmitting(false);
@@ -230,6 +257,32 @@ export const NoticesView: React.FC = () => {
                   placeholder="Enter the full official notification text..."
                   required
                   className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200"
+                />
+              </div>
+
+              {/* Instant WhatsApp & SMS Broadcast Option */}
+              <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-lg bg-emerald-100 dark:bg-emerald-900/70 text-emerald-700 dark:text-emerald-300 flex items-center justify-center shrink-0">
+                    <MessageSquare className="w-3.5 h-3.5" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                      <span>Broadcast via WhatsApp & SMS</span>
+                      <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-emerald-200 text-emerald-900 dark:bg-emerald-900 dark:text-emerald-200">
+                        Auto
+                      </span>
+                    </div>
+                    <div className="text-[10px] text-slate-500 dark:text-neutral-400">
+                      Dispatches alert directly to registered students & parents for high priority updates
+                    </div>
+                  </div>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={broadcastWhatsApp}
+                  onChange={e => setBroadcastWhatsApp(e.target.checked)}
+                  className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer accent-emerald-600"
                 />
               </div>
 

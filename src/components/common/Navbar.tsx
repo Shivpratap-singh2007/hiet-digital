@@ -10,9 +10,11 @@ import {
   Check,
   ChevronDown,
   Sparkles,
-  Search
+  Search,
+  Download
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { usePwa } from '../../context/PwaContext';
 import { dataStore } from '../../lib/mockData';
 import { getAppEnvironment, isProduction } from '../../lib/envConfig';
 
@@ -34,6 +36,7 @@ export const Navbar: React.FC<Props> = ({
   onOpenSearch
 }) => {
   const { user, logout, role, workspaceRoles, switchWorkspace, activeWorkspaceRole } = useAuth();
+  const { isInstallable, isInstalled, isIos, installApp, setShowIosModal } = usePwa();
   const [logoError, setLogoError] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -181,6 +184,22 @@ export const Navbar: React.FC<Props> = ({
           >
             <Sparkles className="w-4 h-4 text-amber-500 group-hover:scale-110 transition-transform" />
           </button>
+
+          {/* PWA Install Button */}
+          {!isInstalled && (isInstallable || isIos) && (
+            <button
+              type="button"
+              onClick={() => {
+                if (isIos) setShowIosModal(true);
+                else installApp();
+              }}
+              className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold transition shadow-2xs cursor-pointer"
+              title="Install HIET Campus App on your device"
+            >
+              <Download className="w-3.5 h-3.5 text-emerald-700" />
+              <span>Install App</span>
+            </button>
+          )}
 
           {user ? (
             <>
