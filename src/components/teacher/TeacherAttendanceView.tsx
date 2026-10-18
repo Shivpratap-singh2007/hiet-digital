@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { CalendarCheck, CheckCircle2, XCircle, Save, Filter, QrCode, AlertTriangle, ShieldCheck, RefreshCw, Radio, Sparkles } from 'lucide-react';
+import { CalendarCheck, CheckCircle2, XCircle, Save, Filter, QrCode, AlertTriangle, ShieldCheck, RefreshCw, Radio, Sparkles, Search } from 'lucide-react';
 import { dataStore } from '../../lib/mockData';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 import { apiService } from '../../lib/supabase';
 import { AttendanceRecord } from '../../types';
 import { calculateAttendanceRisk } from '../../lib/attendanceRisk';
@@ -15,10 +16,14 @@ import {
 
 export const TeacherAttendanceView: React.FC = () => {
   const { user } = useAuth();
+  const toast = useToast();
   const teacherId = user?.teacher_id || 'tch-01';
 
   // Mode: Manual Register vs Dynamic QR Session vs Attendance Risk Insights
   const [activeTab, setActiveTab] = useState<'manual' | 'dynamic_qr' | 'risk_insights'>('manual');
+
+  // Search filter for fast student roster lookup
+  const [studentSearch, setStudentSearch] = useState('');
 
   // Cascading Selector States as strictly specified in Section 26
   const [department, setDepartment] = useState<string>('CSE');
@@ -41,6 +46,12 @@ export const TeacherAttendanceView: React.FC = () => {
   const displayStudents = matchingStudents.length > 0 
     ? matchingStudents 
     : allStudents.filter(s => s.branch === branch);
+
+  const searchedStudents = displayStudents.filter(s => {
+    if (!studentSearch.trim()) return true;
+    const q = studentSearch.toLowerCase();
+    return s.name.toLowerCase().includes(q) || s.roll_no.toLowerCase().includes(q);
+  });
 
   // Local Attendance State
   const [attendanceMap, setAttendanceMap] = useState<Record<string, 'Present' | 'Absent'>>(() => {
@@ -173,6 +184,7 @@ export const TeacherAttendanceView: React.FC = () => {
     await apiService.saveAttendance(records);
     setSaving(false);
     setSaveSuccess(true);
+    toast.success('Attendance Register Saved', `Marked ${presentCount} present, ${absentCount} absent for ${subject}.`);
     setTimeout(() => setSaveSuccess(false), 3000);
   };
 
@@ -196,6 +208,7 @@ export const TeacherAttendanceView: React.FC = () => {
     await attendanceService.approveFlaggedStudent(qrSession.sessionId, studentId);
     setAttendanceMap(prev => ({ ...prev, [studentId]: 'Present' }));
     setLiveScanLogs([...attendanceService.getSessionLogs(qrSession.sessionId)]);
+    toast.success('Attendance Override Approved', 'Student marked present and verified by faculty.');
   };
 
   const presentCount = Object.values(attendanceMap).filter(s => s === 'Present').length;
@@ -631,69 +644,100 @@ export const TeacherAttendanceView: React.FC = () => {
 
       {/* MANUAL REGISTER VIEW */}
       {activeTab === 'manual' && (
-        <div className="space-y-2">
-          {displayStudents.map((s, idx) => {
-            const isPresent = (attendanceMap[s.id] || 'Present') === 'Present';
-            return (
-              <div
-                key={s.id}
-                className={`p-3 sm:p-3.5 rounded-2xl border transition flex items-center justify-between gap-3 ${
-                  isPresent
-                    ? 'bg-white dark:bg-neutral-900 border-slate-200 dark:border-neutral-800'
-                    : 'bg-rose-50/50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-900/60'
-                }`}
+        <div className="space-y-2.5">
+          {/* Instant Student Roster Search */}
+          <div className="relative">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="text"
+              value={studentSearch}
+              onChange={e => setStudentSearch(e.target.value)}
+              placeholder="Search student by name or roll number (e.g. CSE001, Aarav)..."
+              className="w-full pl-10 pr-24 py-2 text-xs rounded-xl border border-slate-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-slate-800 dark:text-neutral-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            />
+            {studentSearch ? (
+              <button
+                type="button"
+                onClick={() => setStudentSearch('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400 hover:text-slate-600 dark:hover:text-neutral-200 cursor-pointer"
               >
-                <div className="flex items-center gap-3 min-w-0">
-                  <span className="w-6 text-center text-xs font-mono font-bold text-slate-400 dark:text-neutral-500">
-                    {idx + 1}
-                  </span>
+                Clear
+              </button>
+            ) : (
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 font-mono">
+                {displayStudents.length} students
+              </span>
+            )}
+          </div>
 
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-xs font-black text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-1.5 py-0.5 rounded">
-                        {s.roll_no}
-                      </span>
-                      <h4 className="font-extrabold text-sm text-slate-900 dark:text-white truncate">
-                        {s.name}
-                      </h4>
+          {searchedStudents.length === 0 ? (
+            <div className="p-6 text-center bg-white dark:bg-neutral-900 rounded-2xl border border-slate-200 dark:border-neutral-800 text-xs text-slate-400">
+              No students found matching &quot;{studentSearch}&quot;.
+            </div>
+          ) : (
+            searchedStudents.map((s, idx) => {
+              const isPresent = (attendanceMap[s.id] || 'Present') === 'Present';
+              return (
+                <div
+                  key={s.id}
+                  className={`p-3 sm:p-3.5 rounded-2xl border transition flex items-center justify-between gap-3 ${
+                    isPresent
+                      ? 'bg-white dark:bg-neutral-900 border-slate-200 dark:border-neutral-800'
+                      : 'bg-rose-50/50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-900/60'
+                  }`}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="w-6 text-center text-xs font-mono font-bold text-slate-400 dark:text-neutral-500">
+                      {idx + 1}
+                    </span>
+
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-xs font-black text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-1.5 py-0.5 rounded">
+                          {s.roll_no}
+                        </span>
+                        <h4 className="font-extrabold text-sm text-slate-900 dark:text-white truncate">
+                          {s.name}
+                        </h4>
+                      </div>
+                      <p className="text-[11px] text-slate-500 dark:text-neutral-400 font-medium">
+                        {s.branch} • Sec {s.section}
+                      </p>
                     </div>
-                    <p className="text-[11px] text-slate-500 dark:text-neutral-400 font-medium">
-                      {s.branch} • Sec {s.section}
-                    </p>
+                  </div>
+
+                  {/* Present / Absent Segmented Buttons */}
+                  <div className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-neutral-800 rounded-xl shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => handleToggle(s.id, 'Present')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer ${
+                        isPresent
+                          ? 'bg-emerald-600 text-white shadow-xs'
+                          : 'text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white'
+                      }`}
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>Present</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleToggle(s.id, 'Absent')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer ${
+                        !isPresent
+                          ? 'bg-rose-600 text-white shadow-xs'
+                          : 'text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white'
+                      }`}
+                    >
+                      <XCircle className="w-3.5 h-3.5" />
+                      <span>Absent</span>
+                    </button>
                   </div>
                 </div>
-
-                {/* Present / Absent Segmented Buttons */}
-                <div className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-neutral-800 rounded-xl shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => handleToggle(s.id, 'Present')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 ${
-                      isPresent
-                        ? 'bg-emerald-600 text-white shadow-xs'
-                        : 'text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white'
-                    }`}
-                  >
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>Present</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleToggle(s.id, 'Absent')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 ${
-                      !isPresent
-                        ? 'bg-rose-600 text-white shadow-xs'
-                        : 'text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white'
-                    }`}
-                  >
-                    <XCircle className="w-3.5 h-3.5" />
-                    <span>Absent</span>
-                  </button>
-                </div>
-              </div>
-            );
-          })}
+              );
+            })
+          )}
         </div>
       )}
 

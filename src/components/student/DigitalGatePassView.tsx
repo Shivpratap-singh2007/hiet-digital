@@ -23,9 +23,11 @@ import { useAuth } from '../../context/AuthContext';
 import { dataStore } from '../../lib/mockData';
 import { apiService } from '../../lib/supabase';
 import { GatePass, GatePassRequest } from '../../types';
+import { useToast } from '../../context/ToastContext';
 
 export const DigitalGatePassView: React.FC = () => {
   const { user, role } = useAuth();
+  const toast = useToast();
   const isApprover = role === 'hod' || role === 'principal' || role === 'admin';
   const student = user?.studentMaster;
   const currentRoll = student?.roll_no || 'CSE001';
@@ -138,8 +140,10 @@ export const DigitalGatePassView: React.FC = () => {
       setRequests(updated);
       setShowRequestModal(false);
       setReason('');
+      toast.success('Gate Pass Requested', 'Your transit request has been submitted for departmental clearance.');
     } catch (err) {
       console.warn('Failed to submit gate pass request:', err);
+      toast.error('Submission Failed', 'Could not submit gate pass request. Please retry.');
     } finally {
       setSubmitting(false);
     }
@@ -220,6 +224,11 @@ export const DigitalGatePassView: React.FC = () => {
       setPasses(updatedPasses);
     }
 
+    toast.success(
+      isApproved ? 'Gate Pass Sanctioned' : 'Gate Pass Denied',
+      isApproved ? `Digital QR pass issued for ${actionTargetRequest.student_name}.` : 'Request status updated.'
+    );
+
     setActionTargetRequest(null);
     setApproverComments('');
   };
@@ -229,6 +238,7 @@ export const DigitalGatePassView: React.FC = () => {
     const updated = requests.map(r => r.id === reqId ? { ...r, status: 'Cancelled' as const } : r);
     dataStore.setGatePassRequests(updated);
     setRequests(updated);
+    toast.info('Gate Pass Cancelled', 'Request has been cancelled.');
   };
 
   return (
@@ -513,6 +523,7 @@ export const DigitalGatePassView: React.FC = () => {
                   <input
                     type="date"
                     required
+                    min={new Date().toISOString().split('T')[0]}
                     value={validDate}
                     onChange={(e) => setValidDate(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl border border-slate-300"
@@ -557,14 +568,42 @@ export const DigitalGatePassView: React.FC = () => {
 
               <div>
                 <label className="block font-bold text-slate-700 mb-1">Detailed Reason *</label>
+                
+                {/* Quick Presets */}
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {[
+                    '🏦 Bank / Official Work',
+                    '🏥 Medical Clinic / Doctor',
+                    '🏠 Going Home (Approved)',
+                    '🛍️ Project Components Lab',
+                    '📝 Competitive Exam Center'
+                  ].map(preset => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => setReason(preset)}
+                      className="text-[10px] px-2 py-1 rounded-lg bg-slate-100 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 border border-slate-200 transition text-slate-700 font-medium cursor-pointer"
+                    >
+                      {preset}
+                    </button>
+                  ))}
+                </div>
+
                 <textarea
                   required
                   rows={3}
-                  placeholder="State academic reason or destination clearly for HOD review..."
+                  maxLength={150}
+                  placeholder="State academic reason or destination clearly (or click a quick preset above)..."
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
                   className="w-full px-3 py-2 rounded-xl border border-slate-300"
                 />
+                <div className="flex justify-between items-center text-[10px] text-slate-400 mt-1">
+                  <span>Fast gate clearance with precise reasons</span>
+                  <span className={reason.length >= 140 ? 'text-amber-600 font-bold' : ''}>
+                    {reason.length}/150 characters
+                  </span>
+                </div>
               </div>
 
               <div className="flex gap-2 pt-2">

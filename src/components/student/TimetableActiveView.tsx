@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, MapPin, User, Sparkles, ChevronRight, CheckCircle2, Calendar } from 'lucide-react';
+import { Clock, MapPin, User, Sparkles, ChevronRight, CheckCircle2, Calendar, List, CalendarDays } from 'lucide-react';
 import { dataStore } from '../../lib/mockData';
 import { apiService } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
@@ -51,6 +51,7 @@ export const TimetableActiveView: React.FC = () => {
   
   // Simulation offset for testing at any time of day/night
   const [simulatedTime, setSimulatedTime] = useState<string>('live');
+  const [viewMode, setViewMode] = useState<'cards' | 'timeline'>('timeline');
 
   // Compute active current hour and minute
   const getCurrentHourAndMinute = () => {
@@ -96,6 +97,36 @@ export const TimetableActiveView: React.FC = () => {
           </p>
         </div>
 
+        {/* View Mode & Simulation Controls */}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* List / Timeline View Mode Toggle */}
+          <div className="flex items-center p-1 bg-slate-100 rounded-xl border border-slate-200/80">
+            <button
+              type="button"
+              onClick={() => setViewMode('cards')}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition ${
+                viewMode === 'cards'
+                  ? 'bg-white text-blue-700 shadow-xs'
+                  : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              <List className="w-3.5 h-3.5" />
+              <span>Cards</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('timeline')}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition ${
+                viewMode === 'timeline'
+                  ? 'bg-white text-blue-700 shadow-xs'
+                  : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              <CalendarDays className="w-3.5 h-3.5" />
+              <span>Timeline</span>
+            </button>
+          </div>
+
         {/* Time Simulation Quick Pill for Evaluators */}
         <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl w-fit">
           <span className="text-[10px] font-bold text-slate-500 uppercase px-1.5">
@@ -115,6 +146,7 @@ export const TimetableActiveView: React.FC = () => {
           </select>
         </div>
       </div>
+    </div>
 
       {/* Active Lecture Billboard Card */}
       {activeSlot ? (
@@ -179,75 +211,178 @@ export const TimetableActiveView: React.FC = () => {
         ))}
       </div>
 
-      {/* Class Schedule Timeline Cards */}
-      <div className="space-y-2.5">
-        {daySlots.map((slot: TimetableSlot) => {
-          const active = isSlotActive(slot);
-          const upcoming = isSlotUpcoming(slot);
+      {/* Day Schedule Content: Timeline vs Cards */}
+      {daySlots.length === 0 ? (
+        <div className="p-8 text-center bg-white rounded-2xl border border-slate-200">
+          <Calendar className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+          <h4 className="text-sm font-bold text-slate-700">No Classes Scheduled</h4>
+          <p className="text-xs text-slate-400 mt-0.5">Enjoy your free time or utilize the campus library and labs.</p>
+        </div>
+      ) : viewMode === 'timeline' ? (
+        <div className="relative pl-6 sm:pl-8 space-y-4 pt-2 pb-2">
+          {/* Vertical Timeline Track Line */}
+          <div className="absolute left-2.5 sm:left-3.5 top-3 bottom-3 w-0.5 bg-slate-200 rounded-full" />
 
-          return (
-            <div
-              key={slot.id}
-              className={`p-3.5 rounded-2xl border transition-all duration-200 ${
-                active
-                  ? 'bg-blue-50/80 border-blue-500 shadow-sm ring-2 ring-blue-500/20'
-                  : upcoming
-                  ? 'bg-amber-50/60 border-amber-300 shadow-2xs'
-                  : 'bg-white border-slate-200 hover:border-slate-300'
-              }`}
-            >
-              <div className="flex items-center justify-between gap-3">
-                {/* Time Strip */}
-                <div className="min-w-20 sm:min-w-24 shrink-0">
-                  <div className="flex items-center gap-1.5">
-                    <Clock className={`w-3.5 h-3.5 ${active ? 'text-blue-600' : 'text-slate-400'}`} />
-                    <span className={`text-xs font-extrabold ${active ? 'text-blue-700' : 'text-slate-700'}`}>
-                      {slot.start_time}
-                    </span>
-                  </div>
-                  <span className="text-[10px] text-slate-400 block mt-0.5">
-                    to {slot.end_time}
-                  </span>
+          {daySlots.map((slot: TimetableSlot) => {
+            const active = isSlotActive(slot);
+            const upcoming = isSlotUpcoming(slot);
+            const slotStart = slot.start_hour_24 * 60 + slot.start_minute;
+            const isPast = currentTotalMinutes > (slot.end_hour_24 * 60 + slot.end_minute);
+
+            return (
+              <div key={slot.id} className="relative group">
+                {/* Timeline Node Icon on Track */}
+                <div
+                  className={`absolute -left-6 sm:-left-8 top-3.5 w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${
+                    active
+                      ? 'bg-blue-600 border-white ring-4 ring-blue-200 shadow-sm'
+                      : upcoming
+                      ? 'bg-amber-500 border-white ring-2 ring-amber-100'
+                      : isPast
+                      ? 'bg-slate-300 border-white'
+                      : 'bg-white border-slate-300'
+                  }`}
+                >
+                  {active && <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />}
                 </div>
 
-                {/* Subject & Teacher Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h4 className={`text-sm font-extrabold truncate ${active ? 'text-blue-900' : 'text-slate-900'}`}>
-                      {slot.subject_name}
-                    </h4>
-                    {active && (
-                      <span className="px-2 py-0.5 rounded-md bg-blue-600 text-white text-[9px] font-black uppercase tracking-wider animate-pulse">
-                        NOW
-                      </span>
-                    )}
-                    {upcoming && (
-                      <span className="px-2 py-0.5 rounded-md bg-amber-500 text-white text-[9px] font-bold uppercase tracking-wider">
-                        UPCOMING
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-[11px] text-slate-500 truncate mt-0.5">
-                    {slot.teacher_name} • {slot.subject_code}
-                  </p>
-                </div>
+                {/* Timeline Card */}
+                <div
+                  className={`p-3.5 sm:p-4 rounded-2xl border transition-all ${
+                    active
+                      ? 'bg-blue-50/90 border-blue-500 shadow-sm ring-2 ring-blue-500/20'
+                      : upcoming
+                      ? 'bg-amber-50/70 border-amber-300 shadow-2xs'
+                      : isPast
+                      ? 'bg-slate-50/60 border-slate-200 opacity-80'
+                      : 'bg-white border-slate-200 hover:border-slate-300 shadow-2xs'
+                  }`}
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                    <div className="flex items-start gap-3 min-w-0">
+                      <div className="min-w-20 shrink-0">
+                        <span className={`text-xs font-black font-mono block ${active ? 'text-blue-700' : 'text-slate-800'}`}>
+                          {slot.start_time}
+                        </span>
+                        <span className="text-[10px] text-slate-400 block">
+                          until {slot.end_time}
+                        </span>
+                      </div>
 
-                {/* Room Pill */}
-                <div className="shrink-0 text-right">
-                  <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-bold ${
-                    active 
-                      ? 'bg-blue-600 text-white' 
-                      : 'bg-slate-100 text-slate-700 border border-slate-200'
-                  }`}>
-                    <MapPin className="w-3 h-3" />
-                    <span>{slot.room_number}</span>
-                  </span>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h4 className={`text-sm font-extrabold truncate ${active ? 'text-blue-900' : 'text-slate-900'}`}>
+                            {slot.subject_name}
+                          </h4>
+                          {active && (
+                            <span className="px-2 py-0.5 rounded-full bg-blue-600 text-white text-[9px] font-black uppercase tracking-wider animate-pulse">
+                              LIVE NOW
+                            </span>
+                          )}
+                          {upcoming && (
+                            <span className="px-2 py-0.5 rounded-full bg-amber-500 text-white text-[9px] font-bold uppercase tracking-wider">
+                              NEXT UP
+                            </span>
+                          )}
+                          {isPast && (
+                            <span className="px-2 py-0.5 rounded-md bg-slate-200 text-slate-600 text-[9px] font-semibold">
+                              COMPLETED
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-slate-500 mt-0.5">
+                          {slot.teacher_name} • <span className="font-mono text-slate-400">{slot.subject_code}</span>
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 self-start sm:self-center shrink-0">
+                      <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-bold ${
+                        active 
+                          ? 'bg-blue-600 text-white shadow-xs' 
+                          : 'bg-slate-100 text-slate-700 border border-slate-200'
+                      }`}>
+                        <MapPin className="w-3.5 h-3.5" />
+                        <span>{slot.room_number}</span>
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      ) : (
+        /* Class Schedule Cards Mode */
+        <div className="space-y-2.5">
+          {daySlots.map((slot: TimetableSlot) => {
+            const active = isSlotActive(slot);
+            const upcoming = isSlotUpcoming(slot);
+
+            return (
+              <div
+                key={slot.id}
+                className={`p-3.5 rounded-2xl border transition-all duration-200 ${
+                  active
+                    ? 'bg-blue-50/80 border-blue-500 shadow-sm ring-2 ring-blue-500/20'
+                    : upcoming
+                    ? 'bg-amber-50/60 border-amber-300 shadow-2xs'
+                    : 'bg-white border-slate-200 hover:border-slate-300'
+                }`}
+              >
+                <div className="flex items-center justify-between gap-3">
+                  {/* Time Strip */}
+                  <div className="min-w-20 sm:min-w-24 shrink-0">
+                    <div className="flex items-center gap-1.5">
+                      <Clock className={`w-3.5 h-3.5 ${active ? 'text-blue-600' : 'text-slate-400'}`} />
+                      <span className={`text-xs font-extrabold ${active ? 'text-blue-700' : 'text-slate-700'}`}>
+                        {slot.start_time}
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-slate-400 block mt-0.5">
+                      to {slot.end_time}
+                    </span>
+                  </div>
+
+                  {/* Subject & Teacher Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h4 className={`text-sm font-extrabold truncate ${active ? 'text-blue-900' : 'text-slate-900'}`}>
+                        {slot.subject_name}
+                      </h4>
+                      {active && (
+                        <span className="px-2 py-0.5 rounded-md bg-blue-600 text-white text-[9px] font-black uppercase tracking-wider animate-pulse">
+                          NOW
+                        </span>
+                      )}
+                      {upcoming && (
+                        <span className="px-2 py-0.5 rounded-md bg-amber-500 text-white text-[9px] font-bold uppercase tracking-wider">
+                          UPCOMING
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-slate-500 truncate mt-0.5">
+                      {slot.teacher_name} • {slot.subject_code}
+                    </p>
+                  </div>
+
+                  {/* Room Pill */}
+                  <div className="shrink-0 text-right">
+                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-bold ${
+                      active 
+                        ? 'bg-blue-600 text-white' 
+                        : 'bg-slate-100 text-slate-700 border border-slate-200'
+                    }`}>
+                      <MapPin className="w-3 h-3" />
+                      <span>{slot.room_number}</span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };

@@ -18,9 +18,11 @@ import { useAuth } from '../../context/AuthContext';
 import { apiService, calculateLeaveDays } from '../../lib/supabase';
 import { LeaveRequest, LeaveRequestHistory } from '../../types';
 import { formatDate, formatIndiaDateTime } from '../../lib/utils';
+import { useToast } from '../../context/ToastContext';
 
 export const LeaveApplicationView: React.FC = () => {
   const { user } = useAuth();
+  const toast = useToast();
   const studentId = user?.student_id || user?.id || 'std-cse-2026-001';
   
   const [leaves, setLeaves] = useState<LeaveRequest[]>(() =>
@@ -100,6 +102,7 @@ export const LeaveApplicationView: React.FC = () => {
     setEndDate('');
     setReason('');
     setDocUrl('');
+    toast.success('Leave Request Submitted', 'Routed to faculty mentor & HOD for institutional review.');
     window.dispatchEvent(new Event('hiet-leave-updated'));
   };
 
@@ -522,6 +525,7 @@ export const LeaveApplicationView: React.FC = () => {
                   <input
                     type="date"
                     value={endDate}
+                    min={startDate}
                     onChange={e => setEndDate(e.target.value)}
                     required
                     className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200"
@@ -554,14 +558,42 @@ export const LeaveApplicationView: React.FC = () => {
                 <label className="block text-xs font-semibold uppercase text-slate-700 dark:text-slate-300 mb-1">
                   Reason for Absence
                 </label>
+
+                {/* Quick Presets */}
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {[
+                    '🏥 Medical Illness / Doctor Visit',
+                    '🏠 Going Home / Family Event',
+                    '⚡ Urgent Family Emergency',
+                    '📝 Competitive Exam / GATE',
+                    '🏆 Tech Fest / Hackathon Participation'
+                  ].map(preset => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => setReason(preset)}
+                      className="text-[10px] px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-blue-900/40 hover:text-blue-700 dark:hover:text-blue-300 hover:border-blue-300 border border-slate-200 dark:border-slate-700 transition text-slate-700 dark:text-slate-300 font-medium cursor-pointer"
+                    >
+                      {preset}
+                    </button>
+                  ))}
+                </div>
+
                 <textarea
                   rows={3}
                   value={reason}
+                  maxLength={250}
                   onChange={e => setReason(e.target.value)}
-                  placeholder="State the purpose of leave (e.g. Medical illness, family emergency, competition duty)..."
+                  placeholder="State the purpose of leave (or click a quick preset above)..."
                   required
                   className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200"
                 />
+                <div className="flex justify-between items-center text-[10px] text-slate-400 mt-1">
+                  <span>Fast review for clear, concise reasons</span>
+                  <span className={reason.length >= 240 ? 'text-amber-600 font-bold' : ''}>
+                    {reason.length}/250 characters
+                  </span>
+                </div>
               </div>
 
               <div>

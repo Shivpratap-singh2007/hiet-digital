@@ -158,6 +158,100 @@ export const CgpaView: React.FC = () => {
           Semester Progression & SGPA Timeline
         </h3>
 
+        {/* Visual SGPA Performance Curve (SVG Interactive Chart) */}
+        {availableSemesters.length > 1 && (
+          <div className="p-4 bg-slate-50/70 dark:bg-slate-900/60 rounded-xl border border-slate-200/80 dark:border-slate-800 mb-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                <TrendingUp className="w-3.5 h-3.5 text-blue-600" />
+                Performance Curve (Sem 1 to Sem {availableSemesters[availableSemesters.length - 1]})
+              </span>
+              <span className="text-[10px] text-slate-400 font-medium">Click any point to switch semester</span>
+            </div>
+
+            <div className="w-full overflow-x-auto">
+              <svg viewBox="0 0 540 115" className="w-full h-28 select-none">
+                <defs>
+                  <linearGradient id="sgpaGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#2563eb" stopOpacity="0.25" />
+                    <stop offset="100%" stopColor="#2563eb" stopOpacity="0.0" />
+                  </linearGradient>
+                </defs>
+
+                {/* 7.5 Benchmark Line */}
+                <line x1="30" y1="50" x2="510" y2="50" stroke="#cbd5e1" strokeDasharray="3 3" strokeWidth="1" />
+                <text x="515" y="53" fill="#94a3b8" fontSize="8" fontWeight="600">7.5 Benchmark</text>
+
+                {(() => {
+                  const points = availableSemesters.map((sem, i) => {
+                    const sgpa = semesterStats[sem]?.sgpa || 0;
+                    const x = 40 + (i / (availableSemesters.length - 1)) * 440;
+                    const normalized = Math.max(0, Math.min(1, (sgpa - 5) / 5));
+                    const y = 95 - normalized * 75;
+                    return { x, y, sgpa, sem };
+                  });
+
+                  const pathD = points.reduce((acc, pt, i) => {
+                    return i === 0 ? `M ${pt.x} ${pt.y}` : `${acc} L ${pt.x} ${pt.y}`;
+                  }, '');
+
+                  const areaD = `${pathD} L ${points[points.length - 1].x} 95 L ${points[0].x} 95 Z`;
+
+                  return (
+                    <>
+                      <path d={areaD} fill="url(#sgpaGrad)" />
+                      <path d={pathD} fill="none" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                      {points.map(pt => {
+                        const isSelected = selectedSem === pt.sem;
+                        return (
+                          <g 
+                            key={pt.sem} 
+                            className="cursor-pointer group"
+                            onClick={() => setSelectedSem(pt.sem)}
+                          >
+                            <circle
+                              cx={pt.x}
+                              cy={pt.y}
+                              r={isSelected ? 6 : 4}
+                              fill={isSelected ? '#1d4ed8' : '#ffffff'}
+                              stroke="#2563eb"
+                              strokeWidth={isSelected ? 3 : 2}
+                              className="transition-all"
+                            />
+                            {isSelected && (
+                              <circle cx={pt.x} cy={pt.y} r={9} fill="none" stroke="#3b82f6" strokeWidth="1.5" opacity="0.6" className="animate-ping" />
+                            )}
+                            <text
+                              x={pt.x}
+                              y={pt.y - 10}
+                              textAnchor="middle"
+                              fill={isSelected ? '#1d4ed8' : '#475569'}
+                              fontSize={isSelected ? '10' : '9'}
+                              fontWeight="bold"
+                            >
+                              {pt.sgpa.toFixed(2)}
+                            </text>
+                            <text
+                              x={pt.x}
+                              y="110"
+                              textAnchor="middle"
+                              fill={isSelected ? '#1e293b' : '#94a3b8'}
+                              fontSize="9"
+                              fontWeight={isSelected ? 'bold' : 'normal'}
+                            >
+                              Sem {pt.sem}
+                            </text>
+                          </g>
+                        );
+                      })}
+                    </>
+                  );
+                })()}
+              </svg>
+            </div>
+          </div>
+        )}
+
         {availableSemesters.length === 0 ? (
           <p className="text-xs text-slate-400 py-3">No semester records available yet. Grades will appear once published by faculty.</p>
         ) : (

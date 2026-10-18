@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ToastProvider } from './context/ToastContext';
 import { Navbar } from './components/common/Navbar';
 import { Sidebar, NavTab } from './components/common/Sidebar';
 import { MobileBottomNav } from './components/common/MobileBottomNav';
@@ -379,7 +380,9 @@ const MainLayout: React.FC = () => {
 export default function App() {
   return (
     <AuthProvider>
-      <MainLayout />
+      <ToastProvider>
+        <MainLayout />
+      </ToastProvider>
     </AuthProvider>
   );
 }
