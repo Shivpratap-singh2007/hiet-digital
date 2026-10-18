@@ -44,6 +44,7 @@ import {
   PackageSearch,
   HeartPulse,
   HeartHandshake,
+  Mic,
   LucideIcon
 } from 'lucide-react';
 import { UserRole } from '../types';
@@ -76,6 +77,7 @@ const STUDENT_NAV: NavItemConfig[] = [
   { id: 'transport', label: 'Bus Routes', href: '/app/transport', icon: Bus, roles: ['student'], enabled: true },
   { id: 'mess', label: 'Hostel Mess', href: '/app/mess', icon: UtensilsCrossed, roles: ['student'], enabled: true },
   { id: 'placements', label: 'Placements & Alumni', href: '/app/placements', icon: Briefcase, roles: ['student'], enabled: true },
+  { id: 'ai_campus_assistant', label: 'Voice AI Assistant', href: '/app/campus-assistant', icon: Mic, roles: ['student'], enabled: true },
   { id: 'events', label: 'Events & Fests', href: '/app/events', icon: Trophy, roles: ['student'], enabled: true },
   { id: 'lost_found', label: 'Lost & Found', href: '/app/lost-found', icon: PackageSearch, roles: ['student'], enabled: true },
   { id: 'emergency_sos', label: 'Emergency & Dispensary', href: '/app/emergency-sos', icon: HeartPulse, roles: ['student'], enabled: true },

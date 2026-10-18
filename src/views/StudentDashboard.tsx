@@ -31,7 +31,9 @@ import {
   Calculator,
   PackageSearch,
   HeartPulse,
-  HeartHandshake
+  HeartHandshake,
+  Mic,
+  Sparkles
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { dataStore } from '../lib/mockData';
@@ -81,6 +83,7 @@ import { DigitalIdCardView } from '../components/student/DigitalIdCardView';
 import { InternalMarksCalculatorView } from '../components/student/InternalMarksCalculatorView';
 import { ParentPortalView } from '../components/student/ParentPortalView';
 import { EmergencyHealthView } from '../components/student/EmergencyHealthView';
+import { VoiceAICampusAssistantView } from '../components/ai/VoiceAICampusAssistantView';
 
 interface Props {
   currentTab: NavTab;
@@ -277,6 +280,7 @@ export const StudentDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
   if (currentTab === 'internals' as any) return <InternalMarksCalculatorView onNavigate={onNavigateTab} />;
   if (currentTab === 'parent_portal' as any) return <ParentPortalView onNavigate={onNavigateTab} />;
   if (currentTab === 'emergency_sos' as any) return <EmergencyHealthView onNavigate={onNavigateTab} />;
+  if (currentTab === 'ai_campus_assistant' as any) return <VoiceAICampusAssistantView onNavigate={onNavigateTab} />;
 
   // Default Overview / Student Dashboard Home
   return (
@@ -333,6 +337,14 @@ export const StudentDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
             >
               <HelpCircle className="w-4 h-4" />
               <span>Ask Doubt</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => onNavigateTab('ai_campus_assistant' as any)}
+              className="px-3.5 py-2 rounded-xl bg-purple-700 hover:bg-purple-800 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
+            >
+              <Mic className="w-4 h-4" />
+              <span>Voice AI</span>
             </button>
           </div>
         }
@@ -842,6 +854,19 @@ export const StudentDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
             <div>
               <span className="font-bold text-xs text-slate-900 block truncate">Digital ID Card</span>
               <span className="text-[10px] text-slate-500 block truncate mt-0.5">Live anti-spoof ID</span>
+            </div>
+          </button>
+
+          <button
+            onClick={() => onNavigateTab('ai_campus_assistant' as any)}
+            className="p-3.5 rounded-xl bg-purple-50/70 border border-purple-200 hover:border-purple-600 hover:bg-purple-100/70 transition text-left flex flex-col justify-between h-28 group cursor-pointer"
+          >
+            <div className="w-8 h-8 rounded-lg bg-white border border-purple-200 text-purple-700 flex items-center justify-center group-hover:bg-purple-700 group-hover:text-white transition">
+              <Mic className="w-4 h-4" />
+            </div>
+            <div>
+              <span className="font-bold text-xs text-slate-900 block truncate">Voice AI Assistant</span>
+              <span className="text-[10px] text-purple-700 font-semibold block truncate mt-0.5">Hindi / Eng Voice AI</span>
             </div>
           </button>
 
