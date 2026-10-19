@@ -18,7 +18,6 @@ import { TeacherDashboard } from './views/TeacherDashboard';
 import { HodDashboard } from './views/HodDashboard';
 import { PrincipalDashboard } from './views/PrincipalDashboard';
 import { SecurityDashboard } from './views/SecurityDashboard';
-import { CampusGalleryModal } from './components/common/CampusGalleryModal';
 import { NotificationsModal } from './components/common/NotificationsModal';
 import { CampusAiAssistantModal } from './components/ai/CampusAiAssistantModal';
 import { VerifyPublicDoc } from './components/common/VerifyPublicDoc';
@@ -28,10 +27,21 @@ import { AiCampusView } from './pages/ai/AiCampusView';
 import { areDevRoutesEnabled } from './lib/envConfig';
 import { PwaProvider } from './context/PwaContext';
 import { PwaInstallBanner } from './components/common/PwaInstallBanner';
+import { 
+  getTabFromPathname, 
+  navigateTo, 
+  subscribeToNavigation, 
+  setupClientSideLinkInterceptor 
+} from './lib/appNavigation';
 
 const MainLayout: React.FC = () => {
   const { user, role, mustChangePassword } = useAuth();
-  const [currentTab, setCurrentTab] = useState<NavTab>('dashboard');
+  const [currentTab, setCurrentTab] = useState<NavTab>(() => {
+    if (typeof window !== 'undefined') {
+      return getTabFromPathname(window.location.pathname);
+    }
+    return 'dashboard';
+  });
   const [showNotificationsModal, setShowNotificationsModal] = useState(false);
   const [showAiAssistantModal, setShowAiAssistantModal] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
@@ -45,7 +55,6 @@ const MainLayout: React.FC = () => {
   });
   const [showStudentRegModal, setShowStudentRegModal] = useState(false);
   const [showTeacherRegModal, setShowTeacherRegModal] = useState(false);
-  const [showGalleryModal, setShowGalleryModal] = useState(false);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
 
   // Global Command Palette Shortcut (Ctrl+K or Cmd+K)
@@ -63,119 +72,33 @@ const MainLayout: React.FC = () => {
   const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
   const isDev = Boolean(import.meta.env.DEV);
 
-  // Synchronize URL paths under /app/* with currentTab (Section 12)
+  // Synchronize client-side navigation, history popstate, and SPA internal links
   React.useEffect(() => {
     if (typeof window === 'undefined') return;
-    const path = window.location.pathname;
-    if (path.startsWith('/app/')) {
-      const parts = path.replace('/app/', '').split('/').filter(Boolean);
-      const rolePrefixes = ['student', 'faculty', 'teacher', 'hod', 'admin', 'principal', 'security', 'md', 'warden', 'library', 'lab', 'it'];
-      
-      let targetSeg = parts[0] || 'dashboard';
-      if (rolePrefixes.includes(targetSeg.toLowerCase())) {
-        targetSeg = parts[1] || 'dashboard';
-      }
 
-      if (parts[0] === 'ai') {
-        const aiSubRoute = parts[1];
-        if (!aiSubRoute) {
-          setCurrentTab('ai_campus');
-          return;
-        }
-        const aiSubMap: Record<string, NavTab> = {
-          'attendance-insights': 'ai_attendance_insights',
-          'smart-board-summary': 'ai_smart_board_summary',
-          'complaint-routing': 'ai_complaint_routing',
-          'campus-assistant': 'ai_campus_assistant',
-          'zone-presence': 'ai_zone_presence',
-          'ble-zone-pilot': 'ai_ble_zone_pilot',
-          'knowledge-search': 'ai_knowledge_search',
-          'occupancy-analytics': 'ai_occupancy_analytics',
-          'smart-waste': 'ai_smart_waste'
-        };
-        if (aiSubMap[aiSubRoute]) {
-          setCurrentTab(aiSubMap[aiSubRoute]);
-          return;
-        }
-        setCurrentTab('ai_campus');
-        return;
-      }
+    const handlePopState = () => {
+      const tab = getTabFromPathname(window.location.pathname);
+      setCurrentTab(tab);
+      setIsMobileSidebarOpen(false);
+    };
 
-      const tabMap: Record<string, NavTab> = {
-        'dashboard': 'dashboard',
-        'ai': 'ai_campus',
-        'campus-zones': 'campus_zones',
-        'campus-operations': 'campus_operations',
-        'attendance': 'attendance',
-        'timetable': 'timetable',
-        'syllabus': 'syllabus',
-        'pyqs': 'pyqs',
-        'assignments': 'assignments',
-        'submissions': 'submissions',
-        'results': 'cgpa',
-        'marks': 'sessional_results',
-        'sessional-marks': 'sessional_results',
-        'leave': 'leaves',
-        'complaints': 'complaints',
-        'doubts': 'doubts',
-        'achievements': 'achievements',
-        'gate-pass': 'gate_pass',
-        'hostel-outpass': 'hostel_outpass',
-        'presence': 'campus_presence',
-        'calendar': 'calendar',
-        'gallery': 'gallery',
-        'smart-board': 'smartboard',
-        'students': 'students_mgmt',
-        'faculty': 'teachers_mgmt',
-        'subject-allocation': 'academic_catalog',
-        'academic-catalog': 'academic_catalog',
-        'departments': 'department',
-        'performance': 'cgpa',
-        'syllabus-progress': 'syllabus_progress',
-        'approvals': 'leaves',
-        'operations': 'gate_pass',
-        'gate-hostel': 'gate_pass',
-        'no-dues': 'no_dues',
-        'events': 'events',
-        'maintenance': 'maintenance',
-        'lost-found': 'lost_found',
-        'import': 'import_data',
-        'content': 'notices',
-        'reports': 'reports',
-        'analytics': 'principal_analytics',
-        'audit-log': 'audit_log',
-        'scan': 'gate_scanner',
-        'gate-passes': 'gate_pass',
-        'hostel-outpasses': 'hostel_outpass',
-        'entry-exit-logs': 'reconciliation',
-        'security-alerts': 'fines',
-        'notifications': 'notices',
-        'fees': 'fees',
-        'fee-receipts': 'fees',
-        'admit-card': 'admit_card',
-        'hall-ticket': 'admit_card',
-        'library': 'library',
-        'transport': 'transport',
-        'bus': 'transport',
-        'mess': 'mess',
-        'hostel-mess': 'mess',
-        'placements': 'placements',
-        'alumni': 'placements',
-        'id-card': 'id_card',
-        'idcard': 'id_card',
-        'internals': 'internals',
-        'internal-calculator': 'internals',
-        'emergency-sos': 'emergency_sos',
-        'emergency': 'emergency_sos',
-        'dispensary': 'emergency_sos',
-        'parent-portal': 'parent_portal',
-        'parent': 'parent_portal',
-        'settings': 'settings'
-      };
-      if (tabMap[targetSeg]) {
-        setCurrentTab(tabMap[targetSeg]);
-      }
-    }
+    window.addEventListener('popstate', handlePopState);
+
+    const unsubscribeNav = subscribeToNavigation((tab) => {
+      setCurrentTab(tab);
+      setIsMobileSidebarOpen(false);
+    });
+
+    const cleanupLinks = setupClientSideLinkInterceptor((tab) => {
+      setCurrentTab(tab);
+      setIsMobileSidebarOpen(false);
+    });
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      unsubscribeNav();
+      cleanupLinks();
+    };
   }, []);
 
   // Development Demo Accounts Switcher (/dev/demo-accounts)
@@ -186,11 +109,11 @@ const MainLayout: React.FC = () => {
   // 0. Public Document Verification Route Handling (/verify/hall-ticket/:token & /verify/certificate/:token)
   if (pathname.startsWith('/verify/hall-ticket/')) {
     const token = pathname.replace('/verify/hall-ticket/', '').split('/')[0] || '';
-    return <VerifyPublicDoc type="hall-ticket" token={token} onGoHome={() => { window.location.href = '/'; }} />;
+    return <VerifyPublicDoc type="hall-ticket" token={token} onGoHome={() => { navigateTo('dashboard'); }} />;
   }
   if (pathname.startsWith('/verify/certificate/')) {
     const token = pathname.replace('/verify/certificate/', '').split('/')[0] || '';
-    return <VerifyPublicDoc type="certificate" token={token} onGoHome={() => { window.location.href = '/'; }} />;
+    return <VerifyPublicDoc type="certificate" token={token} onGoHome={() => { navigateTo('dashboard'); }} />;
   }
 
   // Development Role Preview Support (?previewRole=student|faculty|hod|principal|security)
@@ -224,14 +147,7 @@ const MainLayout: React.FC = () => {
   const handleTabChange = (tab: NavTab) => {
     setCurrentTab(tab);
     setIsMobileSidebarOpen(false);
-    if (typeof window !== 'undefined') {
-      if (tab === 'ai_campus') {
-        window.history.pushState(null, '', '/app/ai');
-      } else if (tab.startsWith('ai_')) {
-        const subRoute = tab.replace('ai_', '').replace(/_/g, '-');
-        window.history.pushState(null, '', `/app/ai/${subRoute}`);
-      }
-    }
+    navigateTo(tab, { scroll: true });
   };
 
   const renderDashboard = () => {
@@ -312,16 +228,10 @@ const MainLayout: React.FC = () => {
           onOpenTeacherRegister={() => setShowTeacherRegModal(true)}
         />
 
-        <CampusGalleryModal
-          isOpen={showGalleryModal}
-          onClose={() => setShowGalleryModal(false)}
-        />
-
         <LandingPage
           onOpenLogin={handleOpenLogin}
           onOpenStudentRegister={() => setShowStudentRegModal(true)}
           onOpenTeacherRegister={() => setShowTeacherRegModal(true)}
-          onOpenGallery={() => setShowGalleryModal(true)}
         />
       </div>
     );
@@ -338,6 +248,7 @@ const MainLayout: React.FC = () => {
         onOpenLogin={handleOpenLogin}
         onOpenAiAssistant={() => setShowAiAssistantModal(true)}
         onOpenSearch={() => setShowCommandPalette(true)}
+        onNavigateHome={() => handleTabChange('dashboard')}
       />
 
       {/* Global Modals */}
@@ -360,11 +271,6 @@ const MainLayout: React.FC = () => {
         isOpen={showNotificationsModal}
         onClose={() => setShowNotificationsModal(false)}
         onNavigateTab={handleTabChange}
-      />
-
-      <CampusGalleryModal
-        isOpen={showGalleryModal}
-        onClose={() => setShowGalleryModal(false)}
       />
 
       <StudentRegisterModal
@@ -396,7 +302,7 @@ const MainLayout: React.FC = () => {
           onCloseMobile={() => setIsMobileSidebarOpen(false)}
         />
 
-        <main className="flex-1 lg:pl-64 w-full min-w-0 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto transition-all pb-20">
+        <main className="flex-1 lg:pl-64 w-full min-w-0 p-3 sm:p-6 lg:p-8 max-w-7xl mx-auto pb-28 sm:pb-32 lg:pb-12">
           {renderDashboard()}
         </main>
       </div>

@@ -7,6 +7,7 @@ import React from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { UserRole } from '../../types';
 import { ShieldAlert, LogIn } from 'lucide-react';
+import { navigateTo } from '../../lib/appNavigation';
 
 interface Props {
   allowedRoles: UserRole[];
@@ -37,8 +38,8 @@ export const RoleGuard: React.FC<Props> = ({ allowedRoles, children, fallback })
           Please sign in with your institutional credentials to access this protected area.
         </p>
         <button
-          onClick={() => { window.location.href = '/login'; }}
-          className="w-full py-2.5 px-4 bg-[#0f2942] hover:bg-[#163a5d] text-white text-sm font-semibold rounded-lg transition-colors"
+          onClick={() => navigateTo('/login')}
+          className="w-full py-2.5 px-4 bg-[#0f2942] hover:bg-[#163a5d] text-white text-sm font-semibold rounded-lg transition-colors cursor-pointer"
         >
           Go to Sign In
         </button>
@@ -61,8 +62,8 @@ export const RoleGuard: React.FC<Props> = ({ allowedRoles, children, fallback })
           Your institutional account ({role}) does not have permission to view this resource.
         </p>
         <button
-          onClick={() => { window.location.href = '/'; }}
-          className="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold rounded-lg transition-colors"
+          onClick={() => navigateTo('dashboard')}
+          className="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold rounded-lg transition-colors cursor-pointer"
         >
           Return to My Workspace
         </button>

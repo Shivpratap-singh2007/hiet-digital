@@ -50,7 +50,6 @@ import { DigitalGatePassView } from '../components/student/DigitalGatePassView';
 import { SecurityScannerView } from '../components/security/SecurityScannerView';
 import { AdminFinesManagementView } from '../components/fines/AdminFinesManagementView';
 import { CalendarView } from '../components/common/CalendarView';
-import { CampusGalleryView } from '../components/common/CampusGalleryView';
 import { TeacherAchievementsView } from '../components/teacher/TeacherAchievementsView';
 import { TimetableActiveView } from '../components/student/TimetableActiveView';
 import { TeacherSessionalView } from '../components/teacher/TeacherSessionalView';
@@ -127,8 +126,14 @@ export const PrincipalDashboard: React.FC<Props> = ({ currentTab, onNavigateTab 
 
   // Calculated Real Metrics
   const pendingLeaves = leaves.filter(l => (l.status || '').toLowerCase().startsWith('pending')).length;
-  const principalQueueCount = leaves.filter(l => (l.status || '').toLowerCase() === 'pending_principal' || l.current_stage === 'principal').length;
-  const openComplaints = complaints.filter(c => c.status === 'Submitted' || c.status === 'Under Review').length;
+  const principalQueueCount = leaves.filter(l => (l.status || '').toLowerCase() === 'pending_principal').length;
+  const openComplaints = complaints.filter(c => 
+    c.status === 'Pending Principal Review' || 
+    c.status === 'Principal Action Overdue' || 
+    c.status === 'Submitted' || 
+    c.status === 'Under Review' ||
+    c.status === 'Escalated to MD'
+  ).length;
   const pendingAchievements = achievements.filter(a => a.verification_status === 'Pending').length;
   const totalPendingApprovals = pendingLeaves + openComplaints + pendingAchievements;
 
@@ -168,7 +173,6 @@ export const PrincipalDashboard: React.FC<Props> = ({ currentTab, onNavigateTab 
   if (currentTab === 'fines') return <AdminFinesManagementView />;
   if (currentTab === 'achievements') return <TeacherAchievementsView />;
   if (currentTab === 'calendar') return <CalendarView />;
-  if (currentTab === 'gallery') return <CampusGalleryView />;
   if (currentTab === 'smartboard') return <SmartBoardTeachingView roleMode="principal" />;
   if (currentTab === 'campus_presence') return <CampusPresenceView roleMode="principal" />;
   if (currentTab === 'settings') return <SettingsView />;

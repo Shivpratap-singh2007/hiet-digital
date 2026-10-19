@@ -27,6 +27,7 @@ import {
   School
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { navigateTo } from '../../lib/appNavigation';
 import { 
   DEMO_COMMON_PASSWORD,
   DEMO_FACULTY_LIST, 
@@ -237,8 +238,8 @@ export const DemoAccountsPage: React.FC = () => {
       if (res.success) {
         setStatusMessage(`Successfully signed in as ${acc.name}. Redirecting to ${acc.expectedWorkspace}...`);
         setTimeout(() => {
-          window.location.href = acc.initialRoute || '/';
-        }, 300);
+          navigateTo(acc.initialRoute || '/');
+        }, 150);
       } else {
         setStatusMessage(res.error || 'Authentication error.');
       }
@@ -315,15 +316,15 @@ export const DemoAccountsPage: React.FC = () => {
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <button
-              onClick={() => { window.location.href = '/login'; }}
-              className="px-4 py-2 text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors inline-flex items-center gap-2"
+              onClick={() => navigateTo('/login')}
+              className="px-4 py-2 text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors inline-flex items-center gap-2 cursor-pointer"
             >
               <LogIn className="w-4 h-4" />
               <span>Standard Login</span>
             </button>
             <button
-              onClick={() => { window.location.href = '/'; }}
-              className="px-4 py-2 text-sm font-semibold text-white bg-[#0f2942] hover:bg-[#163a5d] rounded-lg transition-colors inline-flex items-center gap-2"
+              onClick={() => navigateTo('/')}
+              className="px-4 py-2 text-sm font-semibold text-white bg-[#0f2942] hover:bg-[#163a5d] rounded-lg transition-colors inline-flex items-center gap-2 cursor-pointer"
             >
               <span>Back to Portal</span>
               <ArrowRight className="w-4 h-4" />

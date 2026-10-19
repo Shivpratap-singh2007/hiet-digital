@@ -8,7 +8,6 @@ import {
   Share2, 
   QrCode, 
   HelpCircle, 
-  Camera, 
   ArrowRight,
   ShieldCheck,
   Building2,
@@ -134,20 +133,11 @@ export const ServicesHubView: React.FC<Props> = ({ onNavigate }) => {
       badgeColor: 'bg-slate-100 text-slate-700 border-slate-200',
       icon: Share2,
       iconColor: 'text-slate-600 bg-slate-100'
-    },
-    {
-      id: 'gallery' as NavTab,
-      title: 'Campus Life & Gallery',
-      desc: 'Explore campus infrastructure, annual festivals, AI labs, and convocation moments.',
-      badge: 'HD Photos',
-      badgeColor: 'bg-teal-50 text-teal-700 border-teal-200',
-      icon: Camera,
-      iconColor: 'text-teal-600 bg-teal-50'
     }
   ];
 
   return (
-    <div className="space-y-4 sm:space-y-5 animate-fade-in font-sans pb-12">
+    <div className="space-y-4 sm:space-y-5 animate-fade-in font-sans max-w-5xl mx-auto px-1 sm:px-2 pb-12">
       {/* Header */}
       <div className="bg-white border border-slate-200 rounded-3xl p-4 sm:p-5 shadow-xs">
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold mb-1.5 border border-blue-100">

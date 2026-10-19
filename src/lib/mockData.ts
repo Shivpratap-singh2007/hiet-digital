@@ -16,6 +16,8 @@ import {
   LeaveRequest, 
   LeaveRequestHistory,
   LeaveWorkflowConfig,
+  GrievanceWorkflowConfig,
+  GrievanceEscalationHistoryItem,
   Complaint, 
   Doubt, 
   CalendarEvent, 
@@ -23,6 +25,7 @@ import {
   CampusLocation, 
   NotificationItem,
   SessionalResult,
+  ClassTestRecord,
   TimetableSlot,
   SyllabusProgress,
   CollegeSocialLink,
@@ -44,7 +47,13 @@ import {
   CampusPresenceRecord,
   ClassInchargeRecord,
   HodAssignmentRecord,
-  Hostel
+  Hostel,
+  HostelOutpass,
+  LostFoundItem,
+  LostFoundClaim,
+  LostFoundStatus,
+  LostFoundCategory,
+  LostFoundReportType
 } from '../types';
 import { 
   ALL_DEMO_FACULTY_PROFILES, 
@@ -973,6 +982,164 @@ export const INITIAL_SESSIONAL_RESULTS: SessionalResult[] = [
 ];
 
 // =============================================================================
+// 5B. CLASS TEST RECORDS (Unit tests, diagnostic tests & continuous assessment)
+// =============================================================================
+export const INITIAL_CLASS_TESTS: ClassTestRecord[] = [
+  {
+    id: 'ct-01',
+    student_id: 'std-cse-001',
+    student_roll: 'CSE001',
+    student_name: 'Aarav Sharma',
+    subject_name: 'Mathematics',
+    subject_code: 'CS-601',
+    test_name: 'Class Test 1',
+    test_number: 1,
+    test_date: '2026-08-18',
+    marks_obtained: 19,
+    max_marks: 20,
+    percentage: 95,
+    status: 'Evaluated',
+    semester: 6,
+    branch: 'CSE',
+    teacher_name: 'Er. Rajesh Sharma',
+    remarks: 'Flawless matrix decomposition and eigenvalues step-by-step logic.'
+  },
+  {
+    id: 'ct-02',
+    student_id: 'std-cse-001',
+    student_roll: 'CSE001',
+    student_name: 'Aarav Sharma',
+    subject_name: 'Physics',
+    subject_code: 'CS-602',
+    test_name: 'Class Test 1',
+    test_number: 1,
+    test_date: '2026-08-20',
+    marks_obtained: 18,
+    max_marks: 20,
+    percentage: 90,
+    status: 'Evaluated',
+    semester: 6,
+    branch: 'CSE',
+    teacher_name: 'Dr. Neha Kapoor',
+    remarks: 'Clear wave mechanics diagram and accurate mathematical derivation.'
+  },
+  {
+    id: 'ct-03',
+    student_id: 'std-cse-001',
+    student_roll: 'CSE001',
+    student_name: 'Aarav Sharma',
+    subject_name: 'BEE',
+    subject_code: 'CS-603',
+    test_name: 'Class Test 1',
+    test_number: 1,
+    test_date: '2026-08-23',
+    marks_obtained: 17,
+    max_marks: 20,
+    percentage: 85,
+    status: 'Evaluated',
+    semester: 6,
+    branch: 'CSE',
+    teacher_name: 'Er. Vikas Dogra',
+    remarks: 'Accurate mesh analysis and correct voltage drop values.'
+  },
+  {
+    id: 'ct-04',
+    student_id: 'std-cse-001',
+    student_roll: 'CSE001',
+    student_name: 'Aarav Sharma',
+    subject_name: 'Communication',
+    subject_code: 'CS-604',
+    test_name: 'Class Test 1',
+    test_number: 1,
+    test_date: '2026-08-26',
+    marks_obtained: 19,
+    max_marks: 20,
+    percentage: 95,
+    status: 'Evaluated',
+    semester: 6,
+    branch: 'CSE',
+    teacher_name: 'Dr. Sunita Rana',
+    remarks: 'Excellent technical writing and structured business email draft.'
+  },
+  {
+    id: 'ct-05',
+    student_id: 'std-cse-001',
+    student_roll: 'CSE001',
+    student_name: 'Aarav Sharma',
+    subject_name: 'EVS',
+    subject_code: 'CS-605',
+    test_name: 'Class Test 1',
+    test_number: 1,
+    test_date: '2026-08-29',
+    marks_obtained: 18,
+    max_marks: 20,
+    percentage: 90,
+    status: 'Evaluated',
+    semester: 6,
+    branch: 'CSE',
+    teacher_name: 'Er. Meenakshi Sharma',
+    remarks: 'Well-researched renewable energy conservation overview.'
+  },
+  {
+    id: 'ct-06',
+    student_id: 'std-cse-001',
+    student_roll: 'CSE001',
+    student_name: 'Aarav Sharma',
+    subject_name: 'Mathematics',
+    subject_code: 'CS-601',
+    test_name: 'Class Test 2',
+    test_number: 2,
+    test_date: '2026-09-15',
+    marks_obtained: 18,
+    max_marks: 20,
+    percentage: 90,
+    status: 'Evaluated',
+    semester: 6,
+    branch: 'CSE',
+    teacher_name: 'Er. Rajesh Sharma',
+    remarks: 'Strong Fourier transform derivations and practical problem solutions.'
+  },
+  {
+    id: 'ct-07',
+    student_id: 'std-cse-001',
+    student_roll: 'CSE001',
+    student_name: 'Aarav Sharma',
+    subject_name: 'Physics',
+    subject_code: 'CS-602',
+    test_name: 'Class Test 2',
+    test_number: 2,
+    test_date: '2026-09-18',
+    marks_obtained: 19,
+    max_marks: 20,
+    percentage: 95,
+    status: 'Evaluated',
+    semester: 6,
+    branch: 'CSE',
+    teacher_name: 'Dr. Neha Kapoor',
+    remarks: 'Solid grasp of electromagnetic theory and Maxwell equations.'
+  },
+  {
+    id: 'ct-08',
+    student_id: 'std-cse-001',
+    student_roll: 'CSE001',
+    student_name: 'Aarav Sharma',
+    subject_name: 'BEE',
+    subject_code: 'CS-603',
+    test_name: 'Class Test 2',
+    test_number: 2,
+    test_date: '2026-09-21',
+    marks_obtained: 20,
+    max_marks: 20,
+    percentage: 100,
+    status: 'Evaluated',
+    semester: 6,
+    branch: 'CSE',
+    teacher_name: 'Er. Vikas Dogra',
+    remarks: 'Perfect score on three-phase power measurement algorithms.'
+  }
+];
+
+// =============================================================================
 // 6. TIMETABLE SLOTS (With Time Bounds for Auto-Highlighting "Active / NOW" Class)
 // =============================================================================
 export const INITIAL_TIMETABLE: TimetableSlot[] = [
@@ -1434,40 +1601,40 @@ export const INITIAL_ACADEMIC_RECORDS: AcademicRecord[] = [
 // 8b. GRADES MASTER (Phase 8: Weighted Credits & Dynamic CGPA / SGPA Calculation)
 // =============================================================================
 export const INITIAL_GRADES: Grade[] = [
-  // Aarav Sharma (std-cse-001) - Sem 1: Credits 20, SGPA = 8.80
-  { id: 'grd-01', student_id: 'std-cse-001', semester: 1, subject_code: 'AS-101', subject_name: 'Engineering Mathematics-I', credits: 4.0, letter_grade: 'A', grade_point: 9.0, marks: 84 },
-  { id: 'grd-02', student_id: 'std-cse-001', semester: 1, subject_code: 'AS-102', subject_name: 'Engineering Physics', credits: 4.0, letter_grade: 'A', grade_point: 8.0, marks: 78 },
-  { id: 'grd-03', student_id: 'std-cse-001', semester: 1, subject_code: 'CS-101', subject_name: 'Programming in C & Data Structures', credits: 4.0, letter_grade: 'A+', grade_point: 10.0, marks: 92 },
-  { id: 'grd-04', student_id: 'std-cse-001', semester: 1, subject_code: 'EE-101', subject_name: 'Basic Electrical & Electronics', credits: 4.0, letter_grade: 'B+', grade_point: 8.0, marks: 76 },
-  { id: 'grd-05', student_id: 'std-cse-001', semester: 1, subject_code: 'HU-101', subject_name: 'Professional Communication', credits: 4.0, letter_grade: 'A', grade_point: 9.0, marks: 85 },
+  // Aarav Sharma (std-cse-001) - Sem 1: Credits 20, SGPA = 8.80 (Session 2023-24 Odd)
+  { id: 'grd-01', student_id: 'std-cse-001', semester: 1, session: '2023-24 (Odd Semester)', subject_code: 'AS-101', subject_name: 'Engineering Mathematics-I', credits: 4.0, internal_marks: 12, sessional_marks: 24, external_marks: 48, marks: 84, max_marks: 100, letter_grade: 'A', grade_point: 9.0, status: 'Pass', is_published: true },
+  { id: 'grd-02', student_id: 'std-cse-001', semester: 1, session: '2023-24 (Odd Semester)', subject_code: 'AS-102', subject_name: 'Engineering Physics', credits: 4.0, internal_marks: 10, sessional_marks: 20, practical_marks: 18, external_marks: 30, marks: 78, max_marks: 100, letter_grade: 'A', grade_point: 8.0, status: 'Pass', is_published: true },
+  { id: 'grd-03', student_id: 'std-cse-001', semester: 1, session: '2023-24 (Odd Semester)', subject_code: 'CS-101', subject_name: 'Programming in C & Data Structures', credits: 4.0, internal_marks: 14, sessional_marks: 25, practical_marks: 19, external_marks: 34, marks: 92, max_marks: 100, letter_grade: 'A+', grade_point: 10.0, status: 'Pass', is_published: true },
+  { id: 'grd-04', student_id: 'std-cse-001', semester: 1, session: '2023-24 (Odd Semester)', subject_code: 'EE-101', subject_name: 'Basic Electrical & Electronics', credits: 4.0, internal_marks: 11, sessional_marks: 21, practical_marks: 16, external_marks: 28, marks: 76, max_marks: 100, letter_grade: 'B+', grade_point: 8.0, status: 'Pass', is_published: true },
+  { id: 'grd-05', student_id: 'std-cse-001', semester: 1, session: '2023-24 (Odd Semester)', subject_code: 'HU-101', subject_name: 'Professional Communication', credits: 4.0, internal_marks: 13, sessional_marks: 24, practical_marks: 18, external_marks: 30, marks: 85, max_marks: 100, letter_grade: 'A', grade_point: 9.0, status: 'Pass', is_published: true },
 
-  // Aarav Sharma (std-cse-001) - Sem 2: Credits 20, SGPA = 8.80
-  { id: 'grd-06', student_id: 'std-cse-001', semester: 2, subject_code: 'AS-201', subject_name: 'Engineering Mathematics-II', credits: 4.0, letter_grade: 'A', grade_point: 9.0, marks: 86 },
-  { id: 'grd-07', student_id: 'std-cse-001', semester: 2, subject_code: 'CS-201', subject_name: 'Object Oriented Programming with C++', credits: 4.0, letter_grade: 'A+', grade_point: 10.0, marks: 95 },
-  { id: 'grd-08', student_id: 'std-cse-001', semester: 2, subject_code: 'CS-202', subject_name: 'Digital Logic & Design', credits: 4.0, letter_grade: 'A', grade_point: 8.0, marks: 77 },
-  { id: 'grd-09', student_id: 'std-cse-001', semester: 2, subject_code: 'AS-202', subject_name: 'Environmental Science', credits: 4.0, letter_grade: 'A', grade_point: 9.0, marks: 82 },
-  { id: 'grd-10', student_id: 'std-cse-001', semester: 2, subject_code: 'ME-201', subject_name: 'Engineering Workshop & CAD', credits: 4.0, letter_grade: 'B+', grade_point: 8.0, marks: 75 },
+  // Aarav Sharma (std-cse-001) - Sem 2: Credits 20, SGPA = 8.80 (Session 2023-24 Even)
+  { id: 'grd-06', student_id: 'std-cse-001', semester: 2, session: '2023-24 (Even Semester)', subject_code: 'AS-201', subject_name: 'Engineering Mathematics-II', credits: 4.0, internal_marks: 12, sessional_marks: 26, external_marks: 48, marks: 86, max_marks: 100, letter_grade: 'A', grade_point: 9.0, status: 'Pass', is_published: true },
+  { id: 'grd-07', student_id: 'std-cse-001', semester: 2, session: '2023-24 (Even Semester)', subject_code: 'CS-201', subject_name: 'Object Oriented Programming with C++', credits: 4.0, internal_marks: 15, sessional_marks: 25, practical_marks: 20, external_marks: 35, marks: 95, max_marks: 100, letter_grade: 'A+', grade_point: 10.0, status: 'Pass', is_published: true },
+  { id: 'grd-08', student_id: 'std-cse-001', semester: 2, session: '2023-24 (Even Semester)', subject_code: 'CS-202', subject_name: 'Digital Logic & Design', credits: 4.0, internal_marks: 11, sessional_marks: 22, practical_marks: 16, external_marks: 28, marks: 77, max_marks: 100, letter_grade: 'A', grade_point: 8.0, status: 'Pass', is_published: true },
+  { id: 'grd-09', student_id: 'std-cse-001', semester: 2, session: '2023-24 (Even Semester)', subject_code: 'AS-202', subject_name: 'Environmental Science', credits: 4.0, internal_marks: 12, sessional_marks: 24, external_marks: 46, marks: 82, max_marks: 100, letter_grade: 'A', grade_point: 9.0, status: 'Pass', is_published: true },
+  { id: 'grd-10', student_id: 'std-cse-001', semester: 2, session: '2023-24 (Even Semester)', subject_code: 'ME-201', subject_name: 'Engineering Workshop & CAD', credits: 4.0, internal_marks: 10, sessional_marks: 20, practical_marks: 20, external_marks: 25, marks: 75, max_marks: 100, letter_grade: 'B+', grade_point: 8.0, status: 'Pass', is_published: true },
 
-  // Aarav Sharma (std-cse-001) - Sem 3: Credits 20, SGPA = 9.00
-  { id: 'grd-11', student_id: 'std-cse-001', semester: 3, subject_code: 'CS-301', subject_name: 'Data Structures & Algorithms', credits: 4.0, letter_grade: 'A+', grade_point: 10.0, marks: 93 },
-  { id: 'grd-12', student_id: 'std-cse-001', semester: 3, subject_code: 'CS-302', subject_name: 'Discrete Mathematics', credits: 4.0, letter_grade: 'A', grade_point: 9.0, marks: 85 },
-  { id: 'grd-13', student_id: 'std-cse-001', semester: 3, subject_code: 'CS-303', subject_name: 'Computer Architecture & Org.', credits: 4.0, letter_grade: 'A', grade_point: 8.0, marks: 79 },
-  { id: 'grd-14', student_id: 'std-cse-001', semester: 3, subject_code: 'CS-304', subject_name: 'Database Management Systems', credits: 4.0, letter_grade: 'A+', grade_point: 10.0, marks: 94 },
-  { id: 'grd-15', student_id: 'std-cse-001', semester: 3, subject_code: 'CS-305', subject_name: 'Data Structures Lab', credits: 4.0, letter_grade: 'A', grade_point: 8.0, marks: 80 },
+  // Aarav Sharma (std-cse-001) - Sem 3: Credits 20, SGPA = 9.00 (Session 2024-25 Odd)
+  { id: 'grd-11', student_id: 'std-cse-001', semester: 3, session: '2024-25 (Odd Semester)', subject_code: 'CS-301', subject_name: 'Data Structures & Algorithms', credits: 4.0, internal_marks: 14, sessional_marks: 26, external_marks: 53, marks: 93, max_marks: 100, letter_grade: 'A+', grade_point: 10.0, status: 'Pass', is_published: true },
+  { id: 'grd-12', student_id: 'std-cse-001', semester: 3, session: '2024-25 (Odd Semester)', subject_code: 'CS-302', subject_name: 'Discrete Mathematics', credits: 4.0, internal_marks: 12, sessional_marks: 25, external_marks: 48, marks: 85, max_marks: 100, letter_grade: 'A', grade_point: 9.0, status: 'Pass', is_published: true },
+  { id: 'grd-13', student_id: 'std-cse-001', semester: 3, session: '2024-25 (Odd Semester)', subject_code: 'CS-303', subject_name: 'Computer Architecture & Org.', credits: 4.0, internal_marks: 11, sessional_marks: 23, external_marks: 45, marks: 79, max_marks: 100, letter_grade: 'A', grade_point: 8.0, status: 'Pass', is_published: true },
+  { id: 'grd-14', student_id: 'std-cse-001', semester: 3, session: '2024-25 (Odd Semester)', subject_code: 'CS-304', subject_name: 'Database Management Systems', credits: 4.0, internal_marks: 14, sessional_marks: 26, external_marks: 54, marks: 94, max_marks: 100, letter_grade: 'A+', grade_point: 10.0, status: 'Pass', is_published: true },
+  { id: 'grd-15', student_id: 'std-cse-001', semester: 3, session: '2024-25 (Odd Semester)', subject_code: 'CS-305', subject_name: 'Data Structures Lab', credits: 4.0, internal_marks: 15, sessional_marks: 20, practical_marks: 25, external_marks: 20, marks: 80, max_marks: 100, letter_grade: 'A', grade_point: 8.0, status: 'Pass', is_published: true },
 
-  // Aarav Sharma (std-cse-001) - Sem 4: Credits 20, SGPA = 8.80
-  { id: 'grd-16', student_id: 'std-cse-001', semester: 4, subject_code: 'CS-401', subject_name: 'Operating Systems', credits: 4.0, letter_grade: 'A', grade_point: 9.0, marks: 87 },
-  { id: 'grd-17', student_id: 'std-cse-001', semester: 4, subject_code: 'CS-402', subject_name: 'Design & Analysis of Algorithms', credits: 4.0, letter_grade: 'A', grade_point: 9.0, marks: 88 },
-  { id: 'grd-18', student_id: 'std-cse-001', semester: 4, subject_code: 'CS-403', subject_name: 'Theory of Computation', credits: 4.0, letter_grade: 'B+', grade_point: 8.0, marks: 74 },
-  { id: 'grd-19', student_id: 'std-cse-001', semester: 4, subject_code: 'CS-404', subject_name: 'Computer Networks', credits: 4.0, letter_grade: 'A', grade_point: 9.0, marks: 86 },
-  { id: 'grd-20', student_id: 'std-cse-001', semester: 4, subject_code: 'CS-405', subject_name: 'OS & Networks Lab', credits: 4.0, letter_grade: 'A', grade_point: 9.0, marks: 85 },
+  // Aarav Sharma (std-cse-001) - Sem 4: Credits 20, SGPA = 8.80 (Session 2024-25 Even)
+  { id: 'grd-16', student_id: 'std-cse-001', semester: 4, session: '2024-25 (Even Semester)', subject_code: 'CS-401', subject_name: 'Operating Systems', credits: 4.0, internal_marks: 13, sessional_marks: 25, external_marks: 49, marks: 87, max_marks: 100, letter_grade: 'A', grade_point: 9.0, status: 'Pass', is_published: true },
+  { id: 'grd-17', student_id: 'std-cse-001', semester: 4, session: '2024-25 (Even Semester)', subject_code: 'CS-402', subject_name: 'Design & Analysis of Algorithms', credits: 4.0, internal_marks: 13, sessional_marks: 26, external_marks: 49, marks: 88, max_marks: 100, letter_grade: 'A', grade_point: 9.0, status: 'Pass', is_published: true },
+  { id: 'grd-18', student_id: 'std-cse-001', semester: 4, session: '2024-25 (Even Semester)', subject_code: 'CS-403', subject_name: 'Theory of Computation', credits: 4.0, internal_marks: 10, sessional_marks: 22, external_marks: 42, marks: 74, max_marks: 100, letter_grade: 'B+', grade_point: 8.0, status: 'Pass', is_published: true },
+  { id: 'grd-19', student_id: 'std-cse-001', semester: 4, session: '2024-25 (Even Semester)', subject_code: 'CS-404', subject_name: 'Computer Networks', credits: 4.0, internal_marks: 13, sessional_marks: 25, external_marks: 48, marks: 86, max_marks: 100, letter_grade: 'A', grade_point: 9.0, status: 'Pass', is_published: true },
+  { id: 'grd-20', student_id: 'std-cse-001', semester: 4, session: '2024-25 (Even Semester)', subject_code: 'CS-405', subject_name: 'OS & Networks Lab', credits: 4.0, internal_marks: 15, sessional_marks: 20, practical_marks: 25, external_marks: 25, marks: 85, max_marks: 100, letter_grade: 'A', grade_point: 9.0, status: 'Pass', is_published: true },
 
-  // Aarav Sharma (std-cse-001) - Sem 5: Credits 20, SGPA = 9.20
-  { id: 'grd-21', student_id: 'std-cse-001', semester: 5, subject_code: 'CS-501', subject_name: 'Web Technologies & Frameworks', credits: 4.0, letter_grade: 'A+', grade_point: 10.0, marks: 95 },
-  { id: 'grd-22', student_id: 'std-cse-001', semester: 5, subject_code: 'CS-502', subject_name: 'Compiler Design', credits: 4.0, letter_grade: 'A', grade_point: 8.0, marks: 81 },
-  { id: 'grd-23', student_id: 'std-cse-001', semester: 5, subject_code: 'CS-503', subject_name: 'Software Engineering & Agile', credits: 4.0, letter_grade: 'A', grade_point: 9.0, marks: 89 },
-  { id: 'grd-24', student_id: 'std-cse-001', semester: 5, subject_code: 'CS-504', subject_name: 'Cloud Computing & DevOps', credits: 4.0, letter_grade: 'A+', grade_point: 10.0, marks: 92 },
-  { id: 'grd-25', student_id: 'std-cse-001', semester: 5, subject_code: 'CS-505', subject_name: 'Web Technologies Lab', credits: 4.0, letter_grade: 'A', grade_point: 9.0, marks: 88 }
+  // Aarav Sharma (std-cse-001) - Sem 5: Credits 20, SGPA = 9.20 (Session 2025-26 Odd)
+  { id: 'grd-21', student_id: 'std-cse-001', semester: 5, session: '2025-26 (Odd Semester)', subject_code: 'CS-501', subject_name: 'Web Technologies & Frameworks', credits: 4.0, internal_marks: 15, sessional_marks: 26, external_marks: 54, marks: 95, max_marks: 100, letter_grade: 'A+', grade_point: 10.0, status: 'Pass', is_published: true },
+  { id: 'grd-22', student_id: 'std-cse-001', semester: 5, session: '2025-26 (Odd Semester)', subject_code: 'CS-502', subject_name: 'Compiler Design', credits: 4.0, internal_marks: 12, sessional_marks: 24, external_marks: 45, marks: 81, max_marks: 100, letter_grade: 'A', grade_point: 8.0, status: 'Pass', is_published: true },
+  { id: 'grd-23', student_id: 'std-cse-001', semester: 5, session: '2025-26 (Odd Semester)', subject_code: 'CS-503', subject_name: 'Software Engineering & Agile', credits: 4.0, internal_marks: 13, sessional_marks: 26, external_marks: 50, marks: 89, max_marks: 100, letter_grade: 'A', grade_point: 9.0, status: 'Pass', is_published: true },
+  { id: 'grd-24', student_id: 'std-cse-001', semester: 5, session: '2025-26 (Odd Semester)', subject_code: 'CS-504', subject_name: 'Cloud Computing & DevOps', credits: 4.0, internal_marks: 14, sessional_marks: 26, external_marks: 52, marks: 92, max_marks: 100, letter_grade: 'A+', grade_point: 10.0, status: 'Pass', is_published: true },
+  { id: 'grd-25', student_id: 'std-cse-001', semester: 5, session: '2025-26 (Odd Semester)', subject_code: 'CS-505', subject_name: 'Web Technologies Lab', credits: 4.0, internal_marks: 15, sessional_marks: 21, practical_marks: 25, external_marks: 27, marks: 88, max_marks: 100, letter_grade: 'A', grade_point: 9.0, status: 'Pass', is_published: true }
 ];
 
 // =============================================================================
@@ -1638,6 +1805,15 @@ export const DEFAULT_LEAVE_CONFIG: LeaveWorkflowConfig = {
   principal_required_after_days: 7,
   first_approver_role_key: 'class_incharge',
   is_active: true
+};
+
+export const DEFAULT_GRIEVANCE_CONFIG: GrievanceWorkflowConfig = {
+  config_id: 'cfg-grievance-default',
+  principal_action_deadline_hours: 48,
+  md_escalation_deadline_hours: 96,
+  auto_reminder_enabled: true,
+  auto_escalate_to_md_enabled: true,
+  updated_at: '2026-03-01T00:00:00.000Z'
 };
 
 export const INITIAL_LEAVES: LeaveRequest[] = [
@@ -2364,52 +2540,303 @@ export const INITIAL_DOUBTS: Doubt[] = [
 export const INITIAL_CALENDAR: CalendarEvent[] = [
   {
     id: 'cal-01',
-    title: 'Sessional 1 Examinations (B.Tech)',
-    description: 'Mandatory written midterm exam across all branches.',
+    title: 'Sessional 1 Examinations (B.Tech Midterm)',
+    description: 'Mandatory written midterm examinations across all B.Tech branches and semesters.',
     event_type: 'Exams',
-    start_datetime: '2026-10-05T09:30:00Z',
-    end_datetime: '2026-10-10T17:00:00Z',
+    start_datetime: '2026-10-05T09:30:00',
+    end_datetime: '2026-10-10T17:00:00',
+    start_time: '09:30 AM',
+    end_time: '12:30 PM',
+    venue: 'Academic Block A Exam Halls',
+    location: 'Academic Block A Exam Halls',
     department: 'ALL',
-    location: 'Academic Block A Exam Halls'
+    audience: 'All B.Tech Students',
+    is_verified: true
   },
   {
     id: 'cal-02',
-    title: 'Mahatma Gandhi Jayanti (Holiday)',
-    description: 'National Gazetted Holiday. Campus academic offices closed.',
+    title: 'Mahatma Gandhi Jayanti (Gazetted Holiday)',
+    description: 'National Gazetted Holiday. Academic lectures, laboratories, and administrative offices remain closed.',
     event_type: 'Holidays',
-    start_datetime: '2026-10-02T00:00:00Z',
-    end_datetime: '2026-10-02T23:59:59Z',
-    department: 'ALL'
+    start_datetime: '2026-10-02T00:00:00',
+    end_datetime: '2026-10-02T23:59:59',
+    start_time: 'All Day',
+    end_time: 'All Day',
+    venue: 'Campus Wide',
+    location: 'Campus Wide',
+    department: 'ALL',
+    audience: 'All Students & Faculty',
+    is_verified: true
   },
   {
     id: 'cal-03',
-    title: 'Workshop: Generative AI & LLM Systems',
-    description: 'Hands-on training session organized by CSE AI/ML Department in Aryabhatta Computing Lab.',
+    title: 'Hands-on Workshop: Generative AI & LLM Systems',
+    description: 'Practical training session organized by CSE AI/ML Department covering prompt engineering and model deployment.',
     event_type: 'Seminars',
-    start_datetime: '2026-09-28T10:00:00Z',
-    end_datetime: '2026-09-29T16:00:00Z',
+    start_datetime: '2026-09-28T10:00:00',
+    end_datetime: '2026-09-29T16:00:00',
+    start_time: '10:00 AM',
+    end_time: '04:00 PM',
+    venue: 'Aryabhatta AI Lab, Block A',
+    location: 'Aryabhatta AI Lab, Block A',
     department: 'CSE',
-    location: 'Aryabhatta AI Lab, Block A'
+    audience: 'CSE & AI/ML Students',
+    is_verified: true
   },
   {
     id: 'cal-04',
     title: 'HIET Inter-College Hackathon "Dhauladhar CodeFest 2026"',
-    description: '36-hour non-stop hackathon with themes in HealthTech, AgriTech & Sustainable Energy.',
+    description: '36-hour non-stop hackathon with problem tracks in HealthTech, AgriTech, and Sustainable Smart Campus Systems.',
     event_type: 'Hackathons',
-    start_datetime: '2026-10-16T09:00:00Z',
-    end_datetime: '2026-10-17T21:00:00Z',
+    start_datetime: '2026-10-16T09:00:00',
+    end_datetime: '2026-10-17T21:00:00',
+    start_time: '09:00 AM',
+    end_time: '09:00 PM',
+    venue: 'Central Auditorium & Tech Labs',
+    location: 'Central Auditorium & Tech Labs',
     department: 'CSE',
-    location: 'Central Auditorium'
+    audience: 'All Technical Students',
+    is_verified: true
   },
   {
     id: 'cal-05',
     title: 'HPTU End-Semester Examination Form Submission Deadline',
-    description: 'Last date to submit examination forms with zero late fee.',
+    description: 'Final date to submit university examination registration forms with zero late fee.',
     event_type: 'Important Dates',
-    start_datetime: '2026-10-30T17:00:00Z',
-    end_datetime: '2026-10-30T17:00:00Z',
+    start_datetime: '2026-10-30T17:00:00',
+    end_datetime: '2026-10-30T17:00:00',
+    start_time: '10:00 AM',
+    end_time: '05:00 PM',
+    venue: 'Student Section / Digital ERP Portal',
+    location: 'Student Section / Digital ERP Portal',
     department: 'ALL',
-    location: 'Student Section / Digital Portal'
+    audience: 'All Regular & Carry-Over Students',
+    is_verified: true
+  },
+  {
+    id: 'cal-06',
+    title: 'Odd Semester Academic Classes Commencement',
+    description: 'Official commencement of lectures and lab sessions for 1st, 3rd, 5th, and 7th Semester B.Tech programs.',
+    event_type: 'Classes',
+    start_datetime: '2026-08-10T09:00:00',
+    end_datetime: '2026-08-10T17:00:00',
+    start_time: '09:00 AM',
+    end_time: '05:00 PM',
+    venue: 'Respective Department Lecture Halls',
+    location: 'Respective Department Lecture Halls',
+    department: 'ALL',
+    audience: 'All Registered Students',
+    is_verified: true
+  },
+  {
+    id: 'cal-07',
+    title: 'Mid-Semester Academic Progress & Attendance Review',
+    description: 'Departmental faculty meeting to review course coverage, syllabus progress, and statutory attendance thresholds.',
+    event_type: 'Classes',
+    start_datetime: '2026-10-21T10:00:00',
+    end_datetime: '2026-10-21T13:00:00',
+    start_time: '10:00 AM',
+    end_time: '01:00 PM',
+    venue: 'Conference Room, Block A',
+    location: 'Conference Room, Block A',
+    department: 'ALL',
+    audience: 'Faculty & Department HODs',
+    is_verified: true
+  },
+  {
+    id: 'cal-08',
+    title: 'Dussehra / Vijayadashami (Gazetted Holiday)',
+    description: 'Gazetted holiday on the auspicious occasion of Vijayadashami. College and administrative units will remain closed.',
+    event_type: 'Holidays',
+    start_datetime: '2026-10-20T00:00:00',
+    end_datetime: '2026-10-20T23:59:59',
+    start_time: 'All Day',
+    end_time: 'All Day',
+    venue: 'Campus Wide',
+    location: 'Campus Wide',
+    department: 'ALL',
+    audience: 'All Students & Staff',
+    is_verified: true
+  },
+  {
+    id: 'cal-09',
+    title: 'Sessional 2 / Pre-University Assessment Examinations',
+    description: 'Second internal assessment covering Units 3 & 4. Mandatory for semester internal mark finalization.',
+    event_type: 'Exams',
+    start_datetime: '2026-11-16T09:30:00',
+    end_datetime: '2026-11-21T16:30:00',
+    start_time: '09:30 AM',
+    end_time: '12:30 PM',
+    venue: 'Academic Examination Halls',
+    location: 'Academic Examination Halls',
+    department: 'ALL',
+    audience: 'All B.Tech Students',
+    is_verified: true
+  },
+  {
+    id: 'cal-10',
+    title: 'HPTU End-Semester Practical Vivas & Lab Examinations',
+    description: 'External university practical examinations and viva-voce conducted by appointed university external examiners.',
+    event_type: 'Exams',
+    start_datetime: '2026-12-01T09:00:00',
+    end_datetime: '2026-12-05T16:30:00',
+    start_time: '09:00 AM',
+    end_time: '04:30 PM',
+    venue: 'Department Engineering Laboratories',
+    location: 'Department Engineering Laboratories',
+    department: 'ALL',
+    audience: 'Students meeting 75% attendance criteria',
+    is_verified: true
+  },
+  {
+    id: 'cal-11',
+    title: 'HPTU Final University Theory Examinations',
+    description: 'Final university theory examination for odd semesters conducted under CCTV surveillance and university flying squads.',
+    event_type: 'Exams',
+    start_datetime: '2026-12-08T09:30:00',
+    end_datetime: '2026-12-24T12:30:00',
+    start_time: '09:30 AM',
+    end_time: '12:30 PM',
+    venue: 'Dedicated University Examination Centre',
+    location: 'Dedicated University Examination Centre',
+    department: 'ALL',
+    audience: 'Admitted Students with Valid Hall Tickets',
+    is_verified: true
+  },
+  {
+    id: 'cal-12',
+    title: 'Assignment 1 Submission Deadline: Core Subjects',
+    description: 'Hard deadline to upload written assignment solutions and code repositories via the student portal.',
+    event_type: 'Assignments',
+    start_datetime: '2026-09-25T23:59:00',
+    end_datetime: '2026-09-25T23:59:00',
+    start_time: '11:59 PM',
+    end_time: '11:59 PM',
+    venue: 'Digital Assignment Vault',
+    location: 'Digital Assignment Vault',
+    department: 'ALL',
+    audience: 'All B.Tech Batches',
+    is_verified: true
+  },
+  {
+    id: 'cal-13',
+    title: 'Assignment 2 Submission Deadline: Advanced Electives',
+    description: 'Coursework submission for AI/ML, Cloud Systems, Embedded Systems, and Structural Engineering electives.',
+    event_type: 'Assignments',
+    start_datetime: '2026-10-24T23:59:00',
+    end_datetime: '2026-10-24T23:59:00',
+    start_time: '11:59 PM',
+    end_time: '11:59 PM',
+    venue: 'Digital Assignment Vault',
+    location: 'Digital Assignment Vault',
+    department: 'ALL',
+    audience: '3rd & 4th Year Students',
+    is_verified: true
+  },
+  {
+    id: 'cal-14',
+    title: 'Diwali & Deepawali Festival Break',
+    description: 'Institutional holiday for Diwali festival. Hostels remain open with mess schedule operating on holiday timings.',
+    event_type: 'Holidays',
+    start_datetime: '2026-11-08T00:00:00',
+    end_datetime: '2026-11-11T23:59:59',
+    start_time: 'All Day',
+    end_time: 'All Day',
+    venue: 'Campus Wide',
+    location: 'Campus Wide',
+    department: 'ALL',
+    audience: 'All Students & Staff',
+    is_verified: true
+  },
+  {
+    id: 'cal-15',
+    title: 'Guru Nanak Jayanti (Gazetted Holiday)',
+    description: 'Gazetted holiday across Himachal Pradesh. Academic and administrative activities suspended.',
+    event_type: 'Holidays',
+    start_datetime: '2026-11-24T00:00:00',
+    end_datetime: '2026-11-24T23:59:59',
+    start_time: 'All Day',
+    end_time: 'All Day',
+    venue: 'Campus Wide',
+    location: 'Campus Wide',
+    department: 'ALL',
+    audience: 'All Students & Staff',
+    is_verified: true
+  },
+  {
+    id: 'cal-16',
+    title: 'Industry Seminar: Microservices & Cloud Architecture in FinTech',
+    description: 'Technical lecture by industry principal architects from Gurugram Tech Hub on scalable system design.',
+    event_type: 'Seminars',
+    start_datetime: '2026-10-28T14:00:00',
+    end_datetime: '2026-10-28T16:30:00',
+    start_time: '02:00 PM',
+    end_time: '04:30 PM',
+    venue: 'Seminar Hall 2, Ramanujan Block',
+    location: 'Seminar Hall 2, Ramanujan Block',
+    department: 'CSE',
+    audience: '3rd & 4th Year Students',
+    is_verified: true
+  },
+  {
+    id: 'cal-17',
+    title: 'Annual TechX Robotics & Circuit Design Symposium',
+    description: 'Inter-branch technical exhibition featuring autonomous rovers, drone prototypes, and IoT smart campus demonstrations.',
+    event_type: 'Events',
+    start_datetime: '2026-11-05T09:30:00',
+    end_datetime: '2026-11-06T17:00:00',
+    start_time: '09:30 AM',
+    end_time: '05:00 PM',
+    venue: 'Mechanical & Robotics Innovation Arena',
+    location: 'Mechanical & Robotics Innovation Arena',
+    department: 'ALL',
+    audience: 'Open to All Students and Faculty',
+    is_verified: true
+  },
+  {
+    id: 'cal-18',
+    title: 'TCS & Infosys National Campus Placement Drive (Phase 1)',
+    description: 'On-campus recruitment drive including online aptitude assessment, technical panel interviews, and HR rounds.',
+    event_type: 'Placements',
+    start_datetime: '2026-10-27T09:00:00',
+    end_datetime: '2026-10-29T18:00:00',
+    start_time: '09:00 AM',
+    end_time: '06:00 PM',
+    venue: 'Placement & Training Cell, Block B',
+    location: 'Placement & Training Cell, Block B',
+    department: 'ALL',
+    audience: '7th & 8th Semester Eligible Students',
+    is_verified: true
+  },
+  {
+    id: 'cal-19',
+    title: 'Even Semester Course Pre-Registration & Elective Selection',
+    description: 'Portal opens for students to elect departmental and open electives for the upcoming spring term.',
+    event_type: 'Important Dates',
+    start_datetime: '2026-11-28T10:00:00',
+    end_datetime: '2026-11-30T17:00:00',
+    start_time: '10:00 AM',
+    end_time: '05:00 PM',
+    venue: 'ERP Academic Portal',
+    location: 'ERP Academic Portal',
+    department: 'ALL',
+    audience: '2nd, 4th, and 6th Semester Students',
+    is_verified: true
+  },
+  {
+    id: 'cal-20',
+    title: 'Statutory 75% Attendance Freeze & Examination Roll List',
+    description: 'Official calculation and publishing of final semester attendance percentage. Detained students will be notified.',
+    event_type: 'Important Dates',
+    start_datetime: '2026-11-25T17:00:00',
+    end_datetime: '2026-11-25T17:00:00',
+    start_time: '05:00 PM',
+    end_time: '05:00 PM',
+    venue: 'Notice Boards & Student Portal',
+    location: 'Notice Boards & Student Portal',
+    department: 'ALL',
+    audience: 'All Students & Academic Advisors',
+    is_verified: true
   }
 ];
 
@@ -2603,6 +3030,100 @@ export const INITIAL_HOSTELS: Hostel[] = [
     capacity: 150,
     is_active: true,
     created_at: '2026-07-01T00:00:00Z'
+  }
+];
+
+// =============================================================================
+// 17C. HOSTEL OUTPASSES (Verified Student Allocations & Movement)
+// =============================================================================
+export const INITIAL_HOSTEL_OUTPASSES: HostelOutpass[] = [
+  {
+    id: 'outpass-aditi-001',
+    student_id: 'std-demo-16',
+    student_name: 'Aditi Sharma',
+    student_roll: 'HIET-ECE-2026-001',
+    branch: 'ECE',
+    hostel_block: 'Girls Hostel Block A',
+    room_number: 'R-206',
+    room_no: 'R-206',
+    destination: 'Kangra Home Visit',
+    departure_date: new Date().toISOString().slice(0, 10),
+    departure_time: '16:30',
+    expected_return_date: new Date(Date.now() + 86400000 * 2).toISOString().slice(0, 10),
+    expected_return_time: '18:30',
+    parent_contact: '+91 98165 55016',
+    emergency_contact: '+91 98160 44016',
+    reason: 'Family visit over weekend with parent consent',
+    status: 'Approved',
+    warden_id: 'auth-tch-fac-cse-003',
+    warden_name: 'Ms. Neha Kapoor',
+    warden_remarks: 'Verified telephonically with parent Sh. Kumar Sharma',
+    qr_token: 'OUTPASS-ADITI-2026-001',
+    created_at: new Date(Date.now() - 3600000 * 4).toISOString()
+  },
+  {
+    id: 'outpass-aditya-001',
+    student_id: 'std-demo-1',
+    student_name: 'Aditya Nanda',
+    student_roll: 'HIET-CSE-2026-001',
+    branch: 'CSE',
+    hostel_block: 'Boys Hostel Block B',
+    room_number: 'R-001',
+    room_no: 'R-001',
+    destination: 'Home (Kangra)',
+    departure_date: new Date().toISOString().slice(0, 10),
+    departure_time: '16:00',
+    expected_return_date: new Date(Date.now() + 86400000 * 2).toISOString().slice(0, 10),
+    expected_return_time: '19:00',
+    parent_contact: '+91 98165 55001',
+    reason: 'Family occasion over weekend',
+    status: 'Approved',
+    warden_id: 'auth-tch-fac-ece-002',
+    warden_name: 'Ms. Pooja Thakur',
+    warden_remarks: 'Approved after telephone confirmation from parent',
+    qr_token: 'DEV-OUTPASS-ADITYA-001',
+    created_at: new Date(Date.now() - 3600000 * 6).toISOString()
+  },
+  {
+    id: 'outpass-priya-001',
+    student_id: 'std-demo-3',
+    student_name: 'Priya Verma',
+    student_roll: 'HIET-CSE-2026-003',
+    branch: 'CSE',
+    hostel_block: 'Girls Hostel Block A',
+    room_number: 'R-003',
+    room_no: 'R-003',
+    destination: 'Shimla Home Visit',
+    departure_date: new Date(Date.now() + 86400000).toISOString().slice(0, 10),
+    departure_time: '17:00',
+    expected_return_date: new Date(Date.now() + 86400000 * 3).toISOString().slice(0, 10),
+    expected_return_time: '18:00',
+    parent_contact: '+91 94180 55101',
+    reason: 'Weekend family visit',
+    status: 'Pending',
+    warden_name: 'Ms. Neha Kapoor',
+    qr_token: 'DEV-OUTPASS-PRIYA-003',
+    created_at: new Date(Date.now() - 3600000 * 2).toISOString()
+  },
+  {
+    id: 'outpass-aarav-001',
+    student_id: 'std-demo-2',
+    student_name: 'Aarav Sharma',
+    student_roll: 'HIET-CSE-2026-002',
+    branch: 'CSE',
+    hostel_block: 'Boys Hostel Block B',
+    room_number: 'R-002',
+    room_no: 'R-002',
+    destination: 'Dharamshala Regional Library',
+    departure_date: new Date().toISOString().slice(0, 10),
+    departure_time: '14:00',
+    expected_return_date: new Date().toISOString().slice(0, 10),
+    expected_return_time: '19:00',
+    parent_contact: '+91 98165 55002',
+    reason: 'Reference books collection at regional library',
+    status: 'Pending',
+    qr_token: 'OUTPASS-DEMO-2026-002',
+    created_at: new Date(Date.now() - 3600000).toISOString()
   }
 ];
 
@@ -3551,6 +4072,166 @@ export const INITIAL_SMARTBOARD_LESSONS: SmartBoardLesson[] = [
 ];
 
 // =============================================================================
+// VERIFIED LOST & FOUND VAULT MASTER RECORDS
+// Includes reported lost belongings, found items in custody & verification claims
+// =============================================================================
+export const INITIAL_LOST_FOUND_ITEMS: LostFoundItem[] = [
+  {
+    id: 'lf-found-001',
+    reference_code: 'FOUND-2026-0042',
+    report_type: 'found',
+    title: 'HP Scientific Calculator (fx-991ES Plus)',
+    category: 'Electronics',
+    description: 'Black dual-power non-programmable scientific calculator found on desk row 4.',
+    location: 'LH-201 (Block B, 2nd Floor)',
+    found_location: 'LH-201 (Block B, 2nd Floor)',
+    item_date: '2026-03-28',
+    found_date: '2026-03-28',
+    approximate_time: '11:30 AM',
+    identifying_characteristics: 'Distinctive blue scratch/sticker residue on battery compartment cover.',
+    status: 'Reported',
+    custody_status: 'Library_Desk',
+    challenge_question: 'What is written or engraved on the inner side of the slide-on cover?',
+    challenge_answer: 'HIET ECE 2026',
+    challenge_answer_hash: 'c86c1d76b4a39b56',
+    reporter_id: 'usr-lib-01',
+    reporter_name: 'Library Front Desk Volunteer',
+    reporter_role: 'Staff',
+    founder_name: 'Library Volunteer',
+    contact_preference: 'Campus_Desk',
+    created_at: '2026-03-28T11:45:00.000Z'
+  },
+  {
+    id: 'lf-found-002',
+    reference_code: 'FOUND-2026-0051',
+    report_type: 'found',
+    title: 'College ID Card & Metro Pass Holder',
+    category: 'Documents/ID',
+    description: 'Blue HIET branded lanyard with student ID card and bus pass in protective clear sleeve.',
+    location: 'Central Canteen Table 12',
+    found_location: 'Central Canteen Table 12',
+    item_date: '2026-03-27',
+    found_date: '2026-03-27',
+    approximate_time: '01:45 PM',
+    identifying_characteristics: 'Contains green metro card and silver emergency contact sticker inside.',
+    status: 'Claim_Pending',
+    custody_status: 'Security_Desk',
+    challenge_question: 'What is the full student name and enrollment number visible on the ID?',
+    reporter_id: 'usr-sec-01',
+    reporter_name: 'Security Post 1 Guard Desk',
+    reporter_role: 'Security',
+    founder_name: 'Security Post 1',
+    contact_preference: 'Campus_Desk',
+    created_at: '2026-03-27T14:00:00.000Z'
+  },
+  {
+    id: 'lf-found-003',
+    reference_code: 'FOUND-2026-0067',
+    report_type: 'found',
+    title: 'Dell 65W USB-C Laptop Charger Adapter',
+    category: 'Electronics',
+    description: 'Original Dell black AC power adapter with round rubber cable tie found plugged into row 2 socket.',
+    location: 'Computer Lab 3 (Block A)',
+    found_location: 'Computer Lab 3 (Block A)',
+    item_date: '2026-03-29',
+    found_date: '2026-03-29',
+    approximate_time: '04:15 PM',
+    identifying_characteristics: 'White barcode label partly torn on the brick edge.',
+    status: 'In_Custody',
+    custody_status: 'Department_Office',
+    challenge_question: 'What specific label or marking is attached to the AC wall cable?',
+    challenge_answer: 'Hostel Block B room 204 sticker',
+    reporter_id: 'usr-fac-cse-01',
+    reporter_name: 'CSE Lab Assistant (Er. Raman)',
+    reporter_role: 'Staff',
+    founder_name: 'Er. Raman Lab Tech',
+    contact_preference: 'Institutional_Email',
+    contact_email: 'cse.lab@hiet.ac.in',
+    created_at: '2026-03-29T16:30:00.000Z'
+  },
+  {
+    id: 'lf-lost-001',
+    reference_code: 'LOST-2026-0104',
+    report_type: 'lost',
+    title: 'Casio Scientific Calculator fx-991EX',
+    category: 'Electronics',
+    description: 'Black and white dual-powered scientific calculator misplaced after afternoon Mathematics lecture.',
+    location: 'Block B Lecture Hall 201',
+    item_date: '2026-03-28',
+    approximate_time: '11:15 AM',
+    identifying_characteristics: 'Small initials "AS" engraved with compass needle near display, white slider casing.',
+    status: 'Open',
+    reporter_id: 'usr-demo-std-01',
+    reporter_name: 'Aarav Sharma',
+    reporter_role: 'student',
+    reporter_roll_or_emp: 'HIET-CSE-2026-001',
+    contact_preference: 'Institutional_Email',
+    contact_email: 'aarav.sharma@hiet.ac.in',
+    contact_phone: '+91 98160 11001',
+    additional_info: 'Badly needed for ongoing semester end preparation and lab exams.',
+    created_at: '2026-03-28T12:30:00.000Z'
+  },
+  {
+    id: 'lf-lost-002',
+    reference_code: 'LOST-2026-0118',
+    report_type: 'lost',
+    title: 'Navy Blue Wildcraft Laptop Backpack',
+    category: 'Bags',
+    description: 'Dark navy blue waterproof backpack left near pavilion seating after sports practice.',
+    location: 'Campus Sports Ground Pavilion',
+    item_date: '2026-03-29',
+    approximate_time: '05:30 PM',
+    identifying_characteristics: 'Keyring with miniature brass rover robot attached to front vertical zip.',
+    status: 'Open',
+    reporter_id: 'usr-demo-std-02',
+    reporter_name: 'Aditi Sharma',
+    reporter_role: 'student',
+    reporter_roll_or_emp: 'HIET-ECE-2026-001',
+    contact_preference: 'Phone_WhatsApp',
+    contact_email: 'aditi.sharma@hiet.ac.in',
+    contact_phone: '+91 98160 12001',
+    additional_info: 'Contains class notebooks and engineering drawing instruments box.',
+    created_at: '2026-03-29T18:00:00.000Z'
+  },
+  {
+    id: 'lf-lost-003',
+    reference_code: 'LOST-2026-0129',
+    report_type: 'lost',
+    title: 'Mechanical Drafter & Drawing Sheet Tube',
+    category: 'Books',
+    description: 'Black mini-drafter tool in black zipper case with cylindrical green sheet holder tube.',
+    location: 'Drawing Hall 2 (Workshop Wing)',
+    item_date: '2026-03-26',
+    approximate_time: '02:00 PM',
+    identifying_characteristics: 'Sticker with "HIET MECH 2026" on the protractor head.',
+    status: 'Possible_Match',
+    reporter_id: 'usr-demo-std-03',
+    reporter_name: 'Rohan Verma',
+    reporter_role: 'student',
+    reporter_roll_or_emp: 'HIET-ME-2026-001',
+    contact_preference: 'Institutional_Email',
+    contact_email: 'rohan.verma@hiet.ac.in',
+    contact_phone: '+91 98160 13001',
+    created_at: '2026-03-26T15:30:00.000Z'
+  }
+];
+
+export const INITIAL_LOST_FOUND_CLAIMS: LostFoundClaim[] = [
+  {
+    id: 'claim-001',
+    item_id: 'lf-found-002',
+    claimant_id: 'usr-demo-std-01',
+    claimant_name: 'Aarav Sharma',
+    claimant_roll: 'HIET-CSE-2026-001',
+    claimant_phone: '+91 98160 11001',
+    challenge_response: 'Enrollment No: HIET2026CSE001, Bus Pass Route No 4 to Kangra',
+    additional_proof: 'Photo of the library barcode is present in my mobile gallery.',
+    status: 'Under_Verification',
+    created_at: '2026-03-27T16:15:00.000Z'
+  }
+];
+
+// =============================================================================
 // LOCAL DATA STORE CLASS
 // =============================================================================
 const memoryStore = new Map<string, any>();
@@ -3584,7 +4265,11 @@ class DataStore {
     const map = new Map<string, StudentMaster>();
     raw.forEach(s => {
       if (s && s.id && !map.has(s.id)) {
-        map.set(s.id, s);
+        let updated = { ...s };
+        if (updated.branch === 'ECE' && (updated.department === 'ECE' || !updated.department)) {
+          updated.department = 'B.Tech';
+        }
+        map.set(s.id, updated);
       }
     });
     return Array.from(map.values());
@@ -3633,6 +4318,13 @@ class DataStore {
   }
   setSessionalResults(data: SessionalResult[]): void {
     setLocalItem('sessional_results', data);
+  }
+
+  getClassTests(): ClassTestRecord[] {
+    return getLocalItem('class_tests', INITIAL_CLASS_TESTS);
+  }
+  setClassTests(data: ClassTestRecord[]): void {
+    setLocalItem('class_tests', data);
   }
 
   getTimetable(): TimetableSlot[] {
@@ -3701,9 +4393,69 @@ class DataStore {
     return configs.find(c => c.department_id === departmentId) || configs[0] || DEFAULT_LEAVE_CONFIG;
   }
 
-  getComplaints(): Complaint[] {
-    return getLocalItem('complaints', INITIAL_COMPLAINTS);
+  getGrievanceConfig(): GrievanceWorkflowConfig {
+    return getLocalItem('grievance_config', DEFAULT_GRIEVANCE_CONFIG);
   }
+  setGrievanceConfig(data: GrievanceWorkflowConfig): void {
+    setLocalItem('grievance_config', data);
+  }
+
+  getComplaints(): Complaint[] {
+    const raw = getLocalItem('complaints', INITIAL_COMPLAINTS);
+    let hasChanges = false;
+
+    const normalized: Complaint[] = raw.map((c: Complaint, idx: number) => {
+      let updated: Complaint = { ...c };
+      let itemChanged = false;
+
+      // 1. Ensure reference_id exists
+      if (!updated.reference_id) {
+        const numPart = updated.id.replace(/\D/g, '').padEnd(6, '0').slice(-6) || String(100000 + idx);
+        updated.reference_id = `HIET-GRV-2026-${numPart}`;
+        itemChanged = true;
+      }
+
+      // 2. Map legacy 'Submitted' status to 'Pending Principal Review'
+      if ((updated.status as string) === 'Submitted') {
+        updated.status = 'Pending Principal Review';
+        updated.current_stage = 'principal';
+        itemChanged = true;
+      }
+
+      // 3. Ensure initial escalation history exists
+      if (!updated.escalation_history || updated.escalation_history.length === 0) {
+        updated.escalation_history = [
+          {
+            stage: 'Stage 1: Principal Review',
+            timestamp: updated.created_at || new Date().toISOString(),
+            action: 'Grievance Registered & Queued for Principal Review',
+            remarks: 'Assigned to Principal review queue with 48-hour response tracking.',
+            actor_role: updated.is_anonymous ? 'system' : 'student'
+          }
+        ];
+        itemChanged = true;
+      }
+
+      if (itemChanged) {
+        hasChanges = true;
+      }
+      return updated;
+    });
+
+    if (hasChanges) {
+      setLocalItem('complaints', normalized);
+    }
+    return normalized;
+  }
+
+  getComplaintByReference(referenceId: string): Complaint | undefined {
+    const clean = referenceId.trim().toUpperCase();
+    return this.getComplaints().find(c => 
+      c.reference_id?.toUpperCase() === clean || 
+      c.id.toUpperCase() === clean
+    );
+  }
+
   setComplaints(data: Complaint[]): void {
     setLocalItem('complaints', data);
   }
@@ -3963,6 +4715,22 @@ class DataStore {
     setLocalItem('hostels', data);
   }
 
+  getHostelOutpasses(): HostelOutpass[] {
+    return getLocalItem('hostel_outpasses', INITIAL_HOSTEL_OUTPASSES);
+  }
+  setHostelOutpasses(data: HostelOutpass[]): void {
+    setLocalItem('hostel_outpasses', data);
+  }
+  addHostelOutpass(outpass: HostelOutpass): void {
+    const current = this.getHostelOutpasses();
+    this.setHostelOutpasses([outpass, ...current]);
+  }
+  updateHostelOutpass(id: string, updates: Partial<HostelOutpass>): void {
+    const current = this.getHostelOutpasses();
+    const updated = current.map(p => p.id === id ? { ...p, ...updates } : p);
+    this.setHostelOutpasses(updated);
+  }
+
   getClassIncharges(): ClassInchargeRecord[] {
     return getLocalItem('class_incharges', [
       {
@@ -4138,8 +4906,67 @@ class DataStore {
       academic_records: this.getAcademicRecords(),
       timetable: this.getTimetable(),
       class_incharges: this.getClassIncharges(),
-      hod_assignments: this.getHodAssignments()
+      hod_assignments: this.getHodAssignments(),
+      lost_found_items: this.getLostFoundItems('all')
     };
+  }
+
+  // Feature 15: Lost & Found Vault
+  getLostFoundItems(type?: 'lost' | 'found' | 'all'): LostFoundItem[] {
+    const list = getLocalItem('lost_found_items', INITIAL_LOST_FOUND_ITEMS);
+    if (!type || type === 'all') return list;
+    return list.filter(item => item.report_type === type);
+  }
+
+  setLostFoundItems(data: LostFoundItem[]): void {
+    setLocalItem('lost_found_items', data);
+  }
+
+  saveLostFoundItem(item: LostFoundItem): LostFoundItem {
+    const current = this.getLostFoundItems('all');
+    const existingIndex = current.findIndex(i => i.id === item.id);
+    let updated: LostFoundItem[];
+    if (existingIndex >= 0) {
+      updated = [...current];
+      updated[existingIndex] = { ...updated[existingIndex], ...item, updated_at: new Date().toISOString() };
+    } else {
+      updated = [item, ...current];
+    }
+    this.setLostFoundItems(updated);
+    return item;
+  }
+
+  updateLostFoundStatus(id: string, status: LostFoundStatus, updates?: Partial<LostFoundItem>): LostFoundItem | null {
+    const current = this.getLostFoundItems('all');
+    const target = current.find(i => i.id === id);
+    if (!target) return null;
+    const modified: LostFoundItem = {
+      ...target,
+      ...updates,
+      status,
+      updated_at: new Date().toISOString()
+    };
+    this.setLostFoundItems(current.map(i => i.id === id ? modified : i));
+    return modified;
+  }
+
+  getLostFoundClaims(itemId?: string): LostFoundClaim[] {
+    const list = getLocalItem('lost_found_claims', INITIAL_LOST_FOUND_CLAIMS);
+    return itemId ? list.filter(c => c.item_id === itemId) : list;
+  }
+
+  saveLostFoundClaim(claim: LostFoundClaim): LostFoundClaim {
+    const current = this.getLostFoundClaims();
+    const existingIndex = current.findIndex(c => c.id === claim.id);
+    let updated: LostFoundClaim[];
+    if (existingIndex >= 0) {
+      updated = [...current];
+      updated[existingIndex] = claim;
+    } else {
+      updated = [claim, ...current];
+    }
+    setLocalItem('lost_found_claims', updated);
+    return claim;
   }
 }
 

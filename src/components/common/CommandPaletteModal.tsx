@@ -34,7 +34,7 @@ interface CommandItem {
   id: string;
   tab: NavTab;
   title: string;
-  category: 'Academics' | 'Campus Presence & Passes' | 'Student Services' | 'Institutional' | 'Preferences';
+  category: 'Academics' | 'Campus Passes & Clearance' | 'Student Services' | 'Institutional' | 'Preferences';
   description: string;
   icon: React.ComponentType<{ className?: string }>;
   keywords: string[];
@@ -100,19 +100,19 @@ const COMMAND_ITEMS: CommandItem[] = [
   {
     id: 'cmd-cgpa',
     tab: 'cgpa',
-    title: 'End-Semester Grades & SGPA/CGPA',
+    title: 'Official Examination Results & SGPA/CGPA',
     category: 'Academics',
-    description: 'Semester-wise grade report cards and transcript breakdown',
+    description: 'Official university examination results, internal assessment breakdown, and transcript',
     icon: GraduationCap,
-    keywords: ['cgpa', 'sgpa', 'result', 'grade', 'marksheet', 'percentage']
+    keywords: ['result', 'results', 'cgpa', 'sgpa', 'grade', 'marksheet', 'transcript', 'marks', 'internals', 'calculator']
   },
 
-  // Campus Presence & Passes
+  // Campus Passes & Clearance
   {
     id: 'cmd-gatepass',
     tab: 'gate_pass',
     title: 'Digital Gate Pass',
-    category: 'Campus Presence & Passes',
+    category: 'Campus Passes & Clearance',
     description: 'Apply for transit day pass and show signed QR to campus security',
     icon: ShieldCheck,
     keywords: ['gate pass', 'outpass', 'exit', 'entry', 'security', 'guard', 'transit']
@@ -121,7 +121,7 @@ const COMMAND_ITEMS: CommandItem[] = [
     id: 'cmd-hostel',
     tab: 'hostel_outpass',
     title: 'Hostel Night & Weekend Outpass',
-    category: 'Campus Presence & Passes',
+    category: 'Campus Passes & Clearance',
     description: 'Submit hostel leave request with parent phone confirmation',
     icon: Building2,
     keywords: ['hostel', 'warden', 'night pass', 'home', 'weekend outpass', 'room']
@@ -130,7 +130,7 @@ const COMMAND_ITEMS: CommandItem[] = [
     id: 'cmd-nodues',
     tab: 'no_dues',
     title: '5-Department No-Dues Clearance',
-    category: 'Campus Presence & Passes',
+    category: 'Campus Passes & Clearance',
     description: 'Track clearance from Accounts, Library, Hostel, Labs, and Sports',
     icon: ShieldCheck,
     keywords: ['no dues', 'clearance', 'hall ticket', 'admit card', 'fees', 'library fine']

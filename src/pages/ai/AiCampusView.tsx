@@ -8,6 +8,7 @@ import {
 import { AiCampusOverviewPage } from './AiCampusOverviewPage';
 import { AiFeatureComingSoonPage } from './AiFeatureComingSoonPage';
 import { NavTab } from '../../components/common/Sidebar';
+import { navigateTo, getTabFromPathname } from '../../lib/appNavigation';
 
 interface Props {
   currentTab?: NavTab;
@@ -58,16 +59,16 @@ export const AiCampusView: React.FC<Props> = ({
 
   const handleSelectFeature = (feat: AiFeatureConfig) => {
     setSelectedFeature(feat);
-    if (typeof window !== 'undefined') {
-      window.history.pushState(null, '', feat.route);
+    navigateTo(feat.route);
+    if (onNavigateTab) {
+      const tab = getTabFromPathname(feat.route);
+      onNavigateTab(tab);
     }
   };
 
   const handleBackToOverview = () => {
     setSelectedFeature(null);
-    if (typeof window !== 'undefined') {
-      window.history.pushState(null, '', '/app/ai');
-    }
+    navigateTo('/app/ai');
     if (onNavigateTab) {
       onNavigateTab('ai_campus');
     }

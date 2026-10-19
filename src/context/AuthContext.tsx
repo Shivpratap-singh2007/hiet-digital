@@ -276,6 +276,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const saved = localStorage.getItem('hiet_current_user');
       if (saved && saved !== 'null' && saved !== 'undefined') {
         const parsed = JSON.parse(saved);
+        if (parsed.role === 'student') {
+          if (parsed.studentMaster && parsed.studentMaster.branch === 'ECE') {
+            parsed.studentMaster.department = 'B.Tech';
+            parsed.department = 'B.Tech';
+          }
+        }
         const savedWorkspace = localStorage.getItem('hiet_active_workspace_role');
         if (savedWorkspace && parsed.activeRoles && (parsed.activeRoles.includes(savedWorkspace) || (savedWorkspace === 'hod' && parsed.activeRoles.includes('hod')))) {
           parsed.role = savedWorkspace;
@@ -929,12 +935,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     }
 
-    // 4. Instant clean redirect to login and scrub any previewRole parameter
+    // 4. Instant clean SPA redirect to login and scrub any previewRole parameter
     if (typeof window !== 'undefined') {
       try {
         window.history.replaceState(null, '', '/login');
       } catch {}
-      window.location.replace('/login');
     }
   };
 

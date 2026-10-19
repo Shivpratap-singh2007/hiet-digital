@@ -14,7 +14,8 @@ import {
   Users,
   ShieldCheck,
   CheckCircle2,
-  AlertTriangle
+  AlertTriangle,
+  AlertCircle
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { dataStore } from '../../lib/mockData';
@@ -29,7 +30,7 @@ export const AdvancedAnalyticsView: React.FC = () => {
   const [selectedBranchFilter, setSelectedBranchFilter] = useState<string>('All');
 
   const student = user?.studentMaster;
-  const currentRoll = student?.roll_no || 'CSE001';
+  const currentRoll = student?.roll_no || '';
 
   // Read live data from dataStore
   const allStudents = dataStore.getStudentsMaster();
@@ -110,10 +111,72 @@ export const AdvancedAnalyticsView: React.FC = () => {
       {/* STUDENT ROLE ANALYTICS */}
       {/* ========================================================================= */}
       {role === 'student' && (() => {
-        const myAttendance = allAttendance.filter(a => a.student_id === student?.id || a.student_id === currentRoll);
+        const studentSemester = student?.semester || 1;
+        const myAttendance = allAttendance.filter(a => a.student_id === student?.id || (currentRoll && a.student_id === currentRoll));
         const stats = calculateAttendanceStats(myAttendance);
-        const myAchievements = allAchievements.filter(a => a.student_roll === currentRoll);
-        const mySessional = allSessional.filter(s => s.student_roll === currentRoll);
+        const myAchievements = currentRoll ? allAchievements.filter(a => a.student_roll === currentRoll) : [];
+        const mySessional = allSessional.filter(s => (currentRoll && s.student_roll === currentRoll) || (student?.id && s.student_id === student.id));
+
+        // Fetch authenticated student's valid, published official grades
+        const allGrades = dataStore.getGrades();
+        const studentGrades = allGrades.filter(g => 
+          (g.student_id === student?.id || (currentRoll && g.student_id === currentRoll)) &&
+          g.is_published !== false &&
+          g.semester <= studentSemester
+        );
+
+        // Calculate semester-by-semester SGPA progression only for reached semesters with published results
+        const trajectory: { sem: string; sgpa: number; height: string }[] = [];
+        for (let s = 1; s <= studentSemester; s++) {
+          const semGrades = studentGrades.filter(g => g.semester === s);
+          if (semGrades.length > 0) {
+            const credits = semGrades.reduce((sum, g) => sum + (g.credits || 4.0), 0);
+            const points = semGrades.reduce((sum, g) => sum + (g.grade_point * (g.credits || 4.0)), 0);
+            if (credits > 0) {
+              const sgpa = Math.round((points / credits) * 100) / 100;
+              const heightPct = Math.max(15, Math.min(100, Math.round((sgpa / 10) * 100)));
+              trajectory.push({
+                sem: `Sem ${s}`,
+                sgpa,
+                height: `${heightPct}%`
+              });
+            }
+          }
+        }
+
+        // Calculate cumulative CGPA from valid published records
+        const totalCredits = studentGrades.reduce((sum, g) => sum + (g.credits || 4.0), 0);
+        const totalPoints = studentGrades.reduce((sum, g) => sum + (g.grade_point * (g.credits || 4.0)), 0);
+        const cumulativeCgpa = totalCredits > 0 ? Math.round((totalPoints / totalCredits) * 100) / 100 : null;
+
+        // Calculate Sessional 1 Average from student's real sessional results
+        const sessional1Results = mySessional.filter(s => s.exam_type === 'Sessional 1');
+        const s1TotalObtained = sessional1Results.reduce((acc, s) => acc + s.marks_obtained, 0);
+        const s1TotalMax = sessional1Results.reduce((acc, s) => acc + s.max_marks, 0);
+        const sessional1Avg = s1TotalMax > 0 ? Math.round((s1TotalObtained / s1TotalMax) * 100) : null;
+        const highestSessional1 = sessional1Results.length > 0 
+          ? [...sessional1Results].sort((a, b) => b.percentage - a.percentage)[0]
+          : null;
+
+        // Subject-wise attendance: dynamically scoped to student's current semester & branch
+        const studentBranch = student?.branch || 'ECE';
+        const allSubjects = dataStore.getSubjects();
+        const currentSubjects = allSubjects.filter(s => 
+          s.semester === studentSemester && 
+          (s.branch === studentBranch || s.branch === 'ALL')
+        );
+
+        const subjectAttendanceList = currentSubjects.length > 0
+          ? currentSubjects.map(sub => {
+              const subAtt = myAttendance.filter(a => a.subject_name === sub.name || a.subject_code === sub.code || a.subject_id === sub.id);
+              const subStats = calculateAttendanceStats(subAtt);
+              return {
+                code: sub.code,
+                name: sub.name,
+                pct: subAtt.length > 0 ? subStats.percentage : stats.percentage
+              };
+            })
+          : [];
 
         return (
           <div className="space-y-6">
@@ -130,9 +193,13 @@ export const AdvancedAnalyticsView: React.FC = () => {
               <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs space-y-1">
                 <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Cumulative CGPA</span>
                 <div className="text-2xl font-black font-mono text-blue-600">
-                  8.42
+                  {cumulativeCgpa !== null ? cumulativeCgpa.toFixed(2) : '--'}
                 </div>
-                <span className="text-[10px] text-slate-500">Across Semesters 1-5</span>
+                <span className="text-[10px] text-slate-500">
+                  {trajectory.length > 0 
+                    ? `Across Semester${trajectory.length > 1 ? `s 1-${trajectory.length}` : ' 1'}`
+                    : 'Results not published yet.'}
+                </span>
               </div>
 
               <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs space-y-1">
@@ -146,9 +213,13 @@ export const AdvancedAnalyticsView: React.FC = () => {
               <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs space-y-1">
                 <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Sessional 1 Average</span>
                 <div className="text-2xl font-black font-mono text-blue-700">
-                  86%
+                  {sessional1Avg !== null ? `${sessional1Avg}%` : '--'}
                 </div>
-                <span className="text-[10px] text-slate-500">Highest: 96% in Physics</span>
+                <span className="text-[10px] text-slate-500 truncate block">
+                  {highestSessional1 
+                    ? `Highest: ${highestSessional1.percentage}% in ${highestSessional1.subject_name}`
+                    : 'Results not published yet.'}
+                </span>
               </div>
             </div>
 
@@ -166,25 +237,29 @@ export const AdvancedAnalyticsView: React.FC = () => {
                   </span>
                 </div>
 
-                {/* Responsive SVG Line Chart */}
-                <div className="w-full h-48 flex items-end justify-between gap-3 pt-6 pb-2 px-4 bg-slate-50 rounded-xl border border-slate-100">
-                  {[
-                    { sem: 'Sem 1', sgpa: 7.8, height: '60%' },
-                    { sem: 'Sem 2', sgpa: 8.1, height: '68%' },
-                    { sem: 'Sem 3', sgpa: 8.3, height: '74%' },
-                    { sem: 'Sem 4', sgpa: 8.6, height: '84%' },
-                    { sem: 'Sem 5', sgpa: 8.9, height: '92%' }
-                  ].map((pt, idx) => (
-                    <div key={idx} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group">
-                      <span className="text-[10px] font-mono font-bold text-blue-700 opacity-90">{pt.sgpa}</span>
-                      <div 
-                        style={{ height: pt.height }}
-                        className="w-full max-w-[36px] bg-gradient-to-t from-blue-600 to-sky-400 rounded-t-lg transition-all duration-300 group-hover:opacity-90 shadow-2xs"
-                      />
-                      <span className="text-[10px] font-bold text-slate-600 mt-1">{pt.sem}</span>
-                    </div>
-                  ))}
-                </div>
+                {/* Responsive SGPA Bar Chart or Empty State */}
+                {trajectory.length === 0 ? (
+                  <div className="w-full h-48 flex flex-col items-center justify-center gap-2 bg-slate-50 rounded-xl border border-dashed border-slate-200 p-6 text-center">
+                    <AlertCircle className="w-8 h-8 text-slate-400" />
+                    <p className="text-xs font-bold text-slate-700">Results not published yet.</p>
+                    <p className="text-[11px] text-slate-400">
+                      Official university semester grades have not been announced for your active term (Semester {studentSemester}).
+                    </p>
+                  </div>
+                ) : (
+                  <div className="w-full h-48 flex items-end justify-around gap-3 pt-6 pb-2 px-4 bg-slate-50 rounded-xl border border-slate-100">
+                    {trajectory.map((pt, idx) => (
+                      <div key={idx} className="flex-1 max-w-[64px] flex flex-col items-center gap-1.5 h-full justify-end group">
+                        <span className="text-[10px] font-mono font-bold text-blue-700 opacity-90">{pt.sgpa.toFixed(2)}</span>
+                        <div 
+                          style={{ height: pt.height }}
+                          className="w-full max-w-[36px] bg-gradient-to-t from-blue-600 to-sky-400 rounded-t-lg transition-all duration-300 group-hover:opacity-90 shadow-2xs"
+                        />
+                        <span className="text-[10px] font-bold text-slate-600 mt-1">{pt.sem}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Subject-Wise Attendance Distribution */}
@@ -197,28 +272,28 @@ export const AdvancedAnalyticsView: React.FC = () => {
                 </div>
 
                 <div className="space-y-3 pt-1">
-                  {[
-                    { code: 'CS-601', name: 'Compiler Design', pct: 92 },
-                    { code: 'CS-602', name: 'Computer Networks', pct: 86 },
-                    { code: 'CS-603', name: 'Cloud Computing', pct: 78 },
-                    { code: 'CS-604', name: 'Machine Learning', pct: 88 },
-                    { code: 'CS-605', name: 'Network Security Lab', pct: 94 }
-                  ].map((sub) => (
-                    <div key={sub.code} className="space-y-1 text-xs">
-                      <div className="flex justify-between font-bold text-slate-800">
-                        <span>{sub.code} - {sub.name}</span>
-                        <span className={sub.pct >= 75 ? 'text-emerald-700 font-mono' : 'text-rose-700 font-mono'}>
-                          {sub.pct}%
-                        </span>
-                      </div>
-                      <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden relative">
-                        <div 
-                          style={{ width: `${sub.pct}%` }}
-                          className={`h-full rounded-full transition-all ${sub.pct >= 75 ? 'bg-emerald-500' : 'bg-rose-500'}`}
-                        />
-                      </div>
+                  {subjectAttendanceList.length === 0 ? (
+                    <div className="py-8 text-center text-xs text-slate-400">
+                      No active course subjects assigned for Semester {studentSemester}.
                     </div>
-                  ))}
+                  ) : (
+                    subjectAttendanceList.map((sub) => (
+                      <div key={sub.code} className="space-y-1 text-xs">
+                        <div className="flex justify-between font-bold text-slate-800">
+                          <span>{sub.code} - {sub.name}</span>
+                          <span className={sub.pct >= 75 ? 'text-emerald-700 font-mono' : 'text-rose-700 font-mono'}>
+                            {sub.pct}%
+                          </span>
+                        </div>
+                        <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden relative">
+                          <div 
+                            style={{ width: `${sub.pct}%` }}
+                            className={`h-full rounded-full transition-all ${sub.pct >= 75 ? 'bg-emerald-500' : 'bg-rose-500'}`}
+                          />
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             </div>

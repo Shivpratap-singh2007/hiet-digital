@@ -202,7 +202,12 @@ export function useCampusAssistant() {
       }
 
       if (intent === 'hod_pending_complaints') {
-        const complaints = dataStore.getComplaints().filter((c) => c.status === 'Submitted' || c.status === 'Under Review');
+        const complaints = dataStore.getComplaints().filter((c) => 
+          c.status === 'Pending Principal Review' || 
+          c.status === 'Principal Action Overdue' || 
+          c.status === 'Submitted' || 
+          c.status === 'Under Review'
+        );
         return {
           answer: `🛠️ **Department Complaints**: ${complaints.length} open tickets, including SLA-breached projector HDMI issue in Classroom C-101.`,
           sources: [{ label: 'Grievance Desk', actionUrl: '/app/hod/complaints' }],

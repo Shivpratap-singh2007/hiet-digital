@@ -40,7 +40,6 @@ import {
   Bus,
   UtensilsCrossed,
   CreditCard,
-  Calculator,
   PackageSearch,
   HeartPulse,
   HeartHandshake,
@@ -65,14 +64,13 @@ export interface NavItemConfig {
 
 // Role-ordered Navigation lists as required by Part E Specification
 
-const STUDENT_NAV: NavItemConfig[] = [
+export const STUDENT_NAV: NavItemConfig[] = [
   { id: 'dashboard', label: 'Overview', href: '/app/dashboard', icon: LayoutDashboard, roles: ['student'], enabled: true },
   { id: 'id_card', label: 'Digital ID Card', href: '/app/id-card', icon: CreditCard, roles: ['student'], enabled: true },
   { id: 'attendance', label: 'Attendance', href: '/app/attendance', icon: CalendarCheck, roles: ['student'], enabled: true },
   { id: 'timetable', label: 'Timetable', href: '/app/timetable', icon: CalendarDays, roles: ['student'], enabled: true },
   { id: 'admit_card', label: 'Admit Card', href: '/app/admit-card', icon: FileCheck, roles: ['student'], enabled: true },
   { id: 'fees', label: 'Fee Receipts', href: '/app/fees', icon: Receipt, roles: ['student'], enabled: true },
-  { id: 'internals', label: 'Internal Calculator', href: '/app/internals', icon: Calculator, roles: ['student'], enabled: true },
   { id: 'library', label: 'Library (OPAC)', href: '/app/library', icon: Library, roles: ['student'], enabled: true },
   { id: 'transport', label: 'Bus Routes', href: '/app/transport', icon: Bus, roles: ['student'], enabled: true },
   { id: 'mess', label: 'Hostel Mess', href: '/app/mess', icon: UtensilsCrossed, roles: ['student'], enabled: true },
@@ -86,16 +84,13 @@ const STUDENT_NAV: NavItemConfig[] = [
   { id: 'pyqs', label: 'PYQs', href: '/app/pyqs', icon: FileQuestion, roles: ['student'], enabled: true },
   { id: 'assignments', label: 'Assignments', href: '/app/assignments', icon: FileSpreadsheet, roles: ['student'], enabled: true },
   { id: 'cgpa', label: 'Results', href: '/app/results', icon: Award, roles: ['student'], enabled: true },
-  { id: 'sessional_results', label: 'Sessional Marks', href: '/app/sessional-marks', icon: FileSpreadsheet, roles: ['student'], enabled: true },
   { id: 'leaves', label: 'Leave', href: '/app/leave', icon: Clock, roles: ['student'], enabled: true },
   { id: 'complaints', label: 'Complaint Box', href: '/app/complaints', icon: AlertCircle, roles: ['student'], enabled: true },
   { id: 'doubts', label: 'Doubt Box', href: '/app/doubts', icon: HelpCircle, roles: ['student'], enabled: true },
   { id: 'achievements', label: 'Achievements', href: '/app/achievements', icon: Trophy, roles: ['student'], enabled: true },
   { id: 'gate_pass', label: 'Gate Pass', href: '/app/gate-pass', icon: QrCode, roles: ['student'], enabled: true },
   { id: 'hostel_outpass', label: 'Hostel Outpass', href: '/app/hostel-outpass', icon: ShieldCheck, roles: ['student'], enabled: true },
-  { id: 'campus_presence', label: 'Campus Presence', href: '/app/presence', icon: MapPin, roles: ['student'], enabled: true },
   { id: 'calendar', label: 'Calendar', href: '/app/calendar', icon: CalendarDays, roles: ['student'], enabled: true },
-  { id: 'gallery', label: 'Gallery', href: '/app/gallery', icon: Layers, roles: ['student'], enabled: true },
   { id: 'notices', label: 'Notifications', href: '/app/notifications', icon: Bell, roles: ['student'], enabled: true },
   { id: 'ai_campus', label: 'AI Campus', href: '/app/ai', icon: Sparkles, roles: ['student'], enabled: true },
   { id: 'settings', label: 'Settings', href: '/app/settings', icon: Settings, roles: ['student'], enabled: true }

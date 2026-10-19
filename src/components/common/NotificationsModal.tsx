@@ -39,6 +39,8 @@ export const NotificationsModal: React.FC<Props> = ({ isOpen, onClose, onNavigat
       if (n.recipient_user_id === user.id) return true;
       if (n.user_id === user.id) return true;
       if (role === 'student' && n.type === 'notice') return true;
+      if (role === 'principal' && (n.type === 'complaint' || n.type === 'leave' || n.type === 'report')) return true;
+      if (role === 'managing_director' && (n.type === 'complaint' || n.type === 'report')) return true;
       if (role === 'hod' && (n.type === 'complaint' || n.type === 'leave' || n.type === 'attendance')) return true;
       if (role === 'teacher' && (n.type === 'attendance' || n.type === 'doubt' || n.type === 'leave')) return true;
       if (role === 'admin') return true;

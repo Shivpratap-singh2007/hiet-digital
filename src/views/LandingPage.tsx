@@ -23,7 +23,6 @@ interface Props {
   onOpenLogin?: () => void;
   onOpenStudentRegister: () => void;
   onOpenTeacherRegister: () => void;
-  onOpenGallery?: () => void;
 }
 
 export const LandingPage: React.FC<Props> = ({

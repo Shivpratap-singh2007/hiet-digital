@@ -73,7 +73,13 @@ export const ManagingDirectorDashboard: React.FC<Props> = ({ currentTab, onNavig
     ? Math.round((presentCount / attendance.length) * 100)
     : 85;
 
-  const openComplaints = complaints.filter(c => c.status === 'Submitted' || c.status === 'Under Review').length;
+  const openComplaints = complaints.filter(c => 
+    c.status === 'Pending Principal Review' || 
+    c.status === 'Principal Action Overdue' || 
+    c.status === 'Submitted' || 
+    c.status === 'Under Review' ||
+    c.status === 'Escalated to MD'
+  ).length;
   const pendingLeaves = leaves.filter(l => (l.status || '').toLowerCase().startsWith('pending')).length;
 
   // Subview Router for MD
@@ -81,7 +87,7 @@ export const ManagingDirectorDashboard: React.FC<Props> = ({ currentTab, onNavig
   if (currentTab === 'department') return <DepartmentStructureView />;
   if (currentTab === 'academic_catalog') return <AcademicCatalogView />;
   if (currentTab === 'audit_log') return <AuditLogView />;
-  if (currentTab === 'reports') return <ReportsManagementView />;
+  if (currentTab === 'reports' || currentTab === 'complaints') return <ReportsManagementView roleMode="md" />;
   if (currentTab === 'notices') return <NoticesView />;
   if (currentTab === 'smartboard') return <SmartBoardTeachingView roleMode="principal" />;
   if (currentTab === 'campus_presence') return <CampusPresenceView roleMode="principal" />;
@@ -293,13 +299,17 @@ export const ManagingDirectorDashboard: React.FC<Props> = ({ currentTab, onNavig
               </p>
             </div>
 
-            <div className="p-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50 space-y-1">
+            <div 
+              onClick={() => onNavigateTab && onNavigateTab('complaints')}
+              className="p-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50 space-y-1 cursor-pointer hover:border-[#0f2942]/40 transition"
+              title="Click to view Grievance Redressal Workspace"
+            >
               <div className="flex items-center justify-between font-bold text-slate-900 dark:text-slate-100">
                 <span>Pending Redressal Grievances</span>
                 <span className="text-amber-700 dark:text-amber-400">{openComplaints} In Review</span>
               </div>
               <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                Grievances are actively under committee review. Zero escalated disciplinary proceedings.
+                Grievances are actively under statutory review. Click to inspect escalation queue.
               </p>
             </div>
 

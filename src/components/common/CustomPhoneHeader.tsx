@@ -1,6 +1,5 @@
 import React from 'react';
 import { 
-  Camera, 
   Bell, 
   LogIn, 
   Search, 
@@ -17,7 +16,7 @@ import { dataStore } from '../../lib/mockData';
 export interface PhoneHeaderConfig {
   showLogoEmblem: boolean;
   showLogoText: boolean;
-  showGallery: boolean;
+  showGallery?: boolean;
   showLoginBtn: boolean;
   showNotifications: boolean;
   showSearch: boolean;
@@ -136,19 +135,7 @@ export const CustomPhoneHeader: React.FC<Props> = ({
             </button>
           )}
 
-          {/* 3. Campus Gallery Button */}
-          {config.showGallery && onOpenGallery && (
-            <button
-              onClick={onOpenGallery}
-              className="px-2.5 py-1.5 rounded-lg bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 text-xs font-semibold flex items-center gap-1.5 transition shrink-0"
-              title="Campus Gallery"
-            >
-              <Camera className="w-3.5 h-3.5 text-purple-600" />
-              <span>Gallery</span>
-            </button>
-          )}
-
-          {/* 4. Notification Bell */}
+          {/* 3. Notification Bell */}
           {config.showNotifications && (
             <button
               onClick={onOpenNotifications}

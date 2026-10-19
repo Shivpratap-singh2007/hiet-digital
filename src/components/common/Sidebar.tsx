@@ -102,7 +102,6 @@ export type NavTab =
   | 'mess'
   | 'placements'
   | 'id_card'
-  | 'internals'
   | 'parent_portal'
   | 'emergency_sos'
   | 'settings';

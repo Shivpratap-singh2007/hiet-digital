@@ -69,8 +69,11 @@ export const SettingsView: React.FC<Props> = ({ initialTab = 'profile' }) => {
   const rawId = student?.roll_no || teacher?.faculty_id || user?.id?.slice(0, 8) || '2026-002';
   
   // Format Institutional ID to match "HIET-CSE-2026-002"
-  const department = student?.department || teacher?.department || user?.department || 'CSE';
-  const branch = student?.branch || teacher?.department || 'CSE';
+  const rawStudentDept = student?.department || user?.department;
+  const department = isStudent
+    ? (rawStudentDept === 'ECE' ? 'B.Tech' : (rawStudentDept || 'B.Tech'))
+    : (teacher?.department || user?.department || 'CSE');
+  const branch = student?.branch || teacher?.department || 'ECE';
   const semester = student?.semester ? `Semester ${student.semester}` : 'Semester 1';
 
   const displayId = rawId.startsWith('HIET')
@@ -157,7 +160,7 @@ export const SettingsView: React.FC<Props> = ({ initialTab = 'profile' }) => {
   };
 
   return (
-    <div className="space-y-6 font-sans animate-fade-in max-w-4xl mx-auto px-1 sm:px-2">
+    <div className="space-y-6 font-sans animate-fade-in max-w-5xl mx-auto px-1 sm:px-2">
       {/* 1. Header with Breadcrumbs & Responsive Sign Out Button */}
       <PageHeader
         breadcrumbs={[

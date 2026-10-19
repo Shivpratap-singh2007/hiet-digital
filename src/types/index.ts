@@ -179,6 +179,14 @@ export interface Grade {
   letter_grade: 'O' | 'A+' | 'A' | 'B+' | 'B' | 'C' | 'P' | 'F' | string;
   grade_point: number;
   marks: number;
+  internal_marks?: number;
+  sessional_marks?: number;
+  practical_marks?: number;
+  external_marks?: number;
+  max_marks?: number;
+  status?: 'Pass' | 'Fail' | 'Pending';
+  session?: string;
+  is_published?: boolean;
   created_at?: string;
 }
 
@@ -196,6 +204,27 @@ export interface SessionalResult {
   semester: number;
   branch: string;
   is_published: boolean;
+  remarks?: string;
+  created_at?: string;
+}
+
+export interface ClassTestRecord {
+  id: string;
+  student_id: string;
+  student_roll: string;
+  student_name?: string;
+  subject_name: string;
+  subject_code: string;
+  test_name: string;
+  test_number?: number;
+  test_date: string;
+  marks_obtained: number;
+  max_marks: number;
+  percentage: number;
+  status: 'Evaluated' | 'Pending' | 'Published' | 'Absent';
+  semester?: number;
+  branch?: string;
+  teacher_name?: string;
   remarks?: string;
   created_at?: string;
 }
@@ -437,8 +466,54 @@ export interface LeaveWorkflowConfig {
   updated_at?: string;
 }
 
+export type GrievanceCategory =
+  | 'Academic'
+  | 'Faculty Behaviour'
+  | 'Harassment'
+  | 'Ragging'
+  | 'Infrastructure'
+  | 'Hostel'
+  | 'Safety'
+  | 'Administration'
+  | 'Other'
+  | 'Faculty'
+  | 'Transport'
+  | 'Mess/Canteen'
+  | 'Library'
+  | 'Accounts/Fee'
+  | 'Anti-Ragging'
+  | 'Faculty/Staff';
+
+export type GrievanceStatus =
+  | 'Pending Principal Review'
+  | 'Principal Action Overdue'
+  | 'Escalated to MD'
+  | 'Under Review'
+  | 'Resolved'
+  | 'Closed'
+  | 'Submitted';
+
+export interface GrievanceEscalationHistoryItem {
+  stage: 'Stage 1: Principal Review' | 'Stage 2: Principal Reminder' | 'Stage 3: MD Escalation' | 'Resolution' | string;
+  timestamp: string;
+  action: string;
+  remarks?: string;
+  actor_role?: 'student' | 'principal' | 'managing_director' | 'system' | 'admin' | string;
+  actor_name?: string;
+}
+
+export interface GrievanceWorkflowConfig {
+  config_id: string;
+  principal_action_deadline_hours: number; // default: 48
+  md_escalation_deadline_hours: number; // default: 96
+  auto_reminder_enabled: boolean;
+  auto_escalate_to_md_enabled: boolean;
+  updated_at?: string;
+}
+
 export interface Complaint {
   id: string;
+  reference_id?: string; // e.g. 'HIET-GRV-2026-XXXXX'
   student_id: string;
   student_name?: string;
   student_roll?: string;
@@ -446,20 +521,39 @@ export interface Complaint {
   student_semester?: number;
   student_section?: string;
   is_anonymous: boolean; // Anonymous vs Confidential
-  category: 'Academic' | 'Hostel' | 'Infrastructure' | 'Faculty' | 'Transport' | 'Mess/Canteen' | 'Library' | 'Accounts/Fee' | 'Anti-Ragging' | 'Faculty/Staff' | 'Other';
+  category: GrievanceCategory;
   title: string;
   department?: string;
   description: string;
+  incident_date?: string;
+  incident_location?: string;
   attachment_url?: string;
   priority: 'Low' | 'Medium' | 'High' | 'Urgent';
-  status: 'Submitted' | 'Under Review' | 'Resolved' | 'Closed' | 'Escalated to MD';
+  status: GrievanceStatus;
+  current_stage?: 'principal' | 'principal_overdue' | 'md' | 'resolved';
   assigned_to?: string;
   assigned_to_name?: string;
   admin_response?: string;
+
+  // Stage 1 & 2: Principal Review & Reminder
+  principal_remarks?: string;
+  principal_action_taken?: string;
+  principal_reviewed_at?: string;
+  principal_reminder_sent?: boolean;
+  principal_reminder_sent_at?: string;
+
+  // Stage 3: MD Escalation & Resolution
   escalated_to_md?: boolean;
   escalation_reason?: string;
   escalated_at?: string;
   md_notes?: string;
+  md_remarks?: string;
+  md_resolution?: string;
+  md_resolved_at?: string;
+
+  // Escalation Audit History
+  escalation_history?: GrievanceEscalationHistoryItem[];
+
   created_at: string;
   updated_at: string;
   // AI Campus Phase 1 fields
@@ -507,11 +601,16 @@ export interface CalendarEvent {
   id: string;
   title: string;
   description?: string;
-  event_type: 'Classes' | 'Exams' | 'Holidays' | 'Events' | 'Seminars' | 'Hackathons' | 'Important Dates' | 'Assignments';
+  event_type: 'Classes' | 'Exams' | 'Holidays' | 'Events' | 'Seminars' | 'Hackathons' | 'Important Dates' | 'Assignments' | 'Placements' | string;
   start_datetime: string;
   end_datetime: string;
   department: string;
   location?: string;
+  venue?: string;
+  start_time?: string;
+  end_time?: string;
+  audience?: string;
+  is_verified?: boolean;
   created_by?: string;
 }
 
@@ -1086,25 +1185,65 @@ export interface EventCertificate {
 }
 
 // =============================================================================
-// LOST AND FOUND (Section 7.20)
+// LOST AND FOUND (Section 7.20 - Upgraded with Lost Item Reporting)
 // =============================================================================
+export type LostFoundReportType = 'lost' | 'found';
+
+export type LostFoundCategory = 
+  | 'Electronics' 
+  | 'Documents' 
+  | 'Documents/ID' 
+  | 'Books' 
+  | 'Accessories' 
+  | 'Clothing' 
+  | 'Keys' 
+  | 'Bags' 
+  | 'Other';
+
+export type LostReportStatus = 'Open' | 'Possible_Match' | 'Resolved' | 'Closed';
+export type FoundReportStatus = 'Reported' | 'In_Custody' | 'Claim_Pending' | 'Returned_to_Owner' | 'Verified_Claimed' | 'Closed' | 'Archived';
+export type LostFoundStatus = LostReportStatus | FoundReportStatus | 'Disposed';
+
 export interface LostFoundItem {
   id: string;
+  reference_code: string;
+  report_type: LostFoundReportType;
   title: string;
-  category: 'Electronics' | 'Documents/ID' | 'Accessories' | 'Books' | 'Keys' | 'Other';
+  category: LostFoundCategory;
   description: string;
-  found_location: string;
-  found_date: string;
+  location: string;
+  // Aliases for backward compatibility with legacy found-item views
+  found_location?: string;
+  item_date: string; // YYYY-MM-DD
+  found_date?: string;
+  approximate_time?: string;
+  identifying_characteristics?: string;
+  contact_preference?: 'Institutional_Email' | 'Phone_WhatsApp' | 'Campus_Desk' | 'Confidential';
+  contact_email?: string;
+  contact_phone?: string;
+  additional_info?: string;
   image_url?: string;
-  status: 'Reported' | 'Claim_Pending' | 'Verified_Claimed' | 'Archived';
-  challenge_question: string;
+  status: LostFoundStatus;
+  // Custody & challenge verification for found items
+  custody_status?: 'Finder_Custody' | 'Security_Desk' | 'Library_Desk' | 'Department_Office' | 'Administrative_Office';
+  challenge_question?: string;
+  challenge_answer?: string;
+  challenge_answer_hash?: string;
   answer_hash?: string;
+  // Reporter attribution
+  reporter_id?: string;
+  reporter_name: string;
+  reporter_role?: string;
+  reporter_roll_or_emp?: string;
+  // Legacy aliases
   founder_id?: string;
-  founder_name: string;
+  founder_name?: string;
   founder_contact?: string;
   claimed_by_name?: string;
   claimed_at?: string;
+  matched_item_id?: string;
   created_at: string;
+  updated_at?: string;
 }
 
 export interface LostFoundClaim {
@@ -1119,6 +1258,13 @@ export interface LostFoundClaim {
   status: 'Under_Verification' | 'Approved' | 'Rejected';
   reviewed_by?: string;
   created_at: string;
+}
+
+export interface LostFoundMatchSuggestion {
+  lostItem: LostFoundItem;
+  foundItem: LostFoundItem;
+  matchScore: number; // 0 to 100 percentage
+  matchingFactors: string[];
 }
 
 // =============================================================================
@@ -1587,12 +1733,15 @@ export interface CampusEmergencyContact {
   id: string;
   title: string;
   department: string;
-  phone: string;
+  phone?: string;
   whatsapp?: string;
   location: string;
-  is_24x7: boolean;
+  is_24x7?: boolean;
   priority_level: 'Immediate' | 'Urgent' | 'Standard';
   description?: string;
+  is_verified?: boolean;
+  contact_status?: 'pending' | 'not_provided' | 'verified';
+  status_label?: string;
 }
 
 export interface DispensaryVisit {

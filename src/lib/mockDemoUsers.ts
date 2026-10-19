@@ -432,6 +432,8 @@ export const ALL_DEMO_STAFF_PROFILES: (Profile & { identifier: string })[] = [
 
 // Student Profiles generation
 export const ALL_DEMO_STUDENT_PROFILES: (Profile & { identifier: string })[] = DEMO_STUDENTS_LIST.map((std, idx) => {
+  const isEce = std.department === 'ECE';
+  const resolvedDept = isEce ? 'B.Tech' : 'B.Tech'; // Institutional Department is B.Tech for degree students
   const masterRecord: StudentMaster = {
     id: `std-${std.department.toLowerCase()}-${String(idx + 1).padStart(3, '0')}`,
     roll_no: std.rollNo,
@@ -440,7 +442,7 @@ export const ALL_DEMO_STUDENT_PROFILES: (Profile & { identifier: string })[] = D
     mother_name: `Smt. Anita ${std.name.split(' ')[1] || 'Devi'}`,
     dob: '2004-06-12',
     course: 'B.Tech',
-    department: std.department,
+    department: resolvedDept,
     branch: std.department,
     semester: 1,
     section: 'A',
@@ -449,8 +451,8 @@ export const ALL_DEMO_STUDENT_PROFILES: (Profile & { identifier: string })[] = D
     parent_phone: `+91 98165 ${String(55000 + idx + 1)}`,
     parent_name: `Sh. ${std.name.split(' ')[1] || 'Kumar'} Sharma (Parent)`,
     whatsapp_notifications_enabled: true,
-    cgpa: std.cgpa,
-    sgpa: std.cgpa,
+    cgpa: undefined, // Computed exclusively from verified, published academic records
+    sgpa: undefined, // Computed exclusively from verified, published academic records
     gender: std.gender,
     hostel_code: std.hostel !== 'Day Scholar' ? std.hostel : undefined,
     hostel_name: std.hostel !== 'Day Scholar' ? (std.hostel === 'GIRLS-HOSTEL-A' ? 'Girls Hostel Block A' : 'Boys Hostel Block B') : undefined,
@@ -471,7 +473,7 @@ export const ALL_DEMO_STUDENT_PROFILES: (Profile & { identifier: string })[] = D
     must_change_password: false,
     activeRoles: ['student'],
     activeWorkspaceRole: 'student',
-    department: std.department,
+    department: resolvedDept,
     studentMaster: masterRecord
   };
 });

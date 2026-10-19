@@ -13,6 +13,8 @@ import {
   LeaveStage,
   LeaveRequestHistory,
   LeaveWorkflowConfig,
+  GrievanceWorkflowConfig,
+  GrievanceEscalationHistoryItem,
   Complaint, 
   Doubt, 
   DoubtMessage, 
@@ -21,6 +23,7 @@ import {
   CalendarEvent,
   Subject,
   SessionalResult,
+  ClassTestRecord,
   GatePass,
   GateEntry,
   NotificationItem,
@@ -40,10 +43,15 @@ import {
   ImportEntityType,
   SmartBoardLesson,
   CampusZone,
-  CampusPresenceRecord
+  CampusPresenceRecord,
+  HostelOutpass,
+  LostFoundItem,
+  LostFoundClaim,
+  LostFoundStatus
 } from '../types';
 import { ValidationMasterContext, ValidatedRow, parseTimeToMinutes } from './importValidation';
 import { normalizeFacultyId, normalizeName, formatIndiaDateTime } from './utils';
+import { verifyHostelAllocation } from './hostelValidation';
 
 const supabaseUrl = (typeof import.meta !== 'undefined' && import.meta.env) ? import.meta.env.VITE_SUPABASE_URL : undefined;
 const supabaseAnonKey = (typeof import.meta !== 'undefined' && import.meta.env) ? import.meta.env.VITE_SUPABASE_ANON_KEY : undefined;
@@ -965,14 +973,33 @@ export const apiService = {
     return dataStore.getLeaveConfig(departmentId);
   },
 
-  // 6. Submit Complaint (Grievance Box)
-  async submitComplaint(complaint: Omit<Complaint, 'id' | 'created_at' | 'updated_at' | 'status'>): Promise<Complaint> {
+  // 6. Grievance Box: Submit Grievance (Student -> Principal -> MD Hierarchy)
+  async submitComplaint(complaint: Omit<Complaint, 'id' | 'created_at' | 'updated_at' | 'status'> & { status?: Complaint['status'] }): Promise<Complaint & { reference_id: string }> {
     const id = `comp-${Date.now()}`;
+    const year = new Date().getFullYear();
+    const reference_id = (complaint as any).reference_id || `HIET-GRV-${year}-${Math.floor(100000 + Math.random() * 900000)}`;
+    const isAnon = complaint.is_anonymous ?? true;
+
+    const initialHistory: GrievanceEscalationHistoryItem[] = [
+      {
+        stage: 'Stage 1: Principal Review',
+        timestamp: new Date().toISOString(),
+        action: 'Grievance Registered & Queued for Principal Review',
+        remarks: 'Assigned to Principal grievance queue with 48-hour response tracking window.',
+        actor_role: isAnon ? 'system' : 'student'
+      }
+    ];
+
     const newComplaint: Complaint = {
       ...complaint,
       id,
-      status: 'Submitted',
-      is_anonymous: complaint.is_anonymous ?? true,
+      reference_id,
+      status: 'Pending Principal Review',
+      current_stage: 'principal',
+      is_anonymous: isAnon,
+      student_name: isAnon ? 'Anonymous Student' : (complaint.student_name || 'Anonymous Student'),
+      student_roll: isAnon ? undefined : complaint.student_roll,
+      escalation_history: initialHistory,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
@@ -982,14 +1009,18 @@ export const apiService = {
         .from('complaints')
         .insert([{
           id,
-          student_id: complaint.student_id,
+          reference_id,
+          student_id: isAnon ? 'anonymous' : complaint.student_id,
           category: complaint.category,
           title: complaint.title,
           description: complaint.description,
+          incident_date: complaint.incident_date,
+          incident_location: complaint.incident_location,
           priority: complaint.priority,
-          status: 'Submitted',
+          status: 'Pending Principal Review',
+          current_stage: 'principal',
           attachment_url: complaint.attachment_url,
-          is_anonymous: complaint.is_anonymous ?? true,
+          is_anonymous: isAnon,
           ai_suggested_category: complaint.ai_suggested_category,
           ai_suggested_assignee_role: complaint.ai_suggested_assignee_role,
           ai_suggested_priority: complaint.ai_suggested_priority,
@@ -1001,33 +1032,289 @@ export const apiService = {
         .select()
         .single();
       if (!error && data) {
-        // Notify HOD
-        this.createNotification({
-          recipient_user_id: 'prof-tch-03',
-          title: 'New Confidential Complaint',
-          message: `Confidential grievance submitted under [${complaint.category}]: ${complaint.title}`,
+        // Stage 1: Notify Principal (Dr. Vinod Kumar - prof-principal-01)
+        await this.createNotification({
+          recipient_user_id: 'prof-principal-01',
+          title: 'New Confidential Grievance [Stage 1: Principal Review]',
+          message: `Confidential grievance [${reference_id}] submitted under [${complaint.category}]: "${complaint.title}". 48-hour action period active.`,
           type: 'complaint',
           related_record_id: data.id,
           is_read: false
         });
-        return data as Complaint;
+        return { ...newComplaint, ...data } as Complaint & { reference_id: string };
       }
     }
 
     const current = dataStore.getComplaints();
     dataStore.setComplaints([newComplaint, ...current]);
 
-    // Local notification for HOD
-    this.createNotification({
-      recipient_user_id: 'prof-tch-03',
-      title: 'New Confidential Complaint',
-      message: `Confidential grievance submitted under [${complaint.category}]: ${complaint.title}`,
+    // Stage 1: Local notification for Principal (Dr. Vinod Kumar - prof-principal-01)
+    await this.createNotification({
+      recipient_user_id: 'prof-principal-01',
+      title: 'New Confidential Grievance [Stage 1: Principal Review]',
+      message: `Confidential grievance [${reference_id}] submitted under [${complaint.category}]: "${complaint.title}". 48-hour action period active.`,
       type: 'complaint',
       related_record_id: newComplaint.id,
       is_read: false
     });
 
-    return newComplaint;
+    return newComplaint as Complaint & { reference_id: string };
+  },
+
+  // Grievance Configuration (Configurable deadlines for administrators)
+  getGrievanceConfig(): GrievanceWorkflowConfig {
+    return dataStore.getGrievanceConfig();
+  },
+
+  updateGrievanceConfig(partial: Partial<GrievanceWorkflowConfig>): GrievanceWorkflowConfig {
+    const current = dataStore.getGrievanceConfig();
+    const updated = {
+      ...current,
+      ...partial,
+      updated_at: new Date().toISOString()
+    };
+    dataStore.setGrievanceConfig(updated);
+    return updated;
+  },
+
+  // Automated 48-Hour Deadline Evaluation & Escalation Engine
+  async evaluateGrievanceEscalations(): Promise<{ overdueRemindersSent: number; escalatedToMd: number }> {
+    const config = dataStore.getGrievanceConfig();
+    const now = Date.now();
+    let overdueRemindersSent = 0;
+    let escalatedToMd = 0;
+
+    const complaints = dataStore.getComplaints();
+    const updatedComplaints: Complaint[] = [];
+
+    for (const c of complaints) {
+      let updated = { ...c };
+      const createdMs = new Date(updated.created_at).getTime();
+      const elapsedHours = (now - createdMs) / (1000 * 60 * 60);
+
+      // Stage 2: Principal Reminder if no action within configured hours (default 48h)
+      if (
+        (updated.status === 'Pending Principal Review' || (updated.status as string) === 'Submitted') &&
+        elapsedHours >= config.principal_action_deadline_hours &&
+        config.auto_reminder_enabled &&
+        !updated.principal_reminder_sent
+      ) {
+        updated.status = 'Principal Action Overdue';
+        updated.current_stage = 'principal_overdue';
+        updated.principal_reminder_sent = true;
+        updated.principal_reminder_sent_at = new Date().toISOString();
+        const history = updated.escalation_history || [];
+        updated.escalation_history = [
+          ...history,
+          {
+            stage: 'Stage 2: Principal Reminder',
+            timestamp: new Date().toISOString(),
+            action: '48-Hour Principal Action Reminder Dispatched',
+            remarks: `No review recorded within ${config.principal_action_deadline_hours} hours. Overdue reminder sent to Principal Dr. Vinod Kumar.`,
+            actor_role: 'system'
+          }
+        ];
+        await this.createNotification({
+          recipient_user_id: 'prof-principal-01',
+          title: 'Principal Action Overdue: Confidential Grievance',
+          message: `Grievance [${updated.reference_id}] "${updated.title}" has exceeded the ${config.principal_action_deadline_hours}h review deadline without action. Immediate review required.`,
+          type: 'complaint',
+          related_record_id: updated.id,
+          is_read: false
+        });
+        overdueRemindersSent++;
+      }
+
+      // Stage 3: MD Escalation if unresolved after Principal escalation stage (default 96h)
+      if (
+        updated.status === 'Principal Action Overdue' &&
+        elapsedHours >= config.md_escalation_deadline_hours &&
+        config.auto_escalate_to_md_enabled &&
+        !updated.escalated_to_md
+      ) {
+        updated.status = 'Escalated to MD';
+        updated.current_stage = 'md';
+        updated.escalated_to_md = true;
+        updated.escalated_at = new Date().toISOString();
+        updated.escalation_reason = `Unresolved after Principal escalation stage (${config.md_escalation_deadline_hours}h SLA). Forwarded to Managing Director Desk.`;
+        const history = updated.escalation_history || [];
+        updated.escalation_history = [
+          ...history,
+          {
+            stage: 'Stage 3: MD Escalation',
+            timestamp: new Date().toISOString(),
+            action: 'Escalated to Managing Director (MD)',
+            remarks: 'Complaint remained unresolved past Principal deadline. Transferred to MD Executive Queue.',
+            actor_role: 'system'
+          }
+        ];
+        await this.createNotification({
+          recipient_user_id: 'prof-md-01',
+          title: 'Escalated Grievance Received: Level 3',
+          message: `Confidential Grievance [${updated.reference_id}] "${updated.title}" forwarded to MD Executive Desk following unaddressed Principal escalation period.`,
+          type: 'complaint',
+          related_record_id: updated.id,
+          is_read: false
+        });
+        escalatedToMd++;
+      }
+
+      updatedComplaints.push(updated);
+    }
+
+    dataStore.setComplaints(updatedComplaints);
+    return { overdueRemindersSent, escalatedToMd };
+  },
+
+  // Principal Review: Add remarks, record actions taken, update status
+  async reviewComplaintByPrincipal(complaintId: string, details: {
+    remarks?: string;
+    actionTaken: string;
+    newStatus: Complaint['status'];
+  }): Promise<boolean> {
+    const now = new Date().toISOString();
+    const complaints = dataStore.getComplaints();
+    const target = complaints.find(c => c.id === complaintId);
+    if (!target) return false;
+
+    const isEscalating = details.newStatus === 'Escalated to MD';
+    const historyItem: GrievanceEscalationHistoryItem = {
+      stage: isEscalating ? 'Stage 3: MD Escalation' : 'Stage 1: Principal Review',
+      timestamp: now,
+      action: isEscalating 
+        ? 'Principal Referred to Managing Director Desk' 
+        : `Principal Recorded Action: ${details.actionTaken}`,
+      remarks: details.remarks,
+      actor_role: 'principal',
+      actor_name: 'Dr. Vinod Kumar (Principal / Director)'
+    };
+
+    const update: Partial<Complaint> = {
+      status: details.newStatus,
+      current_stage: isEscalating ? 'md' : (details.newStatus === 'Resolved' || details.newStatus === 'Closed' ? 'resolved' : 'principal'),
+      principal_remarks: details.remarks,
+      principal_action_taken: details.actionTaken,
+      principal_reviewed_at: now,
+      admin_response: details.actionTaken,
+      escalation_history: [...(target.escalation_history || []), historyItem]
+    };
+
+    if (isEscalating) {
+      update.escalated_to_md = true;
+      update.escalated_at = now;
+      update.escalation_reason = details.remarks || 'Referred by Principal to Managing Director for executive decision.';
+      await this.createNotification({
+        recipient_user_id: 'prof-md-01',
+        title: 'Escalated Grievance Referred by Principal',
+        message: `Grievance [${target.reference_id}] "${target.title}" referred to MD Desk by Principal Dr. Vinod Kumar.`,
+        type: 'complaint',
+        related_record_id: target.id,
+        is_read: false
+      });
+    }
+
+    return this.updateComplaint(complaintId, update);
+  },
+
+  // MD Review: Review, remarks, and final resolution
+  async resolveComplaintByMD(complaintId: string, details: {
+    remarks?: string;
+    resolution: string;
+    newStatus?: Complaint['status'];
+  }): Promise<boolean> {
+    const now = new Date().toISOString();
+    const complaints = dataStore.getComplaints();
+    const target = complaints.find(c => c.id === complaintId);
+    if (!target) return false;
+
+    const historyItem: GrievanceEscalationHistoryItem = {
+      stage: 'Resolution',
+      timestamp: now,
+      action: `Managing Director Decision: ${details.resolution}`,
+      remarks: details.remarks,
+      actor_role: 'managing_director',
+      actor_name: 'Er. D. S. Pathania (Managing Director)'
+    };
+
+    const update: Partial<Complaint> = {
+      status: details.newStatus || 'Resolved',
+      current_stage: 'resolved',
+      md_remarks: details.remarks,
+      md_resolution: details.resolution,
+      md_resolved_at: now,
+      admin_response: `MD Final Resolution: ${details.resolution}`,
+      escalation_history: [...(target.escalation_history || []), historyItem]
+    };
+
+    return this.updateComplaint(complaintId, update);
+  },
+
+  // Lookup grievance by reference ID for tracking without revealing identity
+  async getComplaintByReference(referenceId: string): Promise<Complaint | null> {
+    await this.evaluateGrievanceEscalations();
+    const comp = dataStore.getComplaintByReference(referenceId);
+    if (!comp) return null;
+    if (comp.is_anonymous) {
+      return {
+        ...comp,
+        student_name: 'Anonymous Student',
+        student_roll: undefined
+      };
+    }
+    return comp;
+  },
+
+  async getComplaints(
+    filterOrStudentId?: string | { studentId?: string; referenceId?: string; page?: number; pageSize?: number },
+    pagination?: { page?: number; pageSize?: number }
+  ): Promise<Complaint[]> {
+    await this.evaluateGrievanceEscalations();
+    let studentId: string | undefined;
+    let referenceId: string | undefined;
+    let page: number | undefined;
+    let pageSize: number | undefined;
+
+    if (typeof filterOrStudentId === 'string') {
+      studentId = filterOrStudentId;
+      page = pagination?.page;
+      pageSize = pagination?.pageSize;
+    } else if (filterOrStudentId && typeof filterOrStudentId === 'object') {
+      studentId = filterOrStudentId.studentId;
+      referenceId = filterOrStudentId.referenceId;
+      page = filterOrStudentId.page || pagination?.page;
+      pageSize = filterOrStudentId.pageSize || pagination?.pageSize;
+    }
+
+    if (isSupabaseConfigured && supabase) {
+      try {
+        let query = supabase.from('complaints').select('*').order('created_at', { ascending: false });
+        if (studentId) query = query.eq('student_id', studentId);
+        if (pageSize) {
+          const p = Math.max(1, page || 1);
+          const from = (p - 1) * pageSize;
+          query = query.range(from, from + pageSize - 1);
+        }
+        const { data, error } = await query;
+        if (!error && data) return data as Complaint[];
+      } catch (e) {
+        console.warn('Supabase getComplaints error:', e);
+      }
+    }
+
+    let list = dataStore.getComplaints();
+    if (studentId) {
+      list = list.filter(c => c.student_id === studentId);
+    }
+    if (referenceId) {
+      const q = referenceId.trim().toUpperCase();
+      list = list.filter(c => c.reference_id?.toUpperCase() === q || c.id.toUpperCase() === q);
+    }
+    if (pageSize) {
+      const p = Math.max(1, page || 1);
+      const from = (p - 1) * pageSize;
+      return list.slice(from, from + pageSize);
+    }
+    return list;
   },
 
   // 7. Update Complaint Status / Response (Admin & MD Escalation)
@@ -1052,12 +1339,38 @@ export const apiService = {
 
   // Auto-escalate unaddressed complaints to MD
   async escalateComplaintToMD(complaintId: string, reason: string): Promise<boolean> {
-    return this.updateComplaint(complaintId, {
+    const complaints = dataStore.getComplaints();
+    const target = complaints.find(c => c.id === complaintId);
+    const now = new Date().toISOString();
+    const historyItem: GrievanceEscalationHistoryItem = {
+      stage: 'Stage 3: MD Escalation',
+      timestamp: now,
+      action: 'Escalated to Managing Director (MD)',
+      remarks: reason,
+      actor_role: 'system'
+    };
+
+    const success = await this.updateComplaint(complaintId, {
       status: 'Escalated to MD',
+      current_stage: 'md',
       escalated_to_md: true,
       escalation_reason: reason,
-      escalated_at: new Date().toISOString()
+      escalated_at: now,
+      escalation_history: target ? [...(target.escalation_history || []), historyItem] : [historyItem]
     });
+
+    if (success) {
+      await this.createNotification({
+        recipient_user_id: 'prof-md-01',
+        title: 'Escalated Grievance Received: Level 3',
+        message: `Grievance [${target?.reference_id || complaintId}] escalated to MD Desk: ${reason}`,
+        type: 'complaint',
+        related_record_id: complaintId,
+        is_read: false
+      });
+    }
+
+    return success;
   },
 
   // 8. Create Doubt (Student to Teacher Academic Query with Identity Shield)
@@ -1373,19 +1686,67 @@ export const apiService = {
     return newNotice;
   },
 
-  // 14. Create Calendar Event
+  // 14. Calendar Events Methods
+  async getCalendarEvents(): Promise<CalendarEvent[]> {
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data, error } = await supabase.from('calendar_events').select('*').order('start_datetime', { ascending: true });
+        if (!error && data && data.length > 0) return data as CalendarEvent[];
+      } catch (err) {
+        console.warn('Failed to fetch calendar from supabase, falling back to local store:', err);
+      }
+    }
+    return dataStore.getCalendar();
+  },
+
   async createCalendarEvent(event: Omit<CalendarEvent, 'id'>): Promise<CalendarEvent> {
     const newEvent: CalendarEvent = {
       ...event,
       id: `cal-${Date.now()}`
     };
     if (isSupabaseConfigured && supabase) {
-      const { data, error } = await supabase.from('calendar_events').insert([newEvent]).select().single();
-      if (!error && data) return data as CalendarEvent;
+      try {
+        const { data, error } = await supabase.from('calendar_events').insert([newEvent]).select().single();
+        if (!error && data) return data as CalendarEvent;
+      } catch (err) {
+        console.warn('Supabase calendar event insert fallback:', err);
+      }
     }
     const current = dataStore.getCalendar();
     dataStore.setCalendar([...current, newEvent]);
     return newEvent;
+  },
+
+  async updateCalendarEvent(id: string, updates: Partial<CalendarEvent>): Promise<CalendarEvent | null> {
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data, error } = await supabase.from('calendar_events').update(updates).eq('id', id).select().single();
+        if (!error && data) {
+          const current = dataStore.getCalendar();
+          dataStore.setCalendar(current.map(ev => ev.id === id ? { ...ev, ...updates } : ev));
+          return data as CalendarEvent;
+        }
+      } catch (err) {
+        console.warn('Supabase calendar event update fallback:', err);
+      }
+    }
+    const current = dataStore.getCalendar();
+    const updated = current.map(ev => ev.id === id ? { ...ev, ...updates } : ev);
+    dataStore.setCalendar(updated);
+    return updated.find(ev => ev.id === id) || null;
+  },
+
+  async deleteCalendarEvent(id: string): Promise<boolean> {
+    if (isSupabaseConfigured && supabase) {
+      try {
+        await supabase.from('calendar_events').delete().eq('id', id);
+      } catch (err) {
+        console.warn('Supabase calendar event delete fallback:', err);
+      }
+    }
+    const current = dataStore.getCalendar();
+    dataStore.setCalendar(current.filter(ev => ev.id !== id));
+    return true;
   },
 
   // 15. Save / Publish Sessional Results (Teacher / HOD)
@@ -1545,32 +1906,6 @@ export const apiService = {
     return filtered;
   },
 
-  // 18c. Complaints Queries (Supports Student Scope & Pagination)
-  async getComplaints(studentId?: string, pagination?: { page?: number; pageSize?: number }): Promise<Complaint[]> {
-    if (isSupabaseConfigured && supabase) {
-      try {
-        let query = supabase.from('complaints').select('*').order('created_at', { ascending: false });
-        if (studentId) query = query.eq('student_id', studentId);
-        if (pagination?.pageSize) {
-          const page = Math.max(1, pagination.page || 1);
-          const from = (page - 1) * pagination.pageSize;
-          query = query.range(from, from + pagination.pageSize - 1);
-        }
-        const { data, error } = await query;
-        if (!error && data) return data as Complaint[];
-      } catch (e) {
-        console.warn('Supabase getComplaints error:', e);
-      }
-    }
-    const all = dataStore.getComplaints();
-    const filtered = studentId ? all.filter(c => c.student_id === studentId) : all;
-    if (pagination?.pageSize) {
-      const page = Math.max(1, pagination.page || 1);
-      const from = (page - 1) * pagination.pageSize;
-      return filtered.slice(from, from + pagination.pageSize);
-    }
-    return filtered;
-  },
 
   // 18d. Doubts Queries (Supports Student/Teacher Scope & Pagination)
   async getDoubts(filter?: { studentId?: string; teacherId?: string; page?: number; pageSize?: number }): Promise<Doubt[]> {
@@ -1652,6 +1987,50 @@ export const apiService = {
       if (filter?.semester && s.semester !== filter.semester) return false;
       return true;
     });
+  },
+
+  // 18f-2. Class Test Queries & Submissions
+  async getClassTests(filter?: { studentId?: string; studentRoll?: string; branch?: string; semester?: number }): Promise<ClassTestRecord[]> {
+    if (isSupabaseConfigured && supabase) {
+      try {
+        let query = supabase.from('class_tests').select('*').order('test_date', { ascending: false });
+        if (filter?.studentId) query = query.eq('student_id', filter.studentId);
+        if (filter?.studentRoll) query = query.eq('student_roll', filter.studentRoll);
+        if (filter?.branch) query = query.eq('branch', filter.branch);
+        if (filter?.semester) query = query.eq('semester', filter.semester);
+        const { data, error } = await query;
+        if (!error && data) return data as ClassTestRecord[];
+      } catch (e) {
+        console.warn('Supabase getClassTests error (falling back to dataStore):', e);
+      }
+    }
+    const all = dataStore.getClassTests();
+    return all.filter(ct => {
+      if (filter?.studentId && ct.student_id !== filter.studentId && ct.student_roll !== filter.studentRoll) return false;
+      if (filter?.studentRoll && ct.student_roll.toUpperCase() !== filter.studentRoll.toUpperCase()) return false;
+      if (filter?.branch && ct.branch !== filter.branch) return false;
+      if (filter?.semester && ct.semester !== filter.semester) return false;
+      return true;
+    });
+  },
+
+  async saveClassTest(record: Omit<ClassTestRecord, 'id' | 'created_at'>): Promise<ClassTestRecord> {
+    const newRecord: ClassTestRecord = {
+      ...record,
+      id: `ct-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+      created_at: new Date().toISOString()
+    };
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data, error } = await supabase.from('class_tests').insert([newRecord]).select().single();
+        if (!error && data) return data as ClassTestRecord;
+      } catch (e) {
+        console.warn('Supabase saveClassTest error (saving to dataStore):', e);
+      }
+    }
+    const current = dataStore.getClassTests();
+    dataStore.setClassTests([newRecord, ...current]);
+    return newRecord;
   },
 
   // 18g. Timetable Queries (Phase 5)
@@ -1807,6 +2186,203 @@ export const apiService = {
     return newScan;
   },
 
+  // 18h2. Hostel Outpass Operations (Enforces Verified Institutional Allocation & RLS)
+  async getHostelOutpasses(params?: {
+    studentId?: string;
+    studentRoll?: string;
+    hostelBlock?: string;
+  }): Promise<HostelOutpass[]> {
+    if (isSupabaseConfigured && supabase) {
+      try {
+        let query = supabase
+          .from('hostel_outpasses')
+          .select(`
+            *,
+            students_master:student_id (
+              id,
+              roll_no,
+              name,
+              branch,
+              gender,
+              hostel_name,
+              hostel_code,
+              room_no
+            )
+          `)
+          .order('created_at', { ascending: false });
+
+        if (params?.studentId) query = query.eq('student_id', params.studentId);
+        if (params?.hostelBlock) query = query.eq('hostel_block', params.hostelBlock);
+
+        const { data, error } = await query;
+        if (!error && data && data.length > 0) {
+          return data.map((item: any) => {
+            const student = item.students_master;
+            const verification = verifyHostelAllocation(student, item.hostel_block, item.room_number);
+            return {
+              id: item.id,
+              student_id: item.student_id,
+              student_name: student?.name || item.student_name || 'Student',
+              student_roll: student?.roll_no || item.student_roll || '',
+              branch: student?.branch || item.branch || 'CSE',
+              hostel_block: verification.isValid ? (student?.hostel_name || student?.hostel_code || item.hostel_block) : item.hostel_block,
+              room_number: verification.isValid ? (student?.room_no || item.room_number) : item.room_number,
+              room_no: verification.isValid ? (student?.room_no || item.room_number) : item.room_number,
+              destination: item.destination,
+              reason: item.reason,
+              departure_date: item.departure_date,
+              departure_time: item.departure_time,
+              expected_return_date: item.expected_return_date,
+              expected_return_time: item.expected_return_time,
+              parent_contact: item.parent_contact,
+              emergency_contact: item.emergency_contact,
+              status: item.status ? (item.status.charAt(0).toUpperCase() + item.status.slice(1).toLowerCase()) as any : 'Pending',
+              warden_id: item.warden_id,
+              warden_name: item.warden_name,
+              warden_remarks: item.warden_remarks,
+              qr_token: item.verification_token || item.qr_token,
+              created_at: item.created_at
+            };
+          });
+        }
+      } catch (e) {
+        console.warn('Supabase getHostelOutpasses error, falling back:', e);
+      }
+    }
+
+    // Offline / Demo DataStore Resolution
+    const all = dataStore.getHostelOutpasses();
+    const allStudents = dataStore.getStudentsMaster();
+
+    let filtered = all;
+    if (params?.studentId) {
+      filtered = filtered.filter(p => p.student_id === params.studentId);
+    }
+    if (params?.studentRoll) {
+      const cleanRoll = params.studentRoll.trim().toUpperCase();
+      filtered = filtered.filter(p => p.student_roll.trim().toUpperCase() === cleanRoll);
+    }
+    if (params?.hostelBlock) {
+      filtered = filtered.filter(p => p.hostel_block.toLowerCase() === params.hostelBlock!.toLowerCase());
+    }
+
+    // Reconcile each outpass with authoritative student master record to prevent stale or mismatched allocations
+    return filtered.map(pass => {
+      const student = allStudents.find(s => 
+        s.id === pass.student_id || 
+        s.roll_no.toUpperCase() === pass.student_roll.toUpperCase()
+      );
+      if (student) {
+        const verification = verifyHostelAllocation(student, pass.hostel_block, pass.room_number);
+        return {
+          ...pass,
+          student_name: student.name,
+          student_roll: student.roll_no,
+          branch: student.branch || pass.branch,
+          hostel_block: verification.isValid ? (student.hostel_name || student.hostel_code || pass.hostel_block) : pass.hostel_block,
+          room_number: verification.isValid ? (student.room_no || pass.room_number) : pass.room_number,
+          room_no: verification.isValid ? (student.room_no || pass.room_number) : pass.room_number
+        };
+      }
+      return pass;
+    });
+  },
+
+  async createHostelOutpass(outpass: Omit<HostelOutpass, 'id' | 'created_at'>): Promise<HostelOutpass> {
+    const allStudents = dataStore.getStudentsMaster();
+    const student = allStudents.find(s => 
+      s.id === outpass.student_id || 
+      s.roll_no.toUpperCase() === outpass.student_roll.toUpperCase()
+    );
+
+    const verification = verifyHostelAllocation(student, outpass.hostel_block, outpass.room_number);
+    
+    if (verification.status === 'day_scholar') {
+      throw new Error('Day Scholars are not eligible for residential hostel outpasses.');
+    }
+    if (verification.status === 'gender_mismatch') {
+      throw new Error(`Data Integrity Error: ${verification.warning}`);
+    }
+
+    const verifiedOutpass: HostelOutpass = {
+      ...outpass,
+      id: `outpass-${Date.now()}`,
+      student_name: student?.name || outpass.student_name,
+      student_roll: student?.roll_no || outpass.student_roll,
+      hostel_block: verification.isValid ? (student?.hostel_name || student?.hostel_code || outpass.hostel_block) : outpass.hostel_block,
+      room_number: verification.isValid ? (student?.room_no || outpass.room_number) : outpass.room_number,
+      room_no: verification.isValid ? (student?.room_no || outpass.room_number) : outpass.room_number,
+      created_at: new Date().toISOString()
+    };
+
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data, error } = await supabase.from('hostel_outpasses').insert([{
+          student_id: student?.id || outpass.student_id,
+          hostel_block: verifiedOutpass.hostel_block,
+          room_number: verifiedOutpass.room_number,
+          destination: verifiedOutpass.destination,
+          reason: verifiedOutpass.reason,
+          parent_contact: verifiedOutpass.parent_contact,
+          emergency_contact: verifiedOutpass.emergency_contact,
+          departure_date: verifiedOutpass.departure_date,
+          departure_time: verifiedOutpass.departure_time || '16:00:00',
+          expected_return_date: verifiedOutpass.expected_return_date,
+          expected_return_time: verifiedOutpass.expected_return_time || '20:00:00',
+          status: 'pending',
+          verification_token: verifiedOutpass.qr_token || `OUTPASS-${Date.now()}`
+        }]).select().single();
+
+        if (!error && data) {
+          verifiedOutpass.id = data.id;
+        }
+      } catch (e) {
+        console.warn('Supabase createHostelOutpass error, falling back:', e);
+      }
+    }
+
+    dataStore.addHostelOutpass(verifiedOutpass);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('hiet-outpass-updated'));
+    }
+    return verifiedOutpass;
+  },
+
+  async updateHostelOutpassStatus(
+    id: string,
+    status: HostelOutpass['status'],
+    wardenRemarks?: string,
+    wardenName?: string
+  ): Promise<HostelOutpass | null> {
+    if (isSupabaseConfigured && supabase) {
+      try {
+        await supabase
+          .from('hostel_outpasses')
+          .update({
+            status: status.toLowerCase(),
+            warden_remarks: wardenRemarks,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', id);
+      } catch (e) {
+        console.warn('Supabase updateHostelOutpassStatus error:', e);
+      }
+    }
+
+    dataStore.updateHostelOutpass(id, {
+      status,
+      warden_remarks: wardenRemarks,
+      warden_name: wardenName
+    });
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('hiet-outpass-updated'));
+    }
+
+    const updated = dataStore.getHostelOutpasses().find(p => p.id === id);
+    return updated || null;
+  },
+
   // 18i. Student Fines & Appeals (Supports Student Scope & Pagination)
   async getStudentFines(studentId?: string, pagination?: { page?: number; pageSize?: number }): Promise<StudentFine[]> {
     if (isSupabaseConfigured && supabase) {
@@ -1939,20 +2515,32 @@ export const apiService = {
     return true;
   },
 
-  // 18j. Grades & Dynamic CGPA (Phase 8)
+  // 18j. Grades & Dynamic CGPA (Phase 8 - Official University Examination Results)
   async getGrades(studentId: string, semester?: number): Promise<Grade[]> {
     if (isSupabaseConfigured && supabase) {
       try {
-        let query = supabase.from('grades').select('*').eq('student_id', studentId).order('semester', { ascending: true });
+        let query = supabase
+          .from('grades')
+          .select('*')
+          .eq('student_id', studentId)
+          .eq('is_published', true)
+          .order('semester', { ascending: true });
         if (semester) query = query.eq('semester', semester);
         const { data, error } = await query;
-        if (!error && data) return data as Grade[];
+        if (!error && data && data.length > 0) return data as Grade[];
       } catch (e) {
         console.warn('Supabase getGrades error:', e);
       }
     }
+    // Offline / Demo fallback
     const all = dataStore.getGrades();
-    return all.filter(g => g.student_id === studentId && (!semester || g.semester === semester));
+    return all.filter(g => 
+      (g.student_id === studentId ||
+       (studentId === 'std-cse-sem6-001' && g.student_id === 'std-cse-001') ||
+       (studentId === 'CSE001' && g.student_id === 'std-cse-001')) &&
+      g.is_published !== false &&
+      (!semester || g.semester === semester)
+    );
   },
 
   async saveGrade(grade: Omit<Grade, 'id' | 'created_at'>): Promise<Grade> {
@@ -4554,6 +5142,269 @@ export const apiService = {
       }
     }
     return { success: true, escalated_tickets: 0 };
+  },
+
+  // =============================================================================
+  // 35. LOST & FOUND VAULT SERVICE (Lost & Found Item Reporting, Claims & Matching)
+  // =============================================================================
+  async getLostFoundItems(filter?: {
+    type?: 'lost' | 'found' | 'all';
+    category?: string;
+    query?: string;
+    reporterId?: string;
+    reporterRoll?: string;
+  }): Promise<LostFoundItem[]> {
+    if (isSupabaseConfigured && supabase) {
+      try {
+        let queryBuilder = supabase
+          .from('lost_found_items')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (filter?.type && filter.type !== 'all') {
+          queryBuilder = queryBuilder.eq('report_type', filter.type);
+        }
+        if (filter?.category && filter.category !== 'All') {
+          queryBuilder = queryBuilder.eq('category', filter.category);
+        }
+        if (filter?.reporterId) {
+          queryBuilder = queryBuilder.eq('reporter_id', filter.reporterId);
+        }
+
+        const { data, error } = await queryBuilder;
+        if (!error && data) {
+          const mapped: LostFoundItem[] = data.map((row: any) => ({
+            id: row.id,
+            reference_code: row.reference_code || `${(row.report_type || 'found').toUpperCase()}-${new Date(row.created_at || Date.now()).getFullYear()}-${String(row.id).slice(-4)}`,
+            report_type: (row.report_type === 'lost' ? 'lost' : 'found') as 'lost' | 'found',
+            title: row.title,
+            category: row.category,
+            description: row.description,
+            location: row.location || row.found_location || 'Campus Grounds',
+            found_location: row.found_location || row.location || 'Campus Grounds',
+            item_date: row.item_date || row.found_date || new Date().toISOString().slice(0, 10),
+            found_date: row.found_date || row.item_date || new Date().toISOString().slice(0, 10),
+            approximate_time: row.approximate_time,
+            identifying_characteristics: row.identifying_characteristics,
+            contact_preference: row.contact_preference || 'Institutional_Email',
+            contact_email: row.contact_email,
+            contact_phone: row.contact_phone,
+            additional_info: row.additional_info,
+            image_url: row.image_url,
+            status: row.status,
+            custody_status: row.custody_status,
+            challenge_question: row.challenge_question,
+            challenge_answer_hash: row.challenge_answer_hash || row.answer_hash,
+            reporter_id: row.reporter_id || row.founder_id,
+            reporter_name: row.reporter_name || row.founder_name || 'Campus Member',
+            reporter_role: row.reporter_role || 'student',
+            reporter_roll_or_emp: row.reporter_roll_or_emp,
+            founder_name: row.founder_name || row.reporter_name || 'Campus Member',
+            claimed_by_name: row.claimed_by_name,
+            claimed_at: row.claimed_at,
+            matched_item_id: row.matched_item_id,
+            created_at: row.created_at || new Date().toISOString(),
+            updated_at: row.updated_at
+          }));
+
+          // Synchronize local dataStore with fresh remote records
+          if (mapped.length > 0) {
+            dataStore.setLostFoundItems(mapped);
+          }
+
+          let results = mapped;
+          if (filter?.reporterRoll) {
+            results = results.filter(i => i.reporter_roll_or_emp === filter.reporterRoll || i.reporter_id === filter.reporterRoll);
+          }
+          if (filter?.query) {
+            const q = filter.query.toLowerCase();
+            results = results.filter(i =>
+              i.title.toLowerCase().includes(q) ||
+              i.description.toLowerCase().includes(q) ||
+              i.location.toLowerCase().includes(q) ||
+              i.reference_code.toLowerCase().includes(q)
+            );
+          }
+          return results;
+        }
+      } catch (e) {
+        console.warn('Supabase getLostFoundItems error, falling back to dataStore:', e);
+      }
+    }
+
+    // Fallback to local DataStore
+    let items = dataStore.getLostFoundItems(filter?.type);
+    if (filter?.category && filter.category !== 'All') {
+      items = items.filter(i => i.category === filter.category);
+    }
+    if (filter?.reporterId) {
+      items = items.filter(i => i.reporter_id === filter.reporterId);
+    }
+    if (filter?.reporterRoll) {
+      items = items.filter(i => i.reporter_roll_or_emp === filter.reporterRoll || i.reporter_id === filter.reporterRoll);
+    }
+    if (filter?.query) {
+      const q = filter.query.toLowerCase();
+      items = items.filter(i =>
+        i.title.toLowerCase().includes(q) ||
+        i.description.toLowerCase().includes(q) ||
+        (i.location && i.location.toLowerCase().includes(q)) ||
+        (i.reference_code && i.reference_code.toLowerCase().includes(q))
+      );
+    }
+    return items;
+  },
+
+  async saveLostFoundItem(payload: Partial<LostFoundItem>): Promise<LostFoundItem> {
+    const reportType = payload.report_type || 'found';
+    const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+    const referenceCode = payload.reference_code || `${reportType.toUpperCase()}-${new Date().getFullYear()}-${randomSuffix}`;
+    const id = payload.id || `lf-${Date.now()}-${randomSuffix}`;
+    const now = new Date().toISOString();
+
+    const fullItem: LostFoundItem = {
+      id,
+      reference_code: referenceCode,
+      report_type: reportType,
+      title: payload.title || 'Untitled Item',
+      category: payload.category || 'Other',
+      description: payload.description || '',
+      location: payload.location || payload.found_location || 'Campus Grounds',
+      found_location: payload.found_location || payload.location || 'Campus Grounds',
+      item_date: payload.item_date || payload.found_date || now.slice(0, 10),
+      found_date: payload.found_date || payload.item_date || now.slice(0, 10),
+      approximate_time: payload.approximate_time,
+      identifying_characteristics: payload.identifying_characteristics,
+      contact_preference: payload.contact_preference || 'Institutional_Email',
+      contact_email: payload.contact_email,
+      contact_phone: payload.contact_phone,
+      additional_info: payload.additional_info,
+      image_url: payload.image_url,
+      status: payload.status || (reportType === 'lost' ? 'Open' : 'Reported'),
+      custody_status: payload.custody_status,
+      challenge_question: payload.challenge_question,
+      challenge_answer: payload.challenge_answer,
+      challenge_answer_hash: payload.challenge_answer_hash,
+      reporter_id: payload.reporter_id,
+      reporter_name: payload.reporter_name || 'Campus Member',
+      reporter_role: payload.reporter_role || 'student',
+      reporter_roll_or_emp: payload.reporter_roll_or_emp,
+      founder_name: payload.founder_name || payload.reporter_name || 'Campus Member',
+      created_at: payload.created_at || now,
+      updated_at: now
+    };
+
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const dbPayload: any = {
+          id: fullItem.id,
+          reference_code: fullItem.reference_code,
+          report_type: fullItem.report_type,
+          title: fullItem.title,
+          category: fullItem.category,
+          description: fullItem.description,
+          location: fullItem.location,
+          found_location: fullItem.found_location,
+          item_date: fullItem.item_date,
+          found_date: fullItem.found_date,
+          approximate_time: fullItem.approximate_time,
+          identifying_characteristics: fullItem.identifying_characteristics,
+          contact_preference: fullItem.contact_preference,
+          contact_email: fullItem.contact_email,
+          contact_phone: fullItem.contact_phone,
+          additional_info: fullItem.additional_info,
+          image_url: fullItem.image_url,
+          status: fullItem.status,
+          custody_status: fullItem.custody_status,
+          challenge_question: fullItem.challenge_question || null,
+          challenge_answer_hash: fullItem.challenge_answer_hash || null,
+          reporter_id: fullItem.reporter_id || null,
+          reporter_name: fullItem.reporter_name,
+          reporter_role: fullItem.reporter_role,
+          reporter_roll_or_emp: fullItem.reporter_roll_or_emp,
+          founder_name: fullItem.founder_name,
+          created_at: fullItem.created_at
+        };
+
+        const { error } = await supabase.from('lost_found_items').upsert([dbPayload]);
+        if (error) {
+          console.warn('Supabase saveLostFoundItem error (falling back to dataStore):', error.message);
+        }
+      } catch (err) {
+        console.warn('Supabase saveLostFoundItem error:', err);
+      }
+    }
+
+    // Always update local dataStore for immediate reactive UI
+    dataStore.saveLostFoundItem(fullItem);
+    return fullItem;
+  },
+
+  async updateLostFoundStatus(id: string, status: LostFoundStatus, updates?: Partial<LostFoundItem>): Promise<LostFoundItem | null> {
+    const updated = dataStore.updateLostFoundStatus(id, status, updates);
+    if (isSupabaseConfigured && supabase) {
+      try {
+        await supabase
+          .from('lost_found_items')
+          .update({
+            status,
+            ...updates,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', id);
+      } catch (err) {
+        console.warn('Supabase updateLostFoundStatus error:', err);
+      }
+    }
+    return updated;
+  },
+
+  async submitLostFoundClaim(claim: Partial<LostFoundClaim>): Promise<LostFoundClaim> {
+    const newClaim: LostFoundClaim = {
+      id: claim.id || `claim-${Date.now()}`,
+      item_id: claim.item_id || '',
+      claimant_id: claim.claimant_id || '',
+      claimant_name: claim.claimant_name || 'Claimant',
+      claimant_roll: claim.claimant_roll || '',
+      claimant_phone: claim.claimant_phone || '',
+      challenge_response: claim.challenge_response || '',
+      additional_proof: claim.additional_proof,
+      status: 'Under_Verification',
+      created_at: new Date().toISOString()
+    };
+
+    if (isSupabaseConfigured && supabase) {
+      try {
+        await supabase.from('lost_found_claims').insert([newClaim]);
+        if (newClaim.item_id) {
+          await supabase.from('lost_found_items').update({ status: 'Claim_Pending' }).eq('id', newClaim.item_id);
+        }
+      } catch (err) {
+        console.warn('Supabase submitLostFoundClaim error:', err);
+      }
+    }
+
+    dataStore.saveLostFoundClaim(newClaim);
+    if (newClaim.item_id) {
+      dataStore.updateLostFoundStatus(newClaim.item_id, 'Claim_Pending');
+    }
+    return newClaim;
+  },
+
+  async getLostFoundClaims(itemId?: string): Promise<LostFoundClaim[]> {
+    if (isSupabaseConfigured && supabase) {
+      try {
+        let q = supabase.from('lost_found_claims').select('*').order('created_at', { ascending: false });
+        if (itemId) q = q.eq('item_id', itemId);
+        const { data, error } = await q;
+        if (!error && data) {
+          return data as LostFoundClaim[];
+        }
+      } catch (err) {
+        console.warn('Supabase getLostFoundClaims error:', err);
+      }
+    }
+    return dataStore.getLostFoundClaims(itemId);
   }
 };
 

@@ -30,7 +30,7 @@ export const AdminComplaintsView: React.FC = () => {
 
   const filteredComplaints = complaints.filter(c => {
     if (filter === 'escalated') return c.status === 'Escalated to MD' || c.escalated_to_md;
-    if (filter === 'pending') return c.status === 'Submitted' || c.status === 'Under Review';
+    if (filter === 'pending') return c.status === 'Pending Principal Review' || c.status === 'Principal Action Overdue' || c.status === 'Submitted' || c.status === 'Under Review';
     if (filter === 'resolved') return c.status === 'Resolved' || c.status === 'Closed';
     return true;
   });

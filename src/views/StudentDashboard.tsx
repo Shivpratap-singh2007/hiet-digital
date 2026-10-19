@@ -30,7 +30,6 @@ import {
   Building,
   Building2,
   CreditCard,
-  Calculator,
   PackageSearch,
   HeartPulse,
   HeartHandshake,
@@ -58,9 +57,7 @@ import { SessionalResultsView } from '../components/student/SessionalResultsView
 import { TimetableActiveView } from '../components/student/TimetableActiveView';
 import { AcademicResourcesView } from '../components/student/AcademicResourcesView';
 import { AcademicsHubView } from '../components/student/AcademicsHubView';
-import { ServicesHubView } from '../components/student/ServicesHubView';
 import { StudentAssignmentsView } from '../components/student/StudentAssignmentsView';
-import { CampusGalleryView } from '../components/common/CampusGalleryView';
 import { SyllabusProgressTrackerView } from '../components/student/SyllabusProgressTrackerView';
 import { LeaveApplicationView } from '../components/student/LeaveApplicationView';
 import { ComplaintBoxView } from '../components/student/ComplaintBoxView';
@@ -78,7 +75,6 @@ import { NoDuesHallTicketView } from '../components/admin/NoDuesHallTicketView';
 import { EventsCertificatesView } from '../components/common/EventsCertificatesView';
 import { LostAndFoundView } from '../components/common/LostAndFoundView';
 import { MaintenanceGrievanceView } from '../components/common/MaintenanceGrievanceView';
-import { CampusPresenceView } from '../components/presence/CampusPresenceView';
 import { FeeReceiptsView } from '../components/student/FeeReceiptsView';
 import { AdmitCardPrintView } from '../components/student/AdmitCardPrintView';
 import { LibraryCatalogView } from '../components/student/LibraryCatalogView';
@@ -86,7 +82,6 @@ import { TransportTrackerView } from '../components/student/TransportTrackerView
 import { HostelMessView } from '../components/student/HostelMessView';
 import { PlacementsAlumniView } from '../components/student/PlacementsAlumniView';
 import { DigitalIdCardView } from '../components/student/DigitalIdCardView';
-import { InternalMarksCalculatorView } from '../components/student/InternalMarksCalculatorView';
 import { ParentPortalView } from '../components/student/ParentPortalView';
 import { EmergencyHealthView } from '../components/student/EmergencyHealthView';
 import { VoiceAICampusAssistantView } from '../components/ai/VoiceAICampusAssistantView';
@@ -101,7 +96,7 @@ export const StudentDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
   const student = user?.studentMaster;
   const studentRoll = student?.roll_no || '';
   const studentId = user?.student_id || student?.id || '';
-  const studentBranch = student?.branch || student?.department || 'CSE';
+  const studentBranch = student?.branch || 'ECE';
   const studentSemester = student?.semester || 1;
   const studentSection = student?.section || 'A';
   const isHosteler = isStudentHosteler(student);
@@ -109,10 +104,25 @@ export const StudentDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
   // Dynamic student identity extraction
   const studentName = student?.name || user?.name || 'Aarav Sharma';
   const rawId = student?.roll_no || user?.id?.slice(0, 8) || '2026-002';
-  const department = student?.department || 'CSE';
+  const department = (student?.department === 'ECE' ? 'B.Tech' : (student?.department || user?.department || 'B.Tech'));
   const displayRollNo = rawId.startsWith('HIET')
     ? rawId
     : `HIET-${studentBranch}-2026-${rawId.replace(/[^0-9]/g, '').slice(-3) || '002'}`;
+
+  // Dynamic official grades (Strictly scoped to <= student's current semester)
+  const myGrades = dataStore.getGrades().filter(g => 
+    (g.student_id === studentId || (studentRoll && g.student_id === studentRoll)) &&
+    g.is_published !== false &&
+    g.semester <= studentSemester
+  );
+  const totalCredits = myGrades.reduce((sum, g) => sum + (g.credits || 4.0), 0);
+  const totalPoints = myGrades.reduce((sum, g) => sum + (g.grade_point * (g.credits || 4.0)), 0);
+  const calculatedCgpa = totalCredits > 0 ? (Math.round((totalPoints / totalCredits) * 100) / 100).toFixed(2) : null;
+
+  const currentSemGrades = myGrades.filter(g => g.semester === studentSemester);
+  const curSemCredits = currentSemGrades.reduce((sum, g) => sum + (g.credits || 4.0), 0);
+  const curSemPoints = currentSemGrades.reduce((sum, g) => sum + (g.grade_point * (g.credits || 4.0)), 0);
+  const calculatedSgpa = curSemCredits > 0 ? (Math.round((curSemPoints / curSemCredits) * 100) / 100).toFixed(2) : null;
 
   // Metrics from dataStore / Supabase (Strictly scoped to authenticated student)
   const [myAttendance, setMyAttendance] = useState<AttendanceRecord[]>(() =>
@@ -121,14 +131,21 @@ export const StudentDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
 
   useEffect(() => {
     let isMounted = true;
-    if (!studentId) return;
+    if (!studentId || currentTab !== 'dashboard') return;
     apiService.getAttendance({ studentId }).then(records => {
       if (isMounted && records && records.length > 0) {
         setMyAttendance(records);
       }
     }).catch(console.warn);
     return () => { isMounted = false; };
-  }, [studentId]);
+  }, [studentId, currentTab]);
+
+  // Redirect away from removed student tabs (campus_presence, services, gallery) to overview dashboard
+  useEffect(() => {
+    if ((currentTab as string) === 'campus_presence' || currentTab === 'services' || currentTab === 'gallery') {
+      onNavigateTab('dashboard');
+    }
+  }, [currentTab, onNavigateTab]);
 
   const attendanceStats = calculateAttendanceStats(myAttendance);
 
@@ -136,6 +153,7 @@ export const StudentDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
   const [assignmentsCount, setAssignmentsCount] = useState<number>(0);
   useEffect(() => {
     let isMounted = true;
+    if (currentTab !== 'dashboard') return;
     async function loadAssignments() {
       try {
         const list = await apiService.getAssignments({ branch: studentBranch, semester: studentSemester });
@@ -148,7 +166,7 @@ export const StudentDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
     }
     loadAssignments();
     return () => { isMounted = false; };
-  }, [studentBranch, studentSemester]);
+  }, [studentBranch, studentSemester, currentTab]);
 
   // Real-time Student Leave Tracking & Pending Request Counter
   const [studentLeaves, setStudentLeaves] = useState<LeaveRequest[]>(() =>
@@ -157,6 +175,7 @@ export const StudentDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
 
   useEffect(() => {
     let isMounted = true;
+    if (currentTab !== 'dashboard') return;
     async function loadStudentLeaves() {
       if (!studentId && !user?.id) {
         setStudentLeaves([]);
@@ -179,7 +198,7 @@ export const StudentDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
       window.removeEventListener('storage', handleSync);
       window.removeEventListener('hiet-leave-updated', handleSync);
     };
-  }, [studentId, user?.id]);
+  }, [studentId, user?.id, currentTab]);
 
   const pendingLeavesCount = studentLeaves.filter(l => 
     (l.status || '').toLowerCase().startsWith('pending')
@@ -191,6 +210,7 @@ export const StudentDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
 
   useEffect(() => {
     let isMounted = true;
+    if (currentTab !== 'dashboard') return;
     async function loadDashboardTimetable() {
       try {
         const slots = await apiService.getTimetable({
@@ -207,7 +227,7 @@ export const StudentDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
     }
     loadDashboardTimetable();
     return () => { isMounted = false; };
-  }, [studentBranch, studentSemester, studentSection]);
+  }, [studentBranch, studentSemester, studentSection, currentTab]);
 
   const allTimetable = liveTimetable;
   const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -256,11 +276,10 @@ export const StudentDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
 
   // Subview Router
   if (currentTab === 'academics') return <AcademicsHubView onNavigate={onNavigateTab} />;
-  if (currentTab === 'services') return <ServicesHubView onNavigate={onNavigateTab} />;
   if (currentTab === 'assignments') return <StudentAssignmentsView />;
   if (currentTab === 'attendance') return <AttendanceView />;
   if (currentTab === 'cgpa') return <CgpaView />;
-  if (currentTab === 'sessional_results' as any) return <SessionalResultsView />;
+  if (currentTab === 'sessional_results' as any) return <CgpaView initialTab="sessional_results" />;
   if (currentTab === 'timetable' as any) return <TimetableActiveView />;
   if (currentTab === 'syllabus') return <AcademicResourcesView key="syllabus" initialTab="syllabus" />;
   if (currentTab === 'syllabus_progress' as any) return <SyllabusProgressTrackerView />;
@@ -273,7 +292,6 @@ export const StudentDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
   if (currentTab === 'social_links' as any) return <CollegeSocialLinksView />;
   if (currentTab === 'gate_pass' as any) return <DigitalGatePassView />;
   if (currentTab === 'fines' as any) return <StudentFinesView />;
-  if (currentTab === 'gallery') return <CampusGalleryView />;
   if (currentTab === 'analytics' as any) return <AdvancedAnalyticsView />;
   if (currentTab === 'doubts') return <DoubtBoxView />;
   if (currentTab === 'settings') return <SettingsView />;
@@ -283,7 +301,6 @@ export const StudentDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
   if (currentTab === 'events' as any) return <EventsCertificatesView />;
   if (currentTab === 'lost_found' as any) return <LostAndFoundView />;
   if (currentTab === 'maintenance' as any) return <MaintenanceGrievanceView />;
-  if (currentTab === 'campus_presence' as any) return <CampusPresenceView />;
   if (currentTab === 'fees' as any) return <FeeReceiptsView onNavigate={onNavigateTab} />;
   if (currentTab === 'admit_card' as any) return <AdmitCardPrintView onNavigate={onNavigateTab} />;
   if (currentTab === 'library' as any) return <LibraryCatalogView onNavigate={onNavigateTab} />;
@@ -291,7 +308,7 @@ export const StudentDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
   if (currentTab === 'mess' as any) return <HostelMessView onNavigate={onNavigateTab} />;
   if (currentTab === 'placements' as any) return <PlacementsAlumniView onNavigate={onNavigateTab} />;
   if (currentTab === 'id_card' as any) return <DigitalIdCardView onNavigate={onNavigateTab} />;
-  if (currentTab === 'internals' as any) return <InternalMarksCalculatorView onNavigate={onNavigateTab} />;
+  if (currentTab === 'internals' as any) return <CgpaView />;
   if (currentTab === 'parent_portal' as any) return <ParentPortalView onNavigate={onNavigateTab} />;
   if (currentTab === 'emergency_sos' as any) return <EmergencyHealthView onNavigate={onNavigateTab} />;
   if (currentTab === 'ai_campus_assistant' as any) return <VoiceAICampusAssistantView onNavigate={onNavigateTab} />;
@@ -486,14 +503,16 @@ export const StudentDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
 
           <div>
             <div className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-              {student?.cgpa && student?.sgpa 
-                ? `${student.cgpa} / ${student.sgpa}` 
-                : student?.cgpa 
-                ? `${student.cgpa} / 7.2` 
-                : '7.2 / 7.2'}
+              {calculatedCgpa && calculatedSgpa 
+                ? `${calculatedCgpa} / ${calculatedSgpa}` 
+                : calculatedCgpa 
+                ? `${calculatedCgpa} CGPA` 
+                : calculatedSgpa
+                ? `${calculatedSgpa} SGPA`
+                : '--'}
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
-              Cumulative & Semester Grade Index
+              {calculatedCgpa ? 'Cumulative & Semester Grade Index' : 'Results not published yet.'}
             </p>
           </div>
         </div>

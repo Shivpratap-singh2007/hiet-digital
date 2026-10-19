@@ -25,6 +25,7 @@ interface Props {
   onOpenLogin?: () => void;
   onOpenAiAssistant?: () => void;
   onOpenSearch?: () => void;
+  onNavigateHome?: () => void;
 }
 
 export const Navbar: React.FC<Props> = ({
@@ -33,7 +34,8 @@ export const Navbar: React.FC<Props> = ({
   onOpenProfile,
   onOpenLogin,
   onOpenAiAssistant,
-  onOpenSearch
+  onOpenSearch,
+  onNavigateHome
 }) => {
   const { user, logout, role, workspaceRoles, switchWorkspace, activeWorkspaceRole } = useAuth();
   const { isInstallable, isInstalled, isIos, installApp, setShowIosModal } = usePwa();
@@ -112,7 +114,14 @@ export const Navbar: React.FC<Props> = ({
             </button>
           )}
 
-          <div className="flex items-center gap-3 select-none">
+          <div 
+            onClick={onNavigateHome}
+            className={`flex items-center gap-3 select-none ${onNavigateHome ? 'cursor-pointer hover:opacity-95 transition-opacity' : ''}`}
+            role={onNavigateHome ? 'button' : undefined}
+            tabIndex={onNavigateHome ? 0 : undefined}
+            onKeyDown={onNavigateHome ? (e) => { if (e.key === 'Enter' || e.key === ' ') onNavigateHome(); } : undefined}
+            aria-label="HIET Digital Campus Home"
+          >
             <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-900 p-1 border border-slate-200 dark:border-slate-800 flex items-center justify-center shrink-0 shadow-2xs">
               {!logoError ? (
                 <img

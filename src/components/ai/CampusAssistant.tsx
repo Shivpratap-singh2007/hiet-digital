@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { useCampusAssistant } from '../../hooks/useCampusAssistant';
 import { NavTab } from '../common/Sidebar';
+import { getTabFromPathname } from '../../lib/appNavigation';
 
 interface Props {
   onNavigateTab?: (tab: NavTab) => void;
@@ -91,8 +92,8 @@ export const CampusAssistant: React.FC<Props> = ({ onNavigateTab }) => {
 
   const handleActionClick = (url?: string) => {
     if (!url || !onNavigateTab) return;
-    const tab = url.replace('/app/student/', '').replace('/app/faculty/', '').replace('/app/hod/', '').replace('/app/principal/', '');
-    onNavigateTab(tab as NavTab);
+    const tab = getTabFromPathname(url);
+    onNavigateTab(tab);
   };
 
   return (

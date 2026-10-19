@@ -8,14 +8,16 @@ export const SessionalResultsView: React.FC = () => {
   const { user } = useAuth();
   const [selectedExam, setSelectedExam] = useState<'Sessional 1' | 'Sessional 2'>('Sessional 1');
 
-  const studentRoll = user?.studentMaster?.roll_no || 'CSE001';
+  const studentRoll = user?.studentMaster?.roll_no || '';
+  const studentId = user?.studentMaster?.id || user?.student_id || user?.id || '';
   const allResults = dataStore.getSessionalResults();
   
-  // Filter for current student or fallback to CSE001 demo results
-  const studentResults = allResults.filter(r => r.student_roll.toUpperCase() === studentRoll.toUpperCase());
-  const displayResults = studentResults.length > 0 
-    ? studentResults.filter(r => r.exam_type === selectedExam)
-    : allResults.filter(r => r.exam_type === selectedExam && r.student_roll === 'CSE001');
+  // Filter for authenticated student only
+  const studentResults = allResults.filter(r => 
+    (studentRoll && r.student_roll.toUpperCase() === studentRoll.toUpperCase()) ||
+    (studentId && r.student_id === studentId)
+  );
+  const displayResults = studentResults.filter(r => r.exam_type === selectedExam);
 
   const totalMarksObtained = displayResults.reduce((acc, r) => acc + r.marks_obtained, 0);
   const totalMaxMarks = displayResults.reduce((acc, r) => acc + r.max_marks, 0);
@@ -53,36 +55,46 @@ export const SessionalResultsView: React.FC = () => {
         </div>
       </div>
 
-      {/* Aggregate Score Card */}
-      <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-700 to-indigo-800 text-white shadow-md relative overflow-hidden">
-        <div className="relative z-10 flex items-center justify-between">
-          <div>
-            <span className="text-[11px] font-bold uppercase tracking-wider text-blue-200 block">
-              {selectedExam} • Aggregate Performance
-            </span>
-            <div className="flex items-baseline gap-2 mt-1">
-              <span className="text-3xl font-black">{totalMarksObtained}</span>
-              <span className="text-sm font-semibold text-blue-200">/ {totalMaxMarks} Marks</span>
+      {displayResults.length === 0 ? (
+        <div className="p-8 sm:p-12 text-center bg-white rounded-2xl border border-dashed border-slate-200 shadow-2xs space-y-2">
+          <AlertCircle className="w-8 h-8 text-slate-400 mx-auto" />
+          <h3 className="text-sm font-bold text-slate-800">Results not published yet.</h3>
+          <p className="text-xs text-slate-500 max-w-sm mx-auto">
+            Internal evaluation records for {selectedExam} have not been published by your subject faculty yet.
+          </p>
+        </div>
+      ) : (
+        <>
+          {/* Aggregate Score Card */}
+          <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-700 to-indigo-800 text-white shadow-md relative overflow-hidden">
+            <div className="relative z-10 flex items-center justify-between">
+              <div>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-blue-200 block">
+                  {selectedExam} • Aggregate Performance
+                </span>
+                <div className="flex items-baseline gap-2 mt-1">
+                  <span className="text-3xl font-black">{totalMarksObtained}</span>
+                  <span className="text-sm font-semibold text-blue-200">/ {totalMaxMarks} Marks</span>
+                </div>
+                <p className="text-xs text-blue-100/90 mt-1">
+                  Percentage: <strong className="text-white">{overallPercentage}%</strong>
+                </p>
+              </div>
+
+              <div className="w-16 h-16 rounded-2xl bg-white/10 border border-white/20 flex flex-col items-center justify-center backdrop-blur-sm">
+                <span className="text-xl font-black text-amber-300">{overallPercentage}%</span>
+                <span className="text-[9px] uppercase font-bold text-blue-200">Score</span>
+              </div>
             </div>
-            <p className="text-xs text-blue-100/90 mt-1">
-              Percentage: <strong className="text-white">{overallPercentage}%</strong>
-            </p>
           </div>
 
-          <div className="w-16 h-16 rounded-2xl bg-white/10 border border-white/20 flex flex-col items-center justify-center backdrop-blur-sm">
-            <span className="text-xl font-black text-amber-300">{overallPercentage}%</span>
-            <span className="text-[9px] uppercase font-bold text-blue-200">Score</span>
-          </div>
-        </div>
-      </div>
+          {/* Subject-Wise Sessional Cards List */}
+          <div className="space-y-2.5">
+            <div className="text-xs font-bold uppercase tracking-wider text-slate-500 px-1">
+              Subject Breakdown:
+            </div>
 
-      {/* Subject-Wise Sessional Cards List */}
-      <div className="space-y-2.5">
-        <div className="text-xs font-bold uppercase tracking-wider text-slate-500 px-1">
-          Subject Breakdown:
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {displayResults.map(res => {
             const isGood = res.percentage >= 75;
             return (
@@ -139,6 +151,8 @@ export const SessionalResultsView: React.FC = () => {
           })}
         </div>
       </div>
+    </>
+    )}
     </div>
   );
 };

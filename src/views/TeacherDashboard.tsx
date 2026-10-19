@@ -44,7 +44,6 @@ import { TeacherAssignmentsView } from '../components/teacher/TeacherAssignments
 import { TeacherAcademicDocsView } from '../components/teacher/TeacherAcademicDocsView';
 import { CalendarView } from '../components/common/CalendarView';
 import { NoticesView } from '../components/common/NoticesView';
-import { CampusGalleryView } from '../components/common/CampusGalleryView';
 import { AdvancedAnalyticsView } from '../components/analytics/AdvancedAnalyticsView';
 import { TimetableActiveView } from '../components/student/TimetableActiveView';
 import { SmartBoardTeachingView } from '../components/smartboard/SmartBoardTeachingView';
@@ -170,7 +169,6 @@ export const TeacherDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
   }) : todayClasses[0];
 
   // Subview Router
-  if (currentTab === 'gallery') return <CampusGalleryView />;
   if (currentTab === 'assignments') return <TeacherAssignmentsView />;
   if (currentTab === 'submissions' as any) return <TeacherAssignmentsView />;
   if (currentTab === 'syllabus') return <TeacherAcademicDocsView key="teacher-syllabus" initialTab="syllabus" />;

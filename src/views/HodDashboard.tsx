@@ -30,7 +30,6 @@ import { apiService } from '../lib/supabase';
 import { NavTab } from '../components/common/Sidebar';
 import { TeacherLeavesView } from '../components/teacher/TeacherLeavesView';
 import { CalendarView } from '../components/common/CalendarView';
-import { CampusGalleryView } from '../components/common/CampusGalleryView';
 import { calculateAttendanceStats } from '../lib/utils';
 import { calculateAttendanceRisk } from '../lib/attendanceRisk';
 import { StudentMaster, TeacherMaster, Subject, AttendanceRecord, Notice, Achievement, LeaveRequest } from '../types';
@@ -288,7 +287,6 @@ export const HodDashboard: React.FC<Props> = ({ currentTab = 'dashboard', onNavi
   }
 
   if (currentTab === 'syllabus_progress' as any) return <SyllabusProgressTrackerView />;
-  if (currentTab === 'gallery') return <CampusGalleryView />;
   if (currentTab === 'department' as any) return <DepartmentStructureView />;
   if (currentTab === 'academic_catalog' as any) return <AcademicCatalogView />;
   if (currentTab === 'timetable' as any) return <TimetableActiveView />;

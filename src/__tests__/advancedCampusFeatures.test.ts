@@ -65,20 +65,34 @@ describe('Advanced Campus Institutional Features Test Suite', () => {
     });
   });
 
-  describe('2. Campus Emergency SOS & Rapid Directory', () => {
-    it('returns official emergency numbers with 24x7 response', () => {
+  describe('2. Campus Emergency Directory & Verification Integrity', () => {
+    it('returns official emergency directory with verified records and separate wardens', () => {
       const contacts = campusLifeStore.getEmergencyContacts();
-      expect(contacts.length).toBeGreaterThanOrEqual(5);
+      expect(contacts.length).toBeGreaterThanOrEqual(6);
 
+      // Ambulance should NOT have unverified phone numbers
       const ambulance = contacts.find(c => c.department === 'Medical Services');
       expect(ambulance).toBeDefined();
-      expect(ambulance?.phone).toContain('98160');
-      expect(ambulance?.is_24x7).toBe(true);
+      expect(ambulance?.phone).toBeUndefined();
+      expect(ambulance?.is_verified).toBe(false);
       expect(ambulance?.priority_level).toBe('Immediate');
 
+      // Security Gate
       const security = contacts.find(c => c.department === 'Campus Security');
       expect(security).toBeDefined();
       expect(security?.location).toContain('Gate No. 1');
+      expect(security?.phone).toBeUndefined();
+
+      // Separate Boys and Girls Hostel Wardens
+      const boysWarden = contacts.find(c => c.title === 'Boys Hostel Warden');
+      const girlsWarden = contacts.find(c => c.title === 'Girls Hostel Warden');
+      expect(boysWarden).toBeDefined();
+      expect(girlsWarden).toBeDefined();
+      expect(boysWarden?.id).not.toBe(girlsWarden?.id);
+      expect(boysWarden?.phone).toBeUndefined();
+      expect(girlsWarden?.phone).toBeUndefined();
+      expect(boysWarden?.contact_status).toBe('not_provided');
+      expect(girlsWarden?.contact_status).toBe('not_provided');
     });
   });
 
@@ -120,7 +134,8 @@ describe('Advanced Campus Institutional Features Test Suite', () => {
       const navIds = navItems.map(n => n.id);
 
       expect(navIds).toContain('id_card');
-      expect(navIds).toContain('internals');
+      expect(navIds).not.toContain('internals');
+      expect(navIds).toContain('cgpa');
       expect(navIds).toContain('events');
       expect(navIds).toContain('lost_found');
       expect(navIds).toContain('emergency_sos');

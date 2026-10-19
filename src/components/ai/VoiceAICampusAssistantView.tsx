@@ -260,7 +260,7 @@ export const VoiceAICampusAssistantView: React.FC<Props> = ({ onNavigate }) => {
       />
 
       {/* Main Conversation Quad */}
-      <div className="bg-white border border-slate-200 rounded-3xl shadow-xs overflow-hidden flex flex-col h-[580px]">
+      <div className="bg-white border border-slate-200 rounded-3xl shadow-xs overflow-hidden flex flex-col h-[calc(100dvh-260px)] min-h-[460px] max-h-[720px]">
         {/* Quick Suggestion Chips Header */}
         <div className="p-3.5 bg-slate-50 border-b border-slate-200 flex items-center gap-2 overflow-x-auto">
           <span className="text-[10px] font-black uppercase text-slate-400 whitespace-nowrap pl-1">

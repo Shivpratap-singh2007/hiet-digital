@@ -8,7 +8,7 @@ import {
   CheckCircle2, 
   Paperclip, 
   MessageSquare,
-  Sparkles
+  ShieldCheck
 } from 'lucide-react';
 import { dataStore } from '../../lib/mockData';
 import { useAuth } from '../../context/AuthContext';
@@ -101,34 +101,34 @@ export const DoubtBoxView: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in font-sans pb-24 w-full max-w-full">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <HelpCircle className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-600 dark:text-emerald-400 animate-icon-wiggle icon-glow-emerald shrink-0" />
+          <h2 className="text-lg sm:text-xl font-bold text-[#0F2942] flex items-center gap-2">
+            <HelpCircle className="w-5 h-5 sm:w-6 sm:h-6 text-[#0F2942] shrink-0" />
             <span>Interactive Doubt & Query Box</span>
           </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+          <p className="text-xs text-[#64748B] mt-0.5">
             Two-way academic consultation and conceptual questions with assigned course professors
           </p>
         </div>
 
         <button
           onClick={() => setShowNewModal(true)}
-          className="w-full sm:w-auto justify-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold flex items-center gap-2 shadow-sm transition shrink-0"
+          className="w-full sm:w-auto justify-center px-4 py-2.5 bg-[#0F2942] hover:bg-[#183B56] active:bg-[#0B1F33] text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-sm transition shrink-0"
         >
-          <Plus className="w-4 h-4" />
-          Ask a New Doubt
+          <Plus className="w-4 h-4 text-white" />
+          <span>Ask a New Doubt</span>
         </button>
       </div>
 
       {/* Chat Thread Interface (2-Columns) */}
-      <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 rounded-2xl overflow-hidden shadow-xs grid grid-cols-1 lg:grid-cols-3 min-h-[500px]">
+      <div className="bg-white border border-[#E2E8F0] rounded-2xl overflow-hidden shadow-xs grid grid-cols-1 lg:grid-cols-3 min-h-[500px]">
         
         {/* Left Column: List of Doubts */}
-        <div className="border-r border-slate-200 dark:border-slate-700/80 p-3 space-y-2 overflow-y-auto max-h-[600px]">
-          <span className="px-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+        <div className="border-r border-[#E2E8F0] p-3 space-y-2 overflow-y-auto max-h-[600px] bg-white">
+          <span className="px-2 text-[10px] font-bold uppercase tracking-wider text-[#64748B] block mb-1">
             My Queries ({doubts.length})
           </span>
 
@@ -138,32 +138,32 @@ export const DoubtBoxView: React.FC = () => {
               <button
                 key={d.id}
                 onClick={() => setSelectedDoubtId(d.id)}
-                className={`w-full text-left p-3 rounded-xl transition border ${
+                className={`w-full text-left p-3.5 rounded-xl transition border select-none ${
                   isSelected
-                    ? 'bg-emerald-50/70 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800'
-                    : 'bg-slate-50/60 dark:bg-slate-900/40 border-slate-200/80 dark:border-slate-750 hover:bg-slate-100'
+                    ? 'bg-[#F8FAFC] border-[#0F2942] shadow-xs ring-1 ring-[#0F2942]/20'
+                    : 'bg-white border-[#E2E8F0] hover:bg-[#F8FAFC] hover:border-slate-300'
                 }`}
               >
-                <div className="flex justify-between items-center mb-1">
-                  <span className="font-semibold text-xs text-emerald-700 dark:text-emerald-400 truncate max-w-[150px]">
+                <div className="flex justify-between items-center mb-1 gap-2">
+                  <span className="font-bold text-xs text-[#0F2942] truncate max-w-[150px]">
                     {d.subject_name}
                   </span>
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${
+                  <span className={`text-[10px] px-2 py-0.5 rounded-md font-bold shrink-0 ${
                     d.status === 'Resolved'
-                      ? 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
+                      ? 'bg-slate-100 text-slate-700 border border-slate-200'
                       : d.status === 'Answered'
-                      ? 'bg-emerald-100 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200'
-                      : 'bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-200'
+                      ? 'bg-[#0F2942] text-white'
+                      : 'bg-slate-100 text-[#64748B] border border-[#E2E8F0]'
                   }`}>
                     {d.status}
                   </span>
                 </div>
 
-                <p className="text-xs text-slate-800 dark:text-slate-200 line-clamp-2 font-medium">
+                <p className="text-xs text-slate-800 line-clamp-2 font-medium">
                   {d.question}
                 </p>
 
-                <div className="flex justify-between items-center mt-2 text-[10px] text-slate-400">
+                <div className="flex justify-between items-center mt-2 text-[10px] text-[#64748B]">
                   <span>Prof: {d.teacher_name}</span>
                   <span>{formatDate(d.created_at)}</span>
                 </div>
@@ -173,22 +173,24 @@ export const DoubtBoxView: React.FC = () => {
         </div>
 
         {/* Right Column: Active Conversation Messages */}
-        <div className="lg:col-span-2 flex flex-col justify-between p-4 sm:p-6 bg-slate-50/30 dark:bg-slate-900/20">
+        <div className="lg:col-span-2 flex flex-col justify-between p-4 sm:p-6 bg-[#F8FAFC]/50">
           {activeDoubt ? (
             <>
               {/* Thread Header */}
-              <div className="pb-3 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
+              <div className="pb-3 border-b border-[#E2E8F0] flex justify-between items-center gap-2">
                 <div>
-                  <h3 className="font-bold text-sm text-slate-900 dark:text-white">
+                  <h3 className="font-bold text-sm text-[#0F2942]">
                     {activeDoubt.subject_name}
                   </h3>
-                  <p className="text-xs text-slate-500">
-                    Instructor: <strong className="text-slate-700 dark:text-slate-300">{activeDoubt.teacher_name}</strong>
+                  <p className="text-xs text-[#64748B] mt-0.5">
+                    Instructor: <strong className="text-slate-800">{activeDoubt.teacher_name}</strong>
                   </p>
                 </div>
 
                 <span className={`text-xs px-2.5 py-1 rounded-full font-bold ${
-                  activeDoubt.status === 'Resolved' ? 'bg-slate-200 text-slate-700' : 'bg-emerald-100 text-emerald-800'
+                  activeDoubt.status === 'Resolved' 
+                    ? 'bg-slate-100 text-slate-700 border border-slate-200' 
+                    : 'bg-[#0F2942] text-white'
                 }`}>
                   Status: {activeDoubt.status}
                 </span>
@@ -203,8 +205,8 @@ export const DoubtBoxView: React.FC = () => {
                       key={m.id}
                       className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}
                     >
-                      <div className="flex items-center gap-1.5 mb-1 text-[11px] text-slate-400">
-                        <span className="font-semibold text-slate-600 dark:text-slate-300">{m.sender_name}</span>
+                      <div className="flex items-center gap-1.5 mb-1 text-[11px] text-[#64748B]">
+                        <span className="font-semibold text-slate-700">{m.sender_name}</span>
                         <span>•</span>
                         <span>{formatDateTime(m.created_at)}</span>
                       </div>
@@ -212,8 +214,8 @@ export const DoubtBoxView: React.FC = () => {
                       <div
                         className={`max-w-md p-3.5 rounded-2xl text-xs leading-relaxed ${
                           isMe
-                            ? 'bg-emerald-600 text-white rounded-br-none shadow-xs'
-                            : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-bl-none shadow-xs'
+                            ? 'bg-[#0F2942] text-white rounded-br-none shadow-xs'
+                            : 'bg-white border border-[#E2E8F0] text-slate-900 rounded-bl-none shadow-xs'
                         }`}
                       >
                         {m.message}
@@ -224,25 +226,25 @@ export const DoubtBoxView: React.FC = () => {
               </div>
 
               {/* Reply Input Box */}
-              <form onSubmit={handleSendFollowup} className="pt-3 border-t border-slate-200 dark:border-slate-700 flex items-center gap-2">
+              <form onSubmit={handleSendFollowup} className="pt-3 border-t border-[#E2E8F0] flex items-center gap-2">
                 <input
                   type="text"
                   value={replyInput}
                   onChange={e => setReplyInput(e.target.value)}
                   placeholder="Type your follow-up reply to the professor..."
-                  className="flex-1 px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  className="flex-1 px-3.5 py-2.5 rounded-xl border border-[#E2E8F0] bg-white text-xs text-slate-900 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-[#0F2942] focus:border-[#0F2942]"
                 />
                 <button
                   type="submit"
-                  className="p-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-xs transition"
+                  className="p-2.5 bg-[#0F2942] hover:bg-[#183B56] active:bg-[#0B1F33] text-white rounded-xl shadow-xs transition"
                 >
-                  <Send className="w-4 h-4" />
+                  <Send className="w-4 h-4 text-white" />
                 </button>
               </form>
             </>
           ) : (
-            <div className="flex flex-col items-center justify-center h-full text-slate-400 text-xs py-12">
-              <MessageSquare className="w-10 h-10 mb-2 opacity-40" />
+            <div className="flex flex-col items-center justify-center h-full text-[#64748B] text-xs py-12">
+              <MessageSquare className="w-10 h-10 mb-2 opacity-40 text-[#0F2942]" />
               <span>Select a question to view the discussion or ask a new doubt.</span>
             </div>
           )}
@@ -251,32 +253,32 @@ export const DoubtBoxView: React.FC = () => {
 
       {/* Ask Doubt Modal */}
       {showNewModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm p-3 sm:p-4 animate-fade-in overflow-hidden">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl max-w-lg w-full max-h-[92vh] overflow-y-auto p-4 sm:p-6">
-            <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mb-1">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0B1F33]/70 backdrop-blur-xs p-3 sm:p-4 animate-fade-in overflow-hidden">
+          <div className="bg-white border border-[#E2E8F0] rounded-2xl shadow-2xl max-w-lg w-full max-h-[92vh] overflow-y-auto p-4 sm:p-6">
+            <h3 className="text-base sm:text-lg font-bold text-[#0F2942] mb-1">
               Ask Course Faculty
             </h3>
-            <p className="text-xs text-slate-500 mb-3">
+            <p className="text-xs text-[#64748B] mb-3">
               Direct academic consultation with your assigned course professor.
             </p>
 
             {/* Student Privacy Shield Notice */}
-            <div className="mb-4 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 flex items-start gap-2.5">
-              <span className="text-emerald-600 dark:text-emerald-400 font-bold text-sm">🛡️</span>
-              <div className="text-[11px] leading-relaxed text-emerald-900 dark:text-emerald-200">
-                <span className="font-bold">Student Privacy Shield Active:</span> Teacher ko aapka <strong>Naam ya Roll Number show nahi hoga</strong>. Unhe sirf aapki <strong>Branch ({user?.studentMaster?.branch || 'CSE'}), Semester ({user?.studentMaster?.semester || 6}th), aur Section ({user?.studentMaster?.section || 'A'})</strong> dikhega, taaki aap bina kisi sankoch ya dar ke conceptual sawal puch sakein!
+            <div className="mb-4 p-3.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] flex items-start gap-2.5">
+              <ShieldCheck className="w-4 h-4 text-[#0F2942] shrink-0 mt-0.5" />
+              <div className="text-[11px] leading-relaxed text-slate-700">
+                <span className="font-bold text-[#0F2942]">Student Privacy Shield Active:</span> Teacher will not see your name or roll number. They only see your <strong>Branch ({user?.studentMaster?.branch || 'CSE'}), Semester ({user?.studentMaster?.semester || 6}th), and Section ({user?.studentMaster?.section || 'A'})</strong>, ensuring confidential and unbiased academic guidance.
               </div>
             </div>
 
             <form onSubmit={handleCreateDoubt} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold uppercase text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-semibold uppercase text-[#0F2942] mb-1">
                   Select Subject & Faculty
                 </label>
                 <select
                   value={selectedSubId}
                   onChange={e => setSelectedSubId(e.target.value)}
-                  className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200"
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-[#E2E8F0] bg-white text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#0F2942] focus:border-[#0F2942]"
                 >
                   {subjects.map(s => (
                     <option key={s.id} value={s.id}>
@@ -287,7 +289,7 @@ export const DoubtBoxView: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold uppercase text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-semibold uppercase text-[#0F2942] mb-1">
                   Question / Doubt Description
                 </label>
                 <textarea
@@ -296,12 +298,12 @@ export const DoubtBoxView: React.FC = () => {
                   onChange={e => setQuestionText(e.target.value)}
                   placeholder="Specify the equation, page number, slide reference, or algorithm step you need clarified..."
                   required
-                  className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200"
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-[#E2E8F0] bg-white text-slate-800 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-[#0F2942] focus:border-[#0F2942]"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold uppercase text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-semibold uppercase text-[#0F2942] mb-1">
                   Image or Code Snippet Link (Optional)
                 </label>
                 <input
@@ -309,7 +311,7 @@ export const DoubtBoxView: React.FC = () => {
                   value={attachment}
                   onChange={e => setAttachment(e.target.value)}
                   placeholder="https://... (Diagram or snapshot URL)"
-                  className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200"
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-[#E2E8F0] bg-white text-slate-800 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-[#0F2942] focus:border-[#0F2942]"
                 />
               </div>
 
@@ -317,14 +319,14 @@ export const DoubtBoxView: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowNewModal(false)}
-                  className="px-4 py-2 text-xs text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
+                  className="px-4 py-2 text-xs text-[#64748B] hover:text-[#0F2942] hover:bg-[#F8FAFC] rounded-xl border border-transparent hover:border-[#E2E8F0] transition font-medium"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded-lg"
+                  className="px-5 py-2.5 bg-[#0F2942] hover:bg-[#183B56] active:bg-[#0B1F33] text-white text-xs font-bold rounded-xl shadow-sm transition disabled:opacity-50"
                 >
                   {submitting ? 'Posting Question...' : 'Post Doubt'}
                 </button>

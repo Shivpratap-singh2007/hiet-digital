@@ -12,7 +12,6 @@ import {
   ChevronDown,
   ChevronUp,
   Award, 
-  Camera, 
   Trophy,
   CalendarDays,
   PhoneCall,
@@ -35,7 +34,6 @@ import { PyqView } from '../student/PyqView';
 import { StudentAssignmentsView } from '../student/StudentAssignmentsView';
 import { NoticesView } from '../common/NoticesView';
 import { ProfileView } from '../common/ProfileView';
-import { CampusGalleryView } from '../common/CampusGalleryView';
 import { CalendarView } from '../common/CalendarView';
 import { CgpaView } from '../student/CgpaView';
 import { AchievementsView } from '../student/AchievementsView';
@@ -50,7 +48,7 @@ interface Props {
   onOpenLogin: (role?: UserRole) => void;
   onOpenStudentRegister: () => void;
   onOpenTeacherRegister: () => void;
-  onOpenGallery: () => void;
+  onOpenGallery?: () => void;
   onOpenCampus3D: () => void;
 }
 
@@ -59,7 +57,6 @@ export const MobileAppView: React.FC<Props> = ({
   onOpenLogin,
   onOpenStudentRegister,
   onOpenTeacherRegister,
-  onOpenGallery,
   onOpenCampus3D
 }) => {
   const { user, role } = useAuth();
@@ -106,7 +103,6 @@ export const MobileAppView: React.FC<Props> = ({
         case 'achievements': return <TeacherAchievementsView />;
         case 'calendar': return <CalendarView />;
         case 'notices': return <NoticesView />;
-        case 'gallery': return <CampusGalleryView />;
         case 'profile': return <ProfileView />;
         default: return <TeacherAttendanceView />;
       }
@@ -120,7 +116,6 @@ export const MobileAppView: React.FC<Props> = ({
         case 'calendar': return <CalendarView />;
         case 'profile': return <ProfileView />;
         case 'complaints': return <ComplaintBoxView />;
-        case 'gallery': return <CampusGalleryView />;
         default: return <TeacherLeavesView />;
       }
     }
@@ -136,9 +131,9 @@ export const MobileAppView: React.FC<Props> = ({
       case 'assignments': return <StudentAssignmentsView />;
       case 'notices': return <NoticesView />;
       case 'profile': return <ProfileView />;
-      case 'gallery': return <CampusGalleryView />;
       case 'calendar': return <CalendarView />;
       case 'cgpa': return <CgpaView />;
+      case 'sessional_results': return <CgpaView initialTab="sessional_results" />;
       case 'achievements': return <AchievementsView />;
       default: return null;
     }
@@ -159,7 +154,6 @@ export const MobileAppView: React.FC<Props> = ({
           showCompass3D: false
         }}
         onOpenLogin={onOpenLogin}
-        onOpenGallery={onOpenGallery}
         onOpenCampus3D={onOpenCampus3D}
         onOpenProfile={() => setActiveTab('profile')}
         onOpenNotifications={() => setActiveTab('notices')}
@@ -635,21 +629,7 @@ export const MobileAppView: React.FC<Props> = ({
                   <span className="text-[9px] text-slate-400 mt-0.5 font-medium">Sports & Tech</span>
                 </button>
 
-                {/* 10. Photo Gallery */}
-                <button
-                  onClick={onOpenGallery}
-                  className="flex flex-col items-center justify-center p-3.5 rounded-2xl bg-white border border-slate-200/90 hover:border-pink-400 hover:shadow-sm active:scale-95 transition shadow-xs group"
-                >
-                  <div className="w-12 h-12 rounded-2xl bg-pink-50 text-pink-600 flex items-center justify-center mb-1.5 border border-pink-100 group-hover:scale-105 transition shadow-xs">
-                    <Camera className="w-5 h-5 text-pink-600" />
-                  </div>
-                  <span className="text-xs font-bold text-slate-800 text-center leading-tight">
-                    Gallery
-                  </span>
-                  <span className="text-[9px] text-slate-400 mt-0.5 font-medium">Campus Life</span>
-                </button>
-
-                {/* 11. Campus Map */}
+                {/* 10. Campus Map */}
                 <button
                   onClick={onOpenCampus3D}
                   className="flex flex-col items-center justify-center p-3.5 rounded-2xl bg-white border border-slate-200/90 hover:border-teal-400 hover:shadow-sm active:scale-95 transition shadow-xs group"

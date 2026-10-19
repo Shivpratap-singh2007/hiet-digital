@@ -44,6 +44,24 @@ export const AcademicsHubView: React.FC<Props> = ({ onNavigate }) => {
 
   const stats = calculateAttendanceStats(myAttendance);
 
+  // Dynamic CGPA & Semester Grades from official published records
+  const studentSemester = student?.semester || 1;
+  const studentRoll = student?.roll_no || '';
+  const myGrades = dataStore.getGrades().filter(g => 
+    (g.student_id === studentId || (studentRoll && g.student_id === studentRoll)) &&
+    g.is_published !== false &&
+    g.semester <= studentSemester
+  );
+
+  const totalCredits = myGrades.reduce((sum, g) => sum + (g.credits || 4.0), 0);
+  const totalPoints = myGrades.reduce((sum, g) => sum + (g.grade_point * (g.credits || 4.0)), 0);
+  const cumulativeCgpa = totalCredits > 0 ? Math.round((totalPoints / totalCredits) * 100) / 100 : null;
+
+  const currentSemGrades = myGrades.filter(g => g.semester === studentSemester);
+  const curSemCredits = currentSemGrades.reduce((sum, g) => sum + (g.credits || 4.0), 0);
+  const curSemPoints = currentSemGrades.reduce((sum, g) => sum + (g.grade_point * (g.credits || 4.0)), 0);
+  const currentSemSgpa = curSemCredits > 0 ? Math.round((curSemPoints / curSemCredits) * 100) / 100 : null;
+
   // Dynamic Day-aware Timetable
   const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   const now = new Date();
@@ -66,14 +84,14 @@ export const AcademicsHubView: React.FC<Props> = ({ onNavigate }) => {
   const progressList = dataStore.getSyllabusProgress();
 
   return (
-    <div className="space-y-4 sm:space-y-5 animate-fade-in font-sans pb-12">
+    <div className="space-y-4 sm:space-y-5 animate-fade-in font-sans max-w-5xl mx-auto px-1 sm:px-2 pb-12">
       {/* Header */}
       <div className="bg-white border border-slate-200 rounded-3xl p-4 sm:p-5 shadow-xs">
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold mb-1.5 border border-blue-100">
           <GraduationCap className="w-3.5 h-3.5" />
           <span>Academic Portal</span>
           <span>•</span>
-          <span>Semester {student?.semester || 6} ({student?.branch || 'CSE'})</span>
+          <span>Semester {student?.semester || 1} ({student?.branch || 'ECE'})</span>
         </div>
         <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
           Academics & Performance
@@ -141,19 +159,31 @@ export const AcademicsHubView: React.FC<Props> = ({ onNavigate }) => {
                 <TrendingUp className="w-4 h-4 text-emerald-600" />
                 Cumulative GPA
               </span>
-              <span className="px-2 py-0.5 rounded-full text-xs font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                8.72 CGPA
+              <span className={`px-2 py-0.5 rounded-full text-xs font-extrabold ${
+                cumulativeCgpa !== null
+                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                  : 'bg-slate-100 text-slate-600 border border-slate-200'
+              }`}>
+                {cumulativeCgpa !== null ? `${cumulativeCgpa.toFixed(2)} CGPA` : 'Results not published yet.'}
               </span>
             </div>
 
             <div className="my-3 space-y-1">
               <div className="flex justify-between text-xs">
                 <span className="text-slate-600">Current Semester SGPA:</span>
-                <span className="font-bold text-slate-900">8.85 (Sem 5)</span>
+                <span className="font-bold text-slate-900">
+                  {currentSemSgpa !== null 
+                    ? `${currentSemSgpa.toFixed(2)} (Sem ${studentSemester})`
+                    : 'Results not published yet.'}
+                </span>
               </div>
               <div className="flex justify-between text-xs">
                 <span className="text-slate-600">University Standing:</span>
-                <span className="font-bold text-emerald-600">First Class with Distinction</span>
+                <span className={`font-bold ${cumulativeCgpa !== null ? 'text-emerald-600' : 'text-slate-500'}`}>
+                  {cumulativeCgpa !== null
+                    ? (cumulativeCgpa >= 8.0 ? 'First Class with Distinction' : cumulativeCgpa >= 6.5 ? 'First Class' : 'Second Class')
+                    : 'Results not published yet.'}
+                </span>
               </div>
             </div>
           </div>

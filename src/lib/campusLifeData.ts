@@ -627,6 +627,22 @@ export const campusLifeStore = {
   },
 
   getEmergencyContacts: (): CampusEmergencyContact[] => {
+    try {
+      if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+        const stored = localStorage.getItem(`${STORAGE_PREFIX}emergency_contacts`);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            // Invalidate legacy cached emergency contacts containing unverified numbers or legacy combined warden
+            const hasUnverified = parsed.some((c: any) => c.phone && c.phone.includes('+9198160541'));
+            const hasOldWarden = parsed.some((c: any) => c.title && c.title.includes('Chief Hostel Warden'));
+            if (!hasUnverified && !hasOldWarden) return parsed;
+          }
+        }
+      }
+    } catch {
+      // ignore
+    }
     return INITIAL_EMERGENCY_CONTACTS;
   },
 
@@ -689,77 +705,89 @@ export const campusLifeStore = {
 export const INITIAL_EMERGENCY_CONTACTS: CampusEmergencyContact[] = [
   {
     id: 'em-001',
-    title: 'Campus 24x7 Ambulance & Emergency First-Aid',
+    title: 'Campus Ambulance & Emergency First-Aid',
     department: 'Medical Services',
-    phone: '+919816054101',
-    whatsapp: '+919816054101',
     location: 'Dispensary Block, Ground Floor Admin',
-    is_24x7: true,
+    is_24x7: false,
     priority_level: 'Immediate',
-    description: 'Equipped ambulance with oxygen cylinder, stretcher, and on-duty paramedical attendant.'
+    is_verified: false,
+    contact_status: 'pending',
+    status_label: 'Contact details pending verification',
+    description: 'Equipped ambulance with stretcher and on-duty paramedical attendant for transit to Civil Hospital.'
   },
   {
     id: 'em-002',
     title: 'Main Security Gate & Control Room',
     department: 'Campus Security',
-    phone: '+919816054102',
-    whatsapp: '+919816054102',
     location: 'Main Gate No. 1 (NH-154 Entry)',
-    is_24x7: true,
+    is_24x7: false,
     priority_level: 'Immediate',
-    description: 'Chief security officer desk for campus trespass, fire alarm, or perimeter security.'
+    is_verified: false,
+    contact_status: 'pending',
+    status_label: 'Contact details pending verification',
+    description: 'Chief security officer desk for campus access control, trespass, and perimeter safety.'
   },
   {
-    id: 'em-003',
-    title: 'Chief Hostel Warden (Hostel Emergencies)',
-    department: 'Hostel Affairs',
-    phone: '+919816054103',
-    whatsapp: '+919816054103',
-    location: 'Boys & Girls Hostel Office, Block A',
-    is_24x7: true,
+    id: 'em-warden-boys',
+    title: 'Boys Hostel Warden',
+    department: 'Hostel Administration',
+    location: 'Boys Hostel (Block A)',
+    is_24x7: false,
     priority_level: 'Urgent',
-    description: 'Immediate warden support for hostel illness, power failure, or outpass issues.'
+    is_verified: false,
+    contact_status: 'not_provided',
+    status_label: 'Contact details not yet provided',
+    description: "Contact the designated warden for boys' hostel-related emergencies, student assistance, and hostel concerns."
+  },
+  {
+    id: 'em-warden-girls',
+    title: 'Girls Hostel Warden',
+    department: 'Hostel Administration',
+    location: 'Girls Hostel (Block B)',
+    is_24x7: false,
+    priority_level: 'Urgent',
+    is_verified: false,
+    contact_status: 'not_provided',
+    status_label: 'Contact details not yet provided',
+    description: "Contact the designated warden for girls' hostel-related emergencies, student assistance, and hostel concerns."
   },
   {
     id: 'em-004',
     title: "Women's Safety & Anti-Harassment Cell",
     department: 'Student Grievance',
-    phone: '+919816054104',
-    whatsapp: '+919816054104',
     location: 'Academic Block 1, Room 108',
-    is_24x7: true,
+    is_24x7: false,
     priority_level: 'Immediate',
-    description: 'Confidential assistance for female students and staff.'
+    is_verified: false,
+    contact_status: 'pending',
+    status_label: 'Contact details pending verification',
+    description: 'Confidential institutional assistance for female students, faculty, and campus staff.'
   },
   {
     id: 'em-005',
-    title: 'National Anti-Ragging Helpline (UGC/HPTU)',
+    title: 'National Anti-Ragging Helpline (UGC)',
     department: 'Statutory Body',
     phone: '18001805522',
-    location: 'New Delhi / HPTU Hamirpur',
+    location: 'New Delhi / Nationwide',
     is_24x7: true,
     priority_level: 'Immediate',
-    description: 'Toll-free 24-hour national helpline for anti-ragging complaints.'
+    is_verified: true,
+    contact_status: 'verified',
+    status_label: '1800-180-5522 (Toll-Free Verified)',
+    description: 'Official nationwide toll-free 24-hour helpline established under UGC Anti-Ragging Regulations.'
   },
   {
-    id: 'em-006',
-    title: 'Police Station Shahpur',
-    department: 'HP Police',
-    phone: '01892238120',
-    location: 'Shahpur Chowk, Kangra, HP',
+    id: 'em-008',
+    title: 'National Emergency Helpline (ERSS)',
+    department: 'Government of India / HP Police',
+    phone: '112',
+    location: 'All-India Central Emergency Dispatch',
     is_24x7: true,
     priority_level: 'Immediate',
-    description: 'Jurisdictional police station for emergency civil protection.'
-  },
-  {
-    id: 'em-007',
-    title: 'Civil Hospital Shahpur (Emergency & Trauma)',
-    department: 'State Health Dept',
-    phone: '01892238144',
-    location: 'Kangra-Chamba Road, Shahpur',
-    is_24x7: true,
-    priority_level: 'Immediate',
-    description: 'Nearest government trauma and secondary medical care hospital.'
+    is_verified: true,
+    contact_status: 'verified',
+    status_label: 'Dial 112 (Toll-Free Verified)',
+    description: 'Unified single emergency response helpline for Police, Medical, and Disaster emergencies.'
   }
 ];
 

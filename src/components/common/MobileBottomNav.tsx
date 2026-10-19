@@ -31,14 +31,13 @@ export const MobileBottomNav: React.FC<Props> = ({
 }) => {
   const { role } = useAuth();
 
-  // Section 40 - Exact Bottom Navigation Specifications
+  // Section 40 - Exact Bottom Navigation Specifications (Home | Academics | Profile for Students)
   const getNavItems = () => {
     switch (role) {
       case 'student':
         return [
           { id: 'dashboard' as NavTab, label: 'Home', icon: LayoutDashboard },
           { id: 'academics' as NavTab, label: 'Academics', icon: GraduationCap },
-          { id: 'services' as NavTab, label: 'Services', icon: Layers },
           { id: 'profile' as NavTab, label: 'Profile', icon: User }
         ];
       case 'teacher':
@@ -83,10 +82,31 @@ export const MobileBottomNav: React.FC<Props> = ({
         return [
           { id: 'dashboard' as NavTab, label: 'Home', icon: LayoutDashboard },
           { id: 'academics' as NavTab, label: 'Academics', icon: GraduationCap },
-          { id: 'services' as NavTab, label: 'Services', icon: Layers },
           { id: 'profile' as NavTab, label: 'Profile', icon: User }
         ];
     }
+  };
+
+  const isTabActive = (itemId: NavTab): boolean => {
+    if (currentTab === itemId) return true;
+    if (itemId === 'profile' && (currentTab === 'settings' || currentTab === 'social_links' || currentTab === 'push_settings')) return true;
+    if (itemId === 'academics') {
+      return [
+        'academics', 'attendance', 'timetable', 'syllabus', 'pyqs', 
+        'assignments', 'submissions', 'cgpa', 'sessional_results', 
+        'syllabus_progress'
+      ].includes(currentTab);
+    }
+    if (itemId === 'dashboard') {
+      return [
+        'dashboard', 'leaves', 'complaints', 'doubts', 'achievements',
+        'gate_pass', 'hostel_outpass', 'emergency_sos', 'fees', 'admit_card',
+        'library', 'transport', 'mess', 'placements', 'id_card', 
+        'parent_portal', 'fines', 'lost_found', 'maintenance', 'events', 
+        'calendar', 'notices', 'ai_campus', 'ai_campus_assistant'
+      ].includes(currentTab);
+    }
+    return false;
   };
 
   const navItems = getNavItems();
@@ -94,15 +114,15 @@ export const MobileBottomNav: React.FC<Props> = ({
   return (
     <nav 
       aria-label="Mobile Bottom Navigation"
-      className={`${forceVisible ? 'flex' : 'lg:hidden'} fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-[#0a0a0a]/95 backdrop-blur-md border-t border-slate-200/90 dark:border-[#2a2a2a] shadow-lg w-full max-w-full transition-all duration-300 pb-safe`}
+      className={`${forceVisible ? 'flex' : 'lg:hidden'} fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-[#0a0a0a]/95 backdrop-blur-md border-t border-slate-200/90 dark:border-[#2a2a2a] shadow-lg w-full max-w-full pb-safe`}
       style={{
         paddingBottom: 'env(safe-area-inset-bottom, 0px)'
       }}
     >
-      <div className="flex items-center justify-around px-1 py-1.5 w-full max-w-md mx-auto">
+      <div className="flex items-center justify-around px-2 py-1.5 w-full max-w-md mx-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
-          const isActive = currentTab === item.id;
+          const isActive = isTabActive(item.id);
 
           return (
             <button
@@ -116,14 +136,14 @@ export const MobileBottomNav: React.FC<Props> = ({
             >
               {/* Active Indicator Top Bar */}
               {isActive && (
-                <span className="absolute -top-1 w-6 h-1 bg-[#0f2942] dark:bg-white rounded-full" />
+                <span className="absolute -top-1 w-8 h-1 bg-[#0f2942] dark:bg-white rounded-full transition-all" />
               )}
 
               <div className={`p-1 rounded-xl transition-colors ${isActive ? 'bg-slate-100 text-[#0f2942] dark:bg-[#282828] dark:text-white' : ''}`}>
                 <Icon className="w-5 h-5" />
               </div>
               
-              <span className="text-[10px] tracking-tight truncate max-w-[64px] mt-0.5">
+              <span className="text-[10px] sm:text-[11px] tracking-tight truncate max-w-[80px] mt-0.5">
                 {item.label}
               </span>
             </button>
