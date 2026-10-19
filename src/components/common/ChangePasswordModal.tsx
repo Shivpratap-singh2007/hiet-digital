@@ -4,11 +4,16 @@ import { useAuth } from '../../context/AuthContext';
 import { PasswordInput, PasswordRules } from '../auth/PasswordInput';
 
 export const ChangePasswordModal: React.FC = () => {
-  const { changePassword, user } = useAuth();
+  const { changePassword, user, role } = useAuth();
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Institutional Security Policy: Student passwords are managed by College IT administration.
+  if (role === 'student' || user?.role === 'student') {
+    return null;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

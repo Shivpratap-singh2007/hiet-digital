@@ -246,6 +246,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<Profile | null>(() => {
     // 1. Development-only dashboard preview via ?previewRole=... (Section 62)
     if (import.meta.env.DEV && typeof window !== 'undefined') {
+      if (sessionStorage.getItem('hiet_logged_out') === 'true') {
+        return null;
+      }
       try {
         const params = new URLSearchParams(window.location.search);
         const previewRole = params.get('previewRole');
@@ -598,6 +601,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (emailOrId: string, password?: string) => {
     setIsLoading(true);
     try {
+      sessionStorage.removeItem('hiet_logged_out');
       const input = emailOrId.trim();
       const isDemoAllowed = import.meta.env.VITE_ENABLE_DEMO_LOGIN === 'true' || import.meta.env.DEV || !isSupabaseConfigured;
 
@@ -901,25 +905,50 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const logout = async () => {
-    try {
-      if (isSupabaseConfigured && supabase) {
-        await supabase.auth.signOut();
-        supabase.removeAllChannels();
-      }
-    } catch (e) {
-      console.warn('Sign out error:', e);
-    }
+  const logout = () => {
+    // 1. Instantly clear user state synchronously
     setUser(null);
-    localStorage.removeItem('hiet_current_user');
-    localStorage.removeItem('hiet_active_workspace_role');
-    sessionStorage.clear();
+    setIsLoading(false);
+
+    // 2. Wipe storage & set persistent logout marker
+    try {
+      localStorage.clear();
+      sessionStorage.clear();
+      sessionStorage.setItem('hiet_logged_out', 'true');
+    } catch (e) {
+      console.warn('Storage clear notice:', e);
+    }
+
+    // 3. Supabase background sign out (non-blocking, never awaits network)
+    if (isSupabaseConfigured && supabase) {
+      try {
+        supabase.auth.signOut().catch(() => {});
+        supabase.removeAllChannels();
+      } catch (e) {
+        console.warn('Supabase signout notice:', e);
+      }
+    }
+
+    // 4. Instant clean redirect to login and scrub any previewRole parameter
     if (typeof window !== 'undefined') {
-      window.history.replaceState(null, '', '/login');
+      try {
+        window.history.replaceState(null, '', '/login');
+      } catch {}
+      window.location.replace('/login');
     }
   };
 
   const changePassword = async (newPassword: string) => {
+    // Enforce Institutional Policy: Student passwords are professionally managed by College IT Administration
+    const isStudentUser = user?.role === 'student';
+    if (isStudentUser) {
+      console.warn('Institutional Security: Password modification rejected for student account.');
+      return {
+        success: false,
+        error: 'Institutional Security Policy: Student passwords are professionally managed by College IT Administration. Students cannot modify passwords from the portal. Please contact the IT Desk / Registrar for password inquiries.'
+      };
+    }
+
     if (!newPassword || newPassword.length < 6) {
       return { success: false, error: 'Password must be at least 6 characters long.' };
     }
@@ -1078,7 +1107,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         activeWorkspaceRole,
         workspaceRoles,
         isLoading,
-        mustChangePassword: Boolean(user?.must_change_password),
+        mustChangePassword: Boolean(user?.must_change_password) && user?.role !== 'student',
         login,
         logout,
         switchWorkspace,

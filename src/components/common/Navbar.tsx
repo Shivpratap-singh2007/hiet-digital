@@ -219,15 +219,9 @@ export const Navbar: React.FC<Props> = ({
               {/* Profile Pill with Multi-Role Workspace Switcher (Section 6) */}
               <div className="relative" ref={profileMenuRef}>
                 <div 
-                  onClick={() => {
-                    if (workspaceRoles && workspaceRoles.length > 1) {
-                      setShowProfileMenu(prev => !prev);
-                    } else {
-                      onOpenProfile?.();
-                    }
-                  }}
+                  onClick={() => setShowProfileMenu(prev => !prev)}
                   className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-[#0f2942] dark:hover:border-slate-700 transition cursor-pointer select-none"
-                  title={workspaceRoles && workspaceRoles.length > 1 ? "Switch Workspace or View Profile" : "View Profile"}
+                  title="Account & Profile Menu"
                 >
                   {getRoleIcon()}
                   <span className="text-xs font-bold text-slate-900 dark:text-slate-100 max-w-[110px] sm:max-w-[150px] truncate">
@@ -245,13 +239,11 @@ export const Navbar: React.FC<Props> = ({
                     {getRoleLabel()}
                   </span>
 
-                  {workspaceRoles && workspaceRoles.length > 1 && (
-                    <ChevronDown className="w-3.5 h-3.5 text-slate-400 dark:text-slate-400 ml-0.5" />
-                  )}
+                  <ChevronDown className="w-3.5 h-3.5 text-slate-400 dark:text-slate-400 ml-0.5" />
                 </div>
 
-                {/* Workspace Switcher Dropdown (Section 6) */}
-                {showProfileMenu && workspaceRoles && workspaceRoles.length > 1 && (
+                {/* Account & Workspace Switcher Dropdown */}
+                {showProfileMenu && (
                   <div className="absolute right-0 mt-2 w-72 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl py-2 z-50 animate-scale-in text-xs">
                     {/* Header info */}
                     <div className="px-3.5 py-2 border-b border-slate-100 dark:border-slate-800">
@@ -270,48 +262,50 @@ export const Navbar: React.FC<Props> = ({
                       </span>
                     </div>
 
-                    {/* Current Workspace & Switcher */}
-                    <div className="p-3 bg-slate-50/70 dark:bg-slate-800/50 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-400 tracking-wider">
-                          Current Workspace
-                        </span>
-                        <span className="px-1.5 py-0.5 rounded-sm bg-[#0f2942]/10 dark:bg-sky-500/10 text-[10px] font-bold text-[#0f2942] dark:text-sky-300">
-                          {(activeWorkspaceRole || role) === 'hod' ? 'HOD' : 'Faculty'}
-                        </span>
-                      </div>
+                    {/* Current Workspace & Switcher (Shown if user has multiple roles) */}
+                    {workspaceRoles && workspaceRoles.length > 1 && (
+                      <div className="p-3 bg-slate-50/70 dark:bg-slate-800/50 space-y-2 border-b border-slate-100 dark:border-slate-800">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-400 tracking-wider">
+                            Current Workspace
+                          </span>
+                          <span className="px-1.5 py-0.5 rounded-sm bg-[#0f2942]/10 dark:bg-sky-500/10 text-[10px] font-bold text-[#0f2942] dark:text-sky-300">
+                            {(activeWorkspaceRole || role) === 'hod' ? 'HOD' : 'Faculty'}
+                          </span>
+                        </div>
 
-                      <div className="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-400 tracking-wider pt-1">
-                        Switch Workspace
-                      </div>
+                        <div className="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-400 tracking-wider pt-1">
+                          Switch Workspace
+                        </div>
 
-                      <div className="space-y-1">
-                        {workspaceRoles.map(ws => {
-                          const isCurrent = (activeWorkspaceRole || role) === ws.roleKey;
-                          return (
-                            <button
-                              key={ws.roleKey}
-                              type="button"
-                              onClick={() => {
-                                switchWorkspace(ws.roleKey);
-                                setShowProfileMenu(false);
-                              }}
-                              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition text-left cursor-pointer ${
-                                isCurrent
-                                  ? 'bg-[#0f2942] text-white dark:bg-sky-600 dark:text-white shadow-xs'
-                                  : 'text-slate-700 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-slate-800'
-                              }`}
-                            >
-                              <span className="truncate">{ws.label}</span>
-                              {isCurrent && <Check className="w-3.5 h-3.5 ml-1 shrink-0 text-white" />}
-                            </button>
-                          );
-                        })}
+                        <div className="space-y-1">
+                          {workspaceRoles.map(ws => {
+                            const isCurrent = (activeWorkspaceRole || role) === ws.roleKey;
+                            return (
+                              <button
+                                key={ws.roleKey}
+                                type="button"
+                                onClick={() => {
+                                  switchWorkspace(ws.roleKey);
+                                  setShowProfileMenu(false);
+                                }}
+                                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition text-left cursor-pointer ${
+                                  isCurrent
+                                    ? 'bg-[#0f2942] text-white dark:bg-sky-600 dark:text-white shadow-xs'
+                                    : 'text-slate-700 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-slate-800'
+                                }`}
+                              >
+                                <span className="truncate">{ws.label}</span>
+                                {isCurrent && <Check className="w-3.5 h-3.5 ml-1 shrink-0 text-white" />}
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
-                    </div>
+                    )}
 
-                    {/* View Profile Action */}
-                    <div className="pt-1.5 px-1.5">
+                    {/* Actions: View Profile & Sign Out */}
+                    <div className="pt-1.5 px-1.5 space-y-1">
                       <button
                         type="button"
                         onClick={() => {
@@ -323,6 +317,18 @@ export const Navbar: React.FC<Props> = ({
                         <User className="w-3.5 h-3.5 text-slate-400 dark:text-slate-400" />
                         <span>View Profile & Account</span>
                       </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowProfileMenu(false);
+                          logout();
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition text-left cursor-pointer"
+                      >
+                        <LogOut className="w-4 h-4 text-rose-500 shrink-0" />
+                        <span>Sign Out</span>
+                      </button>
                     </div>
                   </div>
                 )}
@@ -330,7 +336,7 @@ export const Navbar: React.FC<Props> = ({
 
               {/* Logout Button */}
               <button
-                onClick={() => setShowLogoutConfirm(true)}
+                onClick={() => logout()}
                 className="w-9 h-9 rounded-xl text-slate-600 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 flex items-center justify-center transition shrink-0 cursor-pointer"
                 title="Sign Out"
                 aria-label="Sign out"
@@ -376,7 +382,6 @@ export const Navbar: React.FC<Props> = ({
               <button
                 type="button"
                 onClick={() => {
-                  setShowLogoutConfirm(false);
                   logout();
                 }}
                 className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition shadow-xs"

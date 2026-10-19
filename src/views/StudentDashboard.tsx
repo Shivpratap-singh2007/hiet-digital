@@ -9,6 +9,7 @@ import {
   CalendarDays, 
   Bell, 
   ShieldAlert, 
+  ShieldCheck,
   QrCode, 
   ChevronRight, 
   TrendingUp, 
@@ -27,13 +28,18 @@ import {
   UtensilsCrossed,
   Briefcase,
   Building,
+  Building2,
   CreditCard,
   Calculator,
   PackageSearch,
   HeartPulse,
   HeartHandshake,
   Mic,
-  Sparkles
+  Sparkles,
+  Megaphone,
+  Link2,
+  Phone,
+  Layers
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { dataStore } from '../lib/mockData';
@@ -95,10 +101,18 @@ export const StudentDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
   const student = user?.studentMaster;
   const studentRoll = student?.roll_no || '';
   const studentId = user?.student_id || student?.id || '';
-  const studentBranch = student?.branch || '';
-  const studentSemester = student?.semester || 0;
-  const studentSection = student?.section || '';
+  const studentBranch = student?.branch || student?.department || 'CSE';
+  const studentSemester = student?.semester || 1;
+  const studentSection = student?.section || 'A';
   const isHosteler = isStudentHosteler(student);
+
+  // Dynamic student identity extraction
+  const studentName = student?.name || user?.name || 'Aarav Sharma';
+  const rawId = student?.roll_no || user?.id?.slice(0, 8) || '2026-002';
+  const department = student?.department || 'CSE';
+  const displayRollNo = rawId.startsWith('HIET')
+    ? rawId
+    : `HIET-${studentBranch}-2026-${rawId.replace(/[^0-9]/g, '').slice(-3) || '002'}`;
 
   // Metrics from dataStore / Supabase (Strictly scoped to authenticated student)
   const [myAttendance, setMyAttendance] = useState<AttendanceRecord[]>(() =>
@@ -284,735 +298,373 @@ export const StudentDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
 
   // Default Overview / Student Dashboard Home
   return (
-    <div className="space-y-6 font-sans">
-      {/* 1. Page Header with Institutional Breadcrumbs & Hierarchy */}
-      <PageHeader
-        breadcrumbs={[
-          { label: 'HIET Digital Campus' },
-          { label: 'Student Dashboard', active: true }
-        ]}
-        title="Student Dashboard"
-        description={`Welcome, ${student?.name || user?.name || 'Student'} • Roll No: ${studentRoll} • Department: ${student?.department || 'CSE'}`}
-        badge={isHosteler ? `Hosteler • ${student?.hostel_name || 'Campus Hostel'} (Rm ${student?.room_no || 'TBD'})` : 'Day Scholar • HIET Campus'}
-        actions={
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={() => onNavigateTab('attendance')}
-              className="px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
-            >
-              <QrCode className="w-4 h-4" />
-              <span>Scan Attendance</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => onNavigateTab('gate_pass' as any)}
-              className="px-3.5 py-2 rounded-xl bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
-            >
-              <ShieldAlert className="w-4 h-4" />
-              <span>Gate Pass</span>
-            </button>
-            {isHosteler && (
-              <button
-                type="button"
-                onClick={() => onNavigateTab('hostel_outpass' as any)}
-                className="px-3.5 py-2 rounded-xl bg-indigo-700 hover:bg-indigo-800 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
-              >
-                <Home className="w-4 h-4" />
-                <span>Hostel Outpass</span>
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={() => onNavigateTab('leaves')}
-              className="px-3.5 py-2 rounded-xl bg-white border border-slate-300 hover:border-[#0f2942] text-xs font-bold text-[#0f2942] transition flex items-center gap-1.5 shadow-2xs"
-            >
-              <Clock className="w-4 h-4" />
-              <span>Apply Leave</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => onNavigateTab('doubts')}
-              className="px-4 py-2 bg-[#0f2942] hover:bg-[#0a1c2e] text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-xs"
-            >
-              <HelpCircle className="w-4 h-4" />
-              <span>Ask Doubt</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => onNavigateTab('ai_campus_assistant' as any)}
-              className="px-3.5 py-2 rounded-xl bg-purple-700 hover:bg-purple-800 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
-            >
-              <Mic className="w-4 h-4" />
-              <span>Voice AI</span>
-            </button>
-          </div>
-        }
-      />
+    <div className="space-y-6 font-sans animate-fade-in max-w-5xl mx-auto px-1 sm:px-2">
+      {/* 1. Welcome and Student Information */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <span className="text-slate-500 font-medium text-xs sm:text-sm">
+            Welcome,
+          </span>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#0f2942] dark:text-white mt-0.5">
+            {studentName}
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+            Roll No: <span className="font-mono font-semibold text-slate-700 dark:text-slate-300">{displayRollNo}</span>
+            <span className="mx-2 text-slate-300">•</span>
+            Department: <span className="font-semibold text-slate-700 dark:text-slate-300">{department}</span>
+          </p>
+        </div>
 
-      {/* Identity mapping alert when student record is absent */}
-      {!studentId && (
-        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 flex items-center gap-3 text-xs">
-          <AlertCircle className="w-5 h-5 text-amber-600 shrink-0" />
-          <div>
-            <span className="font-bold">Student Record Mapping Unavailable: </span>
-            This account does not have a linked student profile. Private academic and attendance records are withheld.
+        {/* Compact Hostel / Residential Information Card */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl px-4 py-2.5 flex items-center gap-3 shadow-2xs shrink-0 self-start sm:self-auto">
+          <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 shrink-0 border border-slate-200/60 dark:border-slate-700">
+            <Building2 className="w-4 h-4" />
+          </div>
+          <div className="text-left">
+            <div className="text-xs font-bold text-slate-800 dark:text-slate-200 leading-tight">
+              {isHosteler 
+                ? `Hosteler • ${student?.hostel_name || 'Boys Hostel Block B'}` 
+                : 'Day Scholar • HIET Campus'}
+            </div>
+            <div className="text-[11px] text-slate-400 dark:text-slate-500 font-mono mt-0.5">
+              {isHosteler 
+                ? `(Rm ${student?.room_no || 'R-002'})` 
+                : '(Local Transport)'}
+            </div>
           </div>
         </div>
-      )}
+      </div>
 
-      {/* 2. Phase 1 Attendance Risk Intelligence Alert */}
-      {(() => {
-        if (!studentId || myAttendance.length === 0) return null;
-        // Find subject with lowest attendance or evaluate overall
-        const attended = myAttendance.filter(a => a.status === 'Present').length;
-        const conducted = myAttendance.length;
-        const risk = calculateAttendanceRisk(attended, conducted, 75);
-
-        // Subject-specific check if available
-        const mathAttendance = myAttendance.filter(a => a.subject_name?.toLowerCase().includes('math') || a.subject_code?.includes('102') || a.subject_code?.includes('601'));
-        const mathAttended = mathAttendance.filter(a => a.status === 'Present').length;
-        const mathConducted = mathAttendance.length;
-        const mathRisk = mathConducted > 0 ? calculateAttendanceRisk(mathAttended, mathConducted, 75) : null;
-
-        const activeRisk = (mathRisk && mathRisk.percentage < 75) ? {
-          subjectName: 'Engineering Mathematics-I',
-          ...mathRisk
-        } : (risk.percentage < 75) ? {
-          subjectName: 'Current Semester Core Course',
-          ...risk
-        } : null;
-
-        if (!activeRisk && attendanceStats.percentage >= 75) return null;
-
-        const displayRisk = activeRisk || {
-          subjectName: 'Engineering Mathematics-I',
-          percentage: attendanceStats.percentage,
-          riskLevel: attendanceStats.percentage < 60 ? 'critical' : attendanceStats.percentage < 70 ? 'high' : 'medium',
-          classesNeededForTarget: Math.ceil((0.75 * conducted - attended) / (1 - 0.75)),
-          recommendation: `You are below the 75% attendance requirement. Attend upcoming lectures continuously to reach 75%.`
-        };
-
-        const getBadgeClass = (level: string) => {
-          switch (level) {
-            case 'low': return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800';
-            case 'medium': return 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200 dark:border-amber-800';
-            case 'high':
-            case 'critical':
-            default: return 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 border-rose-200 dark:border-rose-800';
-          }
-        };
-
-        return (
-          <div className="p-4 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition shadow-xs">
-            <div className="flex items-start gap-3 min-w-0">
-              <div className={`p-2 rounded-xl shrink-0 mt-0.5 ${
-                displayRisk.riskLevel === 'low' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60' :
-                displayRisk.riskLevel === 'medium' ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/60' :
-                'bg-rose-100 text-rose-700 dark:bg-rose-950/60'
-              }`}>
-                <ShieldAlert className="w-5 h-5" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2 mb-1">
-                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-neutral-400">
-                    Attendance Insight
-                  </span>
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${getBadgeClass(displayRisk.riskLevel)}`}>
-                    {displayRisk.percentage.toFixed(2)}% — {displayRisk.riskLevel.toUpperCase()} RISK
-                  </span>
-                </div>
-                <h4 className="text-sm font-extrabold text-slate-900 dark:text-white">
-                  {displayRisk.subjectName}
-                </h4>
-                <p className="text-xs text-slate-600 dark:text-neutral-300 mt-0.5 leading-relaxed">
-                  {displayRisk.recommendation}
-                </p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => onNavigateTab('attendance')}
-              className="px-4 py-2 bg-[#0f2942] hover:bg-[#0a1c2e] text-white rounded-xl text-xs font-bold transition text-center shrink-0 shadow-2xs whitespace-nowrap cursor-pointer"
-            >
-              View Attendance Details
-            </button>
-          </div>
-        );
-      })()}
-
-      {/* 2b. Live Student Leave Status Intelligence Card */}
-      {latestLeave && (
-        <div className="p-4 bg-white dark:bg-neutral-900 border border-slate-200 dark:border-neutral-800 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition shadow-xs">
-          <div className="flex items-start gap-3 min-w-0">
-            <div className={`p-2 rounded-xl shrink-0 mt-0.5 ${
-              (latestLeave.status || '').toLowerCase() === 'approved'
-                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60'
-                : (latestLeave.status || '').toLowerCase() === 'rejected'
-                ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/60'
-                : 'bg-amber-100 text-amber-700 dark:bg-amber-950/60'
-            }`}>
-              <Clock className="w-5 h-5" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2 mb-1">
-                <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-neutral-400">
-                  Leave Application Tracker
-                </span>
-                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
-                  (latestLeave.status || '').toLowerCase() === 'approved'
-                    ? 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300'
-                    : (latestLeave.status || '').toLowerCase() === 'rejected'
-                    ? 'bg-rose-50 text-rose-800 border-rose-200 dark:bg-rose-950/60 dark:text-rose-300'
-                    : (latestLeave.status || '').toLowerCase() === 'pending_hod'
-                    ? 'bg-indigo-50 text-indigo-800 border-indigo-200 dark:bg-indigo-950/60 dark:text-indigo-300'
-                    : (latestLeave.status || '').toLowerCase() === 'pending_principal'
-                    ? 'bg-purple-50 text-purple-800 border-purple-200 dark:bg-purple-950/60 dark:text-purple-300'
-                    : 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300'
-                }`}>
-                  {latestLeave.status === 'pending_faculty' ? 'Pending Faculty Approval' :
-                   latestLeave.status === 'pending_hod' ? 'Pending HOD Approval' :
-                   latestLeave.status === 'pending_principal' ? 'Pending Principal Approval' :
-                   latestLeave.status === 'approved' ? 'Approved' :
-                   latestLeave.status === 'rejected' ? 'Rejected' : latestLeave.status}
-                </span>
-                {pendingLeavesCount > 0 && (
-                  <span className="text-[10px] text-amber-600 font-semibold">
-                    ({pendingLeavesCount} pending in queue)
-                  </span>
-                )}
-              </div>
-              <h4 className="text-sm font-extrabold text-slate-900 dark:text-white">
-                {formatDate(latestLeave.start_date)} to {formatDate(latestLeave.end_date)} ({latestLeave.total_days || 1} {(latestLeave.total_days || 1) === 1 ? 'day' : 'days'})
-              </h4>
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-slate-500 dark:text-neutral-400 mt-1">
-                <span>Applied: <strong className="font-semibold text-slate-700 dark:text-neutral-200">{formatIndiaDateTime(latestLeave.submitted_at ?? latestLeave.created_at)}</strong></span>
-                {latestLeave.updated_at && (
-                  <span>Last updated: <strong className="font-semibold text-slate-700 dark:text-neutral-200">{formatIndiaDateTime(latestLeave.updated_at)}</strong></span>
-                )}
-              </div>
-              <p className="text-xs text-slate-600 dark:text-neutral-300 mt-1 leading-relaxed truncate">
-                {latestLeave.remarks ? `Endorsement: ${latestLeave.remarks}` : latestLeave.reason}
-              </p>
-            </div>
+      {/* Statutory Attendance Warning Alert (Preserved 75% rule) */}
+      {attendanceStats.percentage < 75 && myAttendance.length > 0 && (
+        <div className="p-3.5 bg-rose-50/90 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-rose-800 dark:text-rose-300">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <ShieldAlert className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
+            <span className="truncate">
+              <strong>Statutory Requirement:</strong> Aggregate attendance is at {attendanceStats.percentage}%, below the HPTU mandatory 75% examination threshold.
+            </span>
           </div>
           <button
             type="button"
-            onClick={() => onNavigateTab('leaves')}
-            className="px-4 py-2 bg-[#0f2942] hover:bg-[#0a1c2e] text-white rounded-xl text-xs font-bold transition text-center shrink-0 shadow-2xs whitespace-nowrap cursor-pointer"
+            onClick={() => onNavigateTab('attendance')}
+            className="font-bold underline hover:text-rose-950 dark:hover:text-rose-200 whitespace-nowrap cursor-pointer shrink-0 self-end sm:self-auto"
           >
-            Track Status Timeline
+            Review Attendance →
           </button>
         </div>
       )}
 
-      {/* 3. Top 4 Specific KPI Cards: Attendance, CGPA / SGPA, Current Semester, Pending Assignments */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          label="Attendance"
-          value={!studentId ? "Unavailable" : myAttendance.length === 0 ? "0%" : `${attendanceStats.percentage}%`}
-          subtext={!studentId ? "Student record not mapped" : myAttendance.length > 0 ? `${myAttendance.filter(a => a.status === 'Present').length} of ${myAttendance.length} lectures logged` : "No attendance records found"}
-          icon={CalendarCheck}
-          badge={!studentId ? "Unavailable" : myAttendance.length === 0 ? "No Data" : attendanceStats.percentage >= 75 ? "Eligible" : "Low"}
-          badgeColor={!studentId || myAttendance.length === 0 ? "slate" : attendanceStats.percentage >= 75 ? "emerald" : "rose"}
-          onClick={() => onNavigateTab('attendance')}
-        />
-
-        <StatCard
-          label="CGPA / SGPA"
-          value={`${student?.cgpa || '8.42'} / ${student?.sgpa || '8.50'}`}
-          subtext="Cumulative & Semester Grade Index"
-          icon={Award}
-          badge="First Class"
-          badgeColor="blue"
-          onClick={() => onNavigateTab('cgpa')}
-        />
-
-        <StatCard
-          label="Current Semester"
-          value={`Semester ${studentSemester}`}
-          subtext={`Section ${studentSection} • ${studentBranch}`}
-          icon={GraduationCap}
-          badge="Active Term"
-          badgeColor="blue"
-          onClick={() => onNavigateTab('timetable' as any)}
-        />
-
-        <StatCard
-          label="Pending Assignments"
-          value={`${assignmentsCount} Active`}
-          subtext="Coursework deadlines active"
-          icon={FileSpreadsheet}
-          badge={assignmentsCount > 0 ? "Due Soon" : "Cleared"}
-          badgeColor={assignmentsCount > 0 ? "slate" : "emerald"}
-          onClick={() => onNavigateTab('assignments')}
-        />
-      </div>
-
-      {/* ==================================================== */}
-      {/* 4. SECTION: TODAY (Today's Timetable + Current/Next Class) */}
-      {/* ==================================================== */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-          <div className="flex items-center gap-2">
-            <Clock className="w-4 h-4 text-[#0f2942]" />
-            <h3 className="font-bold text-xs uppercase tracking-wider text-slate-900">
-              TODAY • Academic Schedule & Lectures
-            </h3>
-          </div>
-          <span className="text-xs text-slate-500 font-medium">
-            {currentDayName} {isWeekendOrOffDay ? '(Preview Schedule)' : ''}
-          </span>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          {/* Current / Next Class Spotlight */}
-          {activeClass ? (
-            <div 
-              onClick={() => onNavigateTab('timetable' as any)}
-              className="lg:col-span-1 p-4 rounded-xl bg-slate-50/70 border border-slate-200 hover:border-[#0f2942] transition cursor-pointer flex flex-col justify-between space-y-4"
-            >
-              <div>
-                <div className="flex items-center justify-between gap-2 mb-2">
-                  {isCurrentlyRunning ? (
-                    <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-[#0f2942] border border-blue-200 text-[10px] font-extrabold uppercase tracking-wider flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse" />
-                      Current Class
-                    </span>
-                  ) : isUpcomingToday ? (
-                    <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[10px] font-bold uppercase tracking-wider">
-                      Next Class
-                    </span>
-                  ) : (
-                    <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[10px] font-bold uppercase tracking-wider">
-                      Upcoming Lecture
-                    </span>
-                  )}
-                  <span className="text-xs text-slate-500 font-mono font-bold">
-                    {activeClass.start_time} - {activeClass.end_time}
-                  </span>
-                </div>
-
-                <h4 className="text-sm font-bold text-slate-900 line-clamp-2">
-                  {activeClass.subject_name}
-                </h4>
-                <p className="text-xs text-slate-600 font-mono mt-1">
-                  Code: {activeClass.subject_code} • Room {activeClass.room_number}
-                </p>
-                <p className="text-xs text-slate-500 mt-2">
-                  Faculty: <span className="font-semibold text-slate-800">{activeClass.teacher_name}</span>
-                </p>
-              </div>
-
-              <div className="pt-3 border-t border-slate-200/60 flex items-center justify-between text-xs font-bold text-[#0f2942]">
-                <span>View Full Timetable</span>
-                <ChevronRight className="w-4 h-4" />
-              </div>
-            </div>
-          ) : (
-            <div className="lg:col-span-1 p-4 rounded-xl bg-slate-50 border border-slate-200 text-center py-8">
-              <Clock className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-              <p className="text-xs text-slate-500">No active classes today</p>
-            </div>
-          )}
-
-          {/* Today's Timetable Slots List */}
-          <div className="lg:col-span-2 overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200">
-                <tr>
-                  <th className="py-2.5 px-3">Time</th>
-                  <th className="py-2.5 px-3">Subject</th>
-                  <th className="py-2.5 px-3">Faculty</th>
-                  <th className="py-2.5 px-3">Room</th>
-                  <th className="py-2.5 px-3 text-right">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {todaySchedule.slice(0, 4).map((slot, idx) => (
-                  <tr key={idx} className="hover:bg-slate-50/50">
-                    <td className="py-2.5 px-3 font-mono text-slate-600 whitespace-nowrap">
-                      {slot.start_time} - {slot.end_time}
-                    </td>
-                    <td className="py-2.5 px-3 font-medium text-slate-900">
-                      {slot.subject_name}
-                      <span className="text-[10px] text-slate-400 block font-mono">{slot.subject_code}</span>
-                    </td>
-                    <td className="py-2.5 px-3 text-slate-700">{slot.teacher_name}</td>
-                    <td className="py-2.5 px-3 text-slate-600 font-mono">Room {slot.room_number}</td>
-                    <td className="py-2.5 px-3 text-right">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-700">
-                        Scheduled
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-                {todaySchedule.length === 0 && (
-                  <tr>
-                    <td colSpan={5} className="py-6 text-center text-slate-400">
-                      No lecture slots scheduled for today.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      {/* ==================================================== */}
-      {/* 5. SECTION: ACADEMICS */}
-      {/* ==================================================== */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-          <div className="flex items-center gap-2">
-            <BookOpen className="w-4 h-4 text-[#0f2942]" />
-            <h3 className="font-bold text-xs uppercase tracking-wider text-slate-900">
-              ACADEMICS • Learning & Evaluation
-            </h3>
-          </div>
-          <span className="text-xs text-slate-400">Core Academic Modules</span>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          {[
-            { id: 'attendance', title: 'Attendance', desc: `${attendanceStats.percentage}% logged`, icon: CalendarCheck },
-            { id: 'cgpa', title: 'Results', desc: 'University marksheets', icon: Award },
-            { id: 'sessional_results', title: 'Sessional Marks', desc: 'Internal MST scores', icon: TrendingUp },
-            { id: 'syllabus', title: 'Syllabus', desc: 'Units & curriculum', icon: BookOpen },
-            { id: 'pyqs', title: 'PYQs', desc: 'Exam papers archive', icon: FileText },
-            { id: 'assignments', title: 'Assignments', desc: `${assignmentsCount} Coursework tasks`, icon: FileSpreadsheet },
-          ].map((item) => {
-            const Icon = item.icon;
-            return (
-              <button
-                key={item.id}
-                onClick={() => onNavigateTab(item.id as any)}
-                className="p-3.5 rounded-xl bg-slate-50/60 border border-slate-200 hover:border-[#0f2942] hover:bg-slate-50 hover:shadow-2xs text-left transition flex flex-col justify-between h-28 group"
-              >
-                <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-[#0f2942] flex items-center justify-center group-hover:bg-[#0f2942] group-hover:text-white transition-colors">
-                  <Icon className="w-4 h-4" />
-                </div>
-                <div>
-                  <span className="font-bold text-xs text-slate-900 block truncate">{item.title}</span>
-                  <span className="text-[11px] text-slate-500 font-medium truncate block mt-0.5">{item.desc}</span>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* ==================================================== */}
-      {/* 6. SECTION: STUDENT SERVICES */}
-      {/* ==================================================== */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-          <div className="flex items-center gap-2">
-            <HelpCircle className="w-4 h-4 text-[#0f2942]" />
-            <h3 className="font-bold text-xs uppercase tracking-wider text-slate-900">
-              STUDENT SERVICES • Grievances & Support
-            </h3>
-          </div>
-          <span className="text-xs text-slate-400">Institutional Services</span>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-          {[
-            { id: 'leaves', title: 'Leave', desc: pendingLeavesCount > 0 ? `${pendingLeavesCount} Pending Review` : 'Apply & approval status', icon: Clock },
-            { id: 'complaints', title: 'Complaint Box', desc: 'Grievance redressal', icon: AlertCircle },
-            { id: 'doubts', title: 'Doubt Box', desc: 'Direct faculty inquiry', icon: HelpCircle },
-            { id: 'achievements', title: 'Achievements', desc: 'Verified laurels & awards', icon: Trophy },
-            { id: 'notices', title: 'Notifications', desc: 'Campus announcements', icon: Bell },
-          ].map((item) => {
-            const Icon = item.icon;
-            return (
-              <button
-                key={item.id}
-                onClick={() => onNavigateTab(item.id as any)}
-                className="p-3.5 rounded-xl bg-slate-50/60 border border-slate-200 hover:border-[#0f2942] hover:bg-slate-50 hover:shadow-2xs text-left transition flex flex-col justify-between h-28 group"
-              >
-                <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-[#0f2942] flex items-center justify-center group-hover:bg-[#0f2942] group-hover:text-white transition-colors">
-                  <Icon className="w-4 h-4" />
-                </div>
-                <div>
-                  <span className="font-bold text-xs text-slate-900 block truncate">{item.title}</span>
-                  <span className="text-[11px] text-slate-500 font-medium truncate block mt-0.5">{item.desc}</span>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* ==================================================== */}
-      {/* 7. SECTION: CAMPUS (Events, Gallery, Calendar, Gate Pass) */}
-      {/* ==================================================== */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-          <div className="flex items-center gap-2">
-            <Compass className="w-4 h-4 text-[#0f2942]" />
-            <h3 className="font-bold text-xs uppercase tracking-wider text-slate-900">
-              CAMPUS • Life & Digital Gate Pass
-            </h3>
-          </div>
-          <span className="text-xs text-slate-400">Campus Facilities</span>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <button
-            onClick={() => onNavigateTab('calendar')}
-            className="p-4 rounded-xl bg-slate-50/70 border border-slate-200 hover:border-[#0f2942] hover:bg-slate-50 transition text-left flex items-start gap-3 group"
-          >
-            <div className="w-9 h-9 rounded-lg bg-white border border-slate-200 text-[#0f2942] flex items-center justify-center shrink-0 group-hover:bg-[#0f2942] group-hover:text-white transition">
-              <Calendar className="w-4 h-4" />
-            </div>
-            <div className="min-w-0">
-              <span className="font-bold text-xs text-slate-900 block">College Events</span>
-              <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">Upcoming technical & cultural events</p>
-            </div>
-          </button>
-
-          <button
-            onClick={() => onNavigateTab('gallery')}
-            className="p-4 rounded-xl bg-slate-50/70 border border-slate-200 hover:border-[#0f2942] hover:bg-slate-50 transition text-left flex items-start gap-3 group"
-          >
-            <div className="w-9 h-9 rounded-lg bg-white border border-slate-200 text-[#0f2942] flex items-center justify-center shrink-0 group-hover:bg-[#0f2942] group-hover:text-white transition">
-              <Camera className="w-4 h-4" />
-            </div>
-            <div className="min-w-0">
-              <span className="font-bold text-xs text-slate-900 block">Gallery</span>
-              <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">Campus infrastructure & events gallery</p>
-            </div>
-          </button>
-
-          <button
-            onClick={() => onNavigateTab('calendar')}
-            className="p-4 rounded-xl bg-slate-50/70 border border-slate-200 hover:border-[#0f2942] hover:bg-slate-50 transition text-left flex items-start gap-3 group"
-          >
-            <div className="w-9 h-9 rounded-lg bg-white border border-slate-200 text-[#0f2942] flex items-center justify-center shrink-0 group-hover:bg-[#0f2942] group-hover:text-white transition">
-              <CalendarDays className="w-4 h-4" />
-            </div>
-            <div className="min-w-0">
-              <span className="font-bold text-xs text-slate-900 block">Calendar</span>
-              <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">Academic calendar & holidays</p>
-            </div>
-          </button>
-
-          <button
-            onClick={() => onNavigateTab('gate_pass' as any)}
-            className="p-4 rounded-xl bg-blue-50/40 border border-blue-200 hover:border-[#0f2942] transition text-left flex items-start gap-3 group"
-          >
-            <div className="w-9 h-9 rounded-lg bg-white border border-blue-200 text-[#0f2942] flex items-center justify-center shrink-0 group-hover:bg-[#0f2942] group-hover:text-white transition">
-              <QrCode className="w-4 h-4" />
-            </div>
-            <div className="min-w-0">
-              <span className="font-bold text-xs text-slate-900 block">Digital Gate Pass</span>
-              <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">QR verification for checkpoint exit</p>
-            </div>
-          </button>
-
-          {isHosteler && (
+      {/* 2. Responsive Quick Action Cards (5 Cards) */}
+      <div className="grid grid-cols-5 gap-2 sm:gap-3.5 overflow-x-auto scrollbar-none pb-1">
+        {[
+          {
+            id: 'scan_attendance',
+            label: 'Scan Attendance',
+            icon: QrCode,
+            iconClass: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/60',
+            arrowHover: 'group-hover:text-emerald-600',
+            onClick: () => onNavigateTab('attendance')
+          },
+          {
+            id: 'gate_pass',
+            label: 'Gate Pass',
+            icon: ShieldCheck,
+            iconClass: 'bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-sky-400 border-blue-100 dark:border-blue-900/60',
+            arrowHover: 'group-hover:text-blue-600',
+            onClick: () => onNavigateTab('gate_pass' as any)
+          },
+          {
+            id: 'hostel_outpass',
+            label: 'Hostel Outpass',
+            icon: Home,
+            iconClass: 'bg-purple-50 text-purple-600 dark:bg-purple-950/50 dark:text-purple-400 border-purple-100 dark:border-purple-900/60',
+            arrowHover: 'group-hover:text-purple-600',
+            onClick: () => onNavigateTab('hostel_outpass' as any)
+          },
+          {
+            id: 'apply_leave',
+            label: 'Apply Leave',
+            icon: FileText,
+            iconClass: 'bg-amber-50 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400 border-amber-100 dark:border-amber-900/60',
+            arrowHover: 'group-hover:text-amber-600',
+            onClick: () => onNavigateTab('leaves')
+          },
+          {
+            id: 'voice_ai',
+            label: 'Voice AI',
+            icon: Mic,
+            iconClass: 'bg-rose-50 text-rose-600 dark:bg-rose-950/50 dark:text-rose-400 border-rose-100 dark:border-rose-900/60',
+            arrowHover: 'group-hover:text-rose-600',
+            onClick: () => onNavigateTab('ai_campus_assistant' as any)
+          }
+        ].map(card => {
+          const Icon = card.icon;
+          return (
             <button
-              onClick={() => onNavigateTab('hostel_outpass' as any)}
-              className="p-4 rounded-xl bg-indigo-50/40 border border-indigo-200 hover:border-[#0f2942] transition text-left flex items-start gap-3 group"
+              key={card.id}
+              type="button"
+              onClick={card.onClick}
+              className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-2.5 sm:p-4 shadow-2xs hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xs transition-all flex flex-col items-center justify-between min-w-[64px] sm:min-w-[95px] text-center group cursor-pointer active:scale-95"
             >
-              <div className="w-9 h-9 rounded-lg bg-white border border-indigo-200 text-indigo-700 flex items-center justify-center shrink-0 group-hover:bg-[#0f2942] group-hover:text-white transition">
-                <Home className="w-4 h-4" />
+              <div className={`w-9 h-9 sm:w-11 sm:h-11 rounded-2xl ${card.iconClass} border flex items-center justify-center shrink-0 mb-2 transition-transform group-hover:scale-105`}>
+                <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
-              <div className="min-w-0">
-                <span className="font-bold text-xs text-slate-900 block">Hostel Outpass</span>
-                <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">{student?.hostel_name || 'Residential outpass clearance'}</p>
-              </div>
+              <span className="font-bold text-[10px] sm:text-xs text-slate-800 dark:text-slate-200 block leading-tight">
+                {card.label}
+              </span>
+              <span className={`text-slate-400 text-xs mt-1.5 sm:mt-2 transition-all group-hover:translate-x-0.5 ${card.arrowHover}`}>
+                →
+              </span>
             </button>
-          )}
+          );
+        })}
+      </div>
+
+      {/* 3. Dashboard Statistics (2x2 Grid) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Attendance */}
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-5 sm:p-6 shadow-2xs flex flex-col justify-between space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-sky-400 flex items-center justify-center border border-blue-100 dark:border-blue-900/40">
+                <CalendarDays className="w-4 h-4" />
+              </div>
+              <span className="font-bold text-sm text-slate-900 dark:text-white">Attendance</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => onNavigateTab('attendance')}
+              className="text-xs text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-sky-400 font-semibold flex items-center gap-1 transition cursor-pointer"
+            >
+              <span>View Details</span>
+              <span>→</span>
+            </button>
+          </div>
+
+          <div>
+            <div className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+              {!studentId ? '0%' : myAttendance.length === 0 ? '0%' : `${attendanceStats.percentage}%`}
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
+              {!studentId
+                ? 'Student record not mapped'
+                : myAttendance.length === 0
+                ? 'No attendance records found'
+                : `${myAttendance.filter(a => a.status === 'Present').length} of ${myAttendance.length} lectures logged`}
+            </p>
+
+            {/* Attendance Progress Bar */}
+            <div className="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden mt-3">
+              <div
+                className={`h-full rounded-full transition-all duration-500 ${
+                  attendanceStats.percentage >= 75 ? 'bg-emerald-500' : 'bg-rose-500'
+                }`}
+                style={{ width: `${Math.min(100, Math.max(0, attendanceStats.percentage))}%` }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* CGPA / SGPA */}
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-5 sm:p-6 shadow-2xs flex flex-col justify-between space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-sky-400 flex items-center justify-center border border-blue-100 dark:border-blue-900/40">
+                <GraduationCap className="w-4 h-4" />
+              </div>
+              <span className="font-bold text-sm text-slate-900 dark:text-white">CGPA / SGPA</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => onNavigateTab('cgpa')}
+              className="text-xs text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-sky-400 font-semibold flex items-center gap-1 transition cursor-pointer"
+            >
+              <span>View Details</span>
+              <span>→</span>
+            </button>
+          </div>
+
+          <div>
+            <div className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+              {student?.cgpa && student?.sgpa 
+                ? `${student.cgpa} / ${student.sgpa}` 
+                : student?.cgpa 
+                ? `${student.cgpa} / 7.2` 
+                : '7.2 / 7.2'}
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
+              Cumulative & Semester Grade Index
+            </p>
+          </div>
+        </div>
+
+        {/* Current Semester */}
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-5 sm:p-6 shadow-2xs flex flex-col justify-between space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-sky-400 flex items-center justify-center border border-blue-100 dark:border-blue-900/40">
+                <Layers className="w-4 h-4" />
+              </div>
+              <span className="font-bold text-sm text-slate-900 dark:text-white">Current Semester</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => onNavigateTab('timetable' as any)}
+              className="text-xs text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-sky-400 font-semibold flex items-center gap-1 transition cursor-pointer"
+            >
+              <span>View Details</span>
+              <span>→</span>
+            </button>
+          </div>
+
+          <div>
+            <div className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+              Semester {studentSemester || 1}
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
+              Section {studentSection || 'A'} • {studentBranch || 'CSE'}
+            </p>
+          </div>
+        </div>
+
+        {/* Pending Assignments */}
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-5 sm:p-6 shadow-2xs flex flex-col justify-between space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-sky-400 flex items-center justify-center border border-blue-100 dark:border-blue-900/40">
+                <FileSpreadsheet className="w-4 h-4" />
+              </div>
+              <span className="font-bold text-sm text-slate-900 dark:text-white">Pending Assignments</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => onNavigateTab('assignments')}
+              className="text-xs text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-sky-400 font-semibold flex items-center gap-1 transition cursor-pointer"
+            >
+              <span>View Details</span>
+              <span>→</span>
+            </button>
+          </div>
+
+          <div>
+            <div className="flex items-center gap-3">
+              <span className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                {assignmentsCount} Active
+              </span>
+              {assignmentsCount === 0 ? (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  Cleared
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                  Due Soon
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
+              Coursework deadlines active
+            </p>
+          </div>
         </div>
       </div>
 
-      {/* ==================================================== */}
-      {/* 8. SECTION: ACADEMIC ESSENTIALS & CAMPUS LIFE HUB */}
-      {/* ==================================================== */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-          <div className="flex items-center gap-2">
-            <Building className="w-4 h-4 text-[#0f2942]" />
-            <h3 className="font-bold text-xs uppercase tracking-wider text-slate-900">
-              CAMPUS SERVICES & ACADEMIC ESSENTIALS
-            </h3>
+      {/* 4. Stay Updated (Notices & Announcements - Full Width Card) */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-5 sm:p-6 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-sky-400 flex items-center justify-center shrink-0 border border-blue-100 dark:border-blue-900/40">
+            <Megaphone className="w-6 h-6" />
           </div>
-          <span className="text-xs text-slate-400">Institutional Services</span>
+          <div>
+            <h3 className="font-extrabold text-base text-slate-900 dark:text-white leading-tight">
+              Stay Updated
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              Check your latest notices, updates and important information from your institute.
+            </p>
+          </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <button
+          type="button"
+          onClick={() => onNavigateTab('notices')}
+          className="px-5 py-2.5 rounded-xl bg-[#0F2942] hover:bg-[#0a1c2e] dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition active:scale-95 cursor-pointer shrink-0"
+        >
+          <span>View Notices</span>
+          <span>→</span>
+        </button>
+      </div>
+
+      {/* 5. Quick Links Section */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-2 text-slate-900 dark:text-white font-bold text-sm">
+          <Link2 className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+          <span>Quick Links</span>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+          {/* Academic Calendar */}
           <button
-            onClick={() => onNavigateTab('id_card' as any)}
-            className="p-3.5 rounded-xl bg-gradient-to-br from-[#0f2942]/5 to-[#0f2942]/10 border border-[#0f2942]/20 hover:border-[#0f2942] hover:bg-[#0f2942]/15 transition text-left flex flex-col justify-between h-28 group cursor-pointer"
+            type="button"
+            onClick={() => onNavigateTab('calendar')}
+            className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-4 shadow-2xs hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xs transition cursor-pointer flex flex-col justify-between h-24 text-left group"
           >
-            <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-[#0f2942] flex items-center justify-center group-hover:bg-[#0f2942] group-hover:text-white transition">
-              <CreditCard className="w-4 h-4" />
-            </div>
-            <div>
-              <span className="font-bold text-xs text-slate-900 block truncate">Digital ID Card</span>
-              <span className="text-[10px] text-slate-500 block truncate mt-0.5">Live anti-spoof ID</span>
-            </div>
+            <CalendarDays className="w-5 h-5 text-slate-700 dark:text-slate-300 group-hover:text-blue-600 dark:group-hover:text-sky-400 transition" />
+            <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center justify-between">
+              <span>Academic Calendar</span>
+              <span className="text-slate-400 group-hover:translate-x-0.5 transition-transform">›</span>
+            </span>
           </button>
 
+          {/* Fee Details */}
           <button
-            onClick={() => onNavigateTab('ai_campus_assistant' as any)}
-            className="p-3.5 rounded-xl bg-purple-50/70 border border-purple-200 hover:border-purple-600 hover:bg-purple-100/70 transition text-left flex flex-col justify-between h-28 group cursor-pointer"
-          >
-            <div className="w-8 h-8 rounded-lg bg-white border border-purple-200 text-purple-700 flex items-center justify-center group-hover:bg-purple-700 group-hover:text-white transition">
-              <Mic className="w-4 h-4" />
-            </div>
-            <div>
-              <span className="font-bold text-xs text-slate-900 block truncate">Voice AI Assistant</span>
-              <span className="text-[10px] text-purple-700 font-semibold block truncate mt-0.5">Hindi / Eng Voice AI</span>
-            </div>
-          </button>
-
-          <button
-            onClick={() => onNavigateTab('internals' as any)}
-            className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 hover:border-[#0f2942] hover:bg-slate-100/80 transition text-left flex flex-col justify-between h-28 group cursor-pointer"
-          >
-            <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-[#0f2942] flex items-center justify-center group-hover:bg-[#0f2942] group-hover:text-white transition">
-              <Calculator className="w-4 h-4" />
-            </div>
-            <div>
-              <span className="font-bold text-xs text-slate-900 block truncate">Internal Calculator</span>
-              <span className="text-[10px] text-slate-500 block truncate mt-0.5">HPTU Pass Predictor</span>
-            </div>
-          </button>
-
-          <button
-            onClick={() => onNavigateTab('admit_card' as any)}
-            className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 hover:border-[#0f2942] hover:bg-slate-100/80 transition text-left flex flex-col justify-between h-28 group cursor-pointer"
-          >
-            <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-[#0f2942] flex items-center justify-center group-hover:bg-[#0f2942] group-hover:text-white transition">
-              <FileCheck className="w-4 h-4" />
-            </div>
-            <div>
-              <span className="font-bold text-xs text-slate-900 block truncate">Admit Card</span>
-              <span className="text-[10px] text-slate-500 block truncate mt-0.5">Hall Ticket PDF</span>
-            </div>
-          </button>
-
-          <button
+            type="button"
             onClick={() => onNavigateTab('fees' as any)}
-            className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 hover:border-[#0f2942] hover:bg-slate-100/80 transition text-left flex flex-col justify-between h-28 group cursor-pointer"
+            className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-4 shadow-2xs hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xs transition cursor-pointer flex flex-col justify-between h-24 text-left group"
           >
-            <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-[#0f2942] flex items-center justify-center group-hover:bg-[#0f2942] group-hover:text-white transition">
-              <Receipt className="w-4 h-4" />
-            </div>
-            <div>
-              <span className="font-bold text-xs text-slate-900 block truncate">Fee Receipts</span>
-              <span className="text-[10px] text-slate-500 block truncate mt-0.5">Accounts ledger</span>
-            </div>
+            <span className="font-bold text-lg text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-sky-400 transition leading-none">
+              ₹
+            </span>
+            <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center justify-between">
+              <span>Fee Details</span>
+              <span className="text-slate-400 group-hover:translate-x-0.5 transition-transform">›</span>
+            </span>
           </button>
 
+          {/* Contact Us */}
           <button
-            onClick={() => onNavigateTab('library' as any)}
-            className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 hover:border-[#0f2942] hover:bg-slate-100/80 transition text-left flex flex-col justify-between h-28 group cursor-pointer"
+            type="button"
+            onClick={() => onNavigateTab('social_links' as any)}
+            className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-4 shadow-2xs hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xs transition cursor-pointer flex flex-col justify-between h-24 text-left group"
           >
-            <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-[#0f2942] flex items-center justify-center group-hover:bg-[#0f2942] group-hover:text-white transition">
-              <Library className="w-4 h-4" />
-            </div>
-            <div>
-              <span className="font-bold text-xs text-slate-900 block truncate">Library (OPAC)</span>
-              <span className="text-[10px] text-slate-500 block truncate mt-0.5">Books & renewals</span>
-            </div>
+            <Phone className="w-5 h-5 text-slate-700 dark:text-slate-300 group-hover:text-blue-600 dark:group-hover:text-sky-400 transition" />
+            <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center justify-between">
+              <span>Contact Us</span>
+              <span className="text-slate-400 group-hover:translate-x-0.5 transition-transform">›</span>
+            </span>
           </button>
 
+          {/* Help & Support */}
           <button
-            onClick={() => onNavigateTab('transport' as any)}
-            className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 hover:border-[#0f2942] hover:bg-slate-100/80 transition text-left flex flex-col justify-between h-28 group cursor-pointer"
+            type="button"
+            onClick={() => onNavigateTab('complaints')}
+            className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-4 shadow-2xs hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xs transition cursor-pointer flex flex-col justify-between h-24 text-left group"
           >
-            <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-[#0f2942] flex items-center justify-center group-hover:bg-[#0f2942] group-hover:text-white transition">
-              <Bus className="w-4 h-4" />
-            </div>
-            <div>
-              <span className="font-bold text-xs text-slate-900 block truncate">Bus Routes</span>
-              <span className="text-[10px] text-slate-500 block truncate mt-0.5">Transport tracker</span>
-            </div>
-          </button>
-
-          <button
-            onClick={() => onNavigateTab('mess' as any)}
-            className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 hover:border-[#0f2942] hover:bg-slate-100/80 transition text-left flex flex-col justify-between h-28 group cursor-pointer"
-          >
-            <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-[#0f2942] flex items-center justify-center group-hover:bg-[#0f2942] group-hover:text-white transition">
-              <UtensilsCrossed className="w-4 h-4" />
-            </div>
-            <div>
-              <span className="font-bold text-xs text-slate-900 block truncate">Hostel Mess</span>
-              <span className="text-[10px] text-slate-500 block truncate mt-0.5">Weekly meal menu</span>
-            </div>
-          </button>
-
-          <button
-            onClick={() => onNavigateTab('placements' as any)}
-            className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 hover:border-[#0f2942] hover:bg-slate-100/80 transition text-left flex flex-col justify-between h-28 group cursor-pointer"
-          >
-            <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-[#0f2942] flex items-center justify-center group-hover:bg-[#0f2942] group-hover:text-white transition">
-              <Briefcase className="w-4 h-4" />
-            </div>
-            <div>
-              <span className="font-bold text-xs text-slate-900 block truncate">Placements</span>
-              <span className="text-[10px] text-slate-500 block truncate mt-0.5">T&P & Alumni</span>
-            </div>
-          </button>
-
-          <button
-            onClick={() => onNavigateTab('events' as any)}
-            className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 hover:border-[#0f2942] hover:bg-slate-100/80 transition text-left flex flex-col justify-between h-28 group cursor-pointer"
-          >
-            <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-[#0f2942] flex items-center justify-center group-hover:bg-[#0f2942] group-hover:text-white transition">
-              <Trophy className="w-4 h-4" />
-            </div>
-            <div>
-              <span className="font-bold text-xs text-slate-900 block truncate">Events & Fests</span>
-              <span className="text-[10px] text-slate-500 block truncate mt-0.5">Passes & certificates</span>
-            </div>
-          </button>
-
-          <button
-            onClick={() => onNavigateTab('lost_found' as any)}
-            className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 hover:border-[#0f2942] hover:bg-slate-100/80 transition text-left flex flex-col justify-between h-28 group cursor-pointer"
-          >
-            <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-[#0f2942] flex items-center justify-center group-hover:bg-[#0f2942] group-hover:text-white transition">
-              <PackageSearch className="w-4 h-4" />
-            </div>
-            <div>
-              <span className="font-bold text-xs text-slate-900 block truncate">Lost & Found</span>
-              <span className="text-[10px] text-slate-500 block truncate mt-0.5">Campus claim desk</span>
-            </div>
-          </button>
-
-          <button
-            onClick={() => onNavigateTab('emergency_sos' as any)}
-            className="p-3.5 rounded-xl bg-rose-50/70 border border-rose-200 hover:border-rose-400 hover:bg-rose-100/70 transition text-left flex flex-col justify-between h-28 group cursor-pointer"
-          >
-            <div className="w-8 h-8 rounded-lg bg-white border border-rose-200 text-rose-600 flex items-center justify-center group-hover:bg-rose-600 group-hover:text-white transition">
-              <HeartPulse className="w-4 h-4" />
-            </div>
-            <div>
-              <span className="font-bold text-xs text-rose-950 block truncate">Emergency SOS</span>
-              <span className="text-[10px] text-rose-700 block truncate mt-0.5">Ambulance & Dispensary</span>
-            </div>
-          </button>
-
-          <button
-            onClick={() => onNavigateTab('parent_portal' as any)}
-            className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 hover:border-[#0f2942] hover:bg-slate-100/80 transition text-left flex flex-col justify-between h-28 group cursor-pointer"
-          >
-            <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-[#0f2942] flex items-center justify-center group-hover:bg-[#0f2942] group-hover:text-white transition">
-              <HeartHandshake className="w-4 h-4" />
-            </div>
-            <div>
-              <span className="font-bold text-xs text-slate-900 block truncate">Parent Portal</span>
-              <span className="text-[10px] text-slate-500 block truncate mt-0.5">Suraksha & Progress</span>
-            </div>
+            <HelpCircle className="w-5 h-5 text-slate-700 dark:text-slate-300 group-hover:text-blue-600 dark:group-hover:text-sky-400 transition" />
+            <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center justify-between">
+              <span>Help & Support</span>
+              <span className="text-slate-400 group-hover:translate-x-0.5 transition-transform">›</span>
+            </span>
           </button>
         </div>
+      </div>
+
+      {/* 6. Footer Institutional Branding */}
+      <div className="pt-6 pb-2 text-center flex items-center justify-center gap-3 text-[11px] text-slate-400 dark:text-slate-500 font-medium">
+        <div className="h-px bg-slate-200 dark:bg-slate-800 flex-1 max-w-[80px]" />
+        <span>HIET Group of Institutions | Empowering Future</span>
+        <div className="h-px bg-slate-200 dark:bg-slate-800 flex-1 max-w-[80px]" />
       </div>
     </div>
   );

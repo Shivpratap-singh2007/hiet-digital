@@ -13,7 +13,7 @@ interface PageHeaderProps {
   title: string;
   description?: string;
   subtitle?: string;
-  badge?: string | { label: string; variant?: string };
+  badge?: string | { label: string; variant?: string } | React.ReactNode;
   actions?: React.ReactNode;
 }
 
@@ -28,7 +28,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
 }) => {
   const activeBreadcrumbs = breadcrumbs || breadcrumb;
   const activeDescription = description || subtitle;
-  const badgeLabel = typeof badge === 'object' && badge ? badge.label : badge;
+  const badgeLabel = typeof badge === 'object' && badge && 'label' in badge ? (badge as any).label : (typeof badge === 'string' ? badge : null);
 
   return (
     <div className="space-y-3 mb-6">
@@ -64,11 +64,13 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-[#0f2942] dark:text-white tracking-tight">
               {title}
             </h1>
-            {badgeLabel && (
+            {React.isValidElement(badge) ? (
+              badge
+            ) : badgeLabel ? (
               <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 dark:bg-blue-950/60 text-[#0f2942] dark:text-sky-300 border border-blue-200 dark:border-blue-800">
                 {badgeLabel}
               </span>
-            )}
+            ) : null}
           </div>
           {activeDescription && (
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-3xl leading-relaxed">

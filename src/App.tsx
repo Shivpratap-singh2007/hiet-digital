@@ -197,7 +197,7 @@ const MainLayout: React.FC = () => {
   let effectiveRole = role;
   let devPreviewActive = false;
 
-  if (areDevRoutesEnabled() && typeof window !== 'undefined') {
+  if (areDevRoutesEnabled() && typeof window !== 'undefined' && user) {
     const params = new URLSearchParams(window.location.search);
     const pRole = params.get('previewRole');
     if (pRole) {
@@ -209,6 +209,13 @@ const MainLayout: React.FC = () => {
       else if (pRole === 'security') effectiveRole = 'security_guard';
     }
   }
+
+  // Purge any previewRole param from browser URL if user logs out
+  React.useEffect(() => {
+    if (!user && typeof window !== 'undefined' && window.location.search.includes('previewRole')) {
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+  }, [user]);
 
   const handleOpenLogin = () => {
     setShowLoginModal(true);
@@ -291,7 +298,12 @@ const MainLayout: React.FC = () => {
 
         <LoginModal
           isOpen={showLoginModal}
-          onClose={() => setShowLoginModal(false)}
+          onClose={() => {
+            setShowLoginModal(false);
+            if (typeof window !== 'undefined' && window.location.pathname === '/login') {
+              window.history.replaceState(null, '', '/');
+            }
+          }}
           onSuccess={() => {
             setShowLoginModal(false);
             setCurrentTab('dashboard');
@@ -329,7 +341,7 @@ const MainLayout: React.FC = () => {
       />
 
       {/* Global Modals */}
-      {mustChangePassword && <ChangePasswordModal />}
+      {mustChangePassword && role !== 'student' && <ChangePasswordModal />}
 
       <CommandPaletteModal
         isOpen={showCommandPalette}

@@ -170,15 +170,6 @@ export const LandingPage: React.FC<Props> = ({
             >
               Contact
             </button>
-            <button
-              onClick={() => {
-                const el = document.getElementById('login-card');
-                el?.scrollIntoView({ behavior: 'smooth' });
-              }}
-              className="px-4 py-2 bg-[#0f2942] hover:bg-[#0a1c2e] dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-bold rounded-xl shadow-xs transition"
-            >
-              Sign In
-            </button>
           </div>
 
         </div>
