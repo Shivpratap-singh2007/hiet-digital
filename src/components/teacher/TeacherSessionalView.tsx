@@ -276,7 +276,7 @@ export const TeacherSessionalView: React.FC = () => {
   });
 
   return (
-    <div className="space-y-5 animate-fade-in font-sans w-full max-w-full overflow-hidden">
+    <div className="space-y-5 animate-fade-in font-sans w-full max-w-full min-w-0">
       {/* 1. Header with Institutional Description (Strict Monochrome Theme) */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>

@@ -138,7 +138,7 @@ export const MaintenanceGrievanceView: React.FC = () => {
   const resolvedCount = tickets.filter(t => t.status === 'Resolved').length;
 
   return (
-    <div className="space-y-6 font-sans w-full max-w-full overflow-hidden">
+    <div className="space-y-6 font-sans w-full max-w-full min-w-0">
       <PageHeader
         breadcrumbs={[
           { label: 'Campus Operations' },

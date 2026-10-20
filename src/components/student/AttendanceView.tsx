@@ -323,7 +323,7 @@ export const AttendanceView: React.FC = () => {
     : null;
 
   return (
-    <div className="space-y-6 animate-fade-in font-sans w-full max-w-full overflow-hidden">
+    <div className="space-y-6 animate-fade-in font-sans w-full max-w-full min-w-0">
       {/* Header with Scan Button & Dev Mode Toggle */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>

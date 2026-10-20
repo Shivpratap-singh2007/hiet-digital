@@ -271,7 +271,7 @@ export const DemoAccountsPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-800 p-4 sm:p-6 lg:p-8 font-sans selection:bg-[#0f2942] selection:text-white w-full max-w-full overflow-hidden">
+    <div className="min-h-screen bg-[#f8fafc] text-slate-800 p-4 sm:p-6 lg:p-8 font-sans selection:bg-[#0f2942] selection:text-white w-full max-w-full min-w-0">
       <div className="max-w-7xl mx-auto space-y-6">
         
         {/* MANDATORY WARNING BANNER */}

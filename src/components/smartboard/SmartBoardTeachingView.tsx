@@ -226,7 +226,7 @@ export const SmartBoardTeachingView: React.FC<Props> = ({ roleMode }) => {
   const uniqueTeachersCount = new Set(lessons.map(l => l.teacher_id)).size;
 
   return (
-    <div className="space-y-6 animate-fade-in font-sans w-full max-w-full overflow-hidden">
+    <div className="space-y-6 animate-fade-in font-sans w-full max-w-full min-w-0">
       {/* 1. Header */}
       <PageHeader
         breadcrumbs={[

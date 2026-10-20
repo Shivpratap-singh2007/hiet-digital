@@ -72,7 +72,7 @@ export const ContentManagementView: React.FC = () => {
   });
 
   return (
-    <div className="space-y-6 font-sans w-full max-w-full overflow-hidden">
+    <div className="space-y-6 font-sans w-full max-w-full min-w-0">
       <PageHeader
         breadcrumbs={[
           { label: 'Institutional Communications' },

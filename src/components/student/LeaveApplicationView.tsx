@@ -154,7 +154,7 @@ export const LeaveApplicationView: React.FC = () => {
   const isPending = (s: string) => s.toLowerCase().startsWith('pending');
 
   return (
-    <div className="space-y-6 animate-fade-in w-full max-w-full overflow-hidden">
+    <div className="space-y-6 animate-fade-in w-full max-w-full min-w-0">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>

@@ -90,7 +90,7 @@ export const FeeReceiptsView: React.FC<Props> = () => {
   };
 
   return (
-    <div className="space-y-6 font-sans animate-fade-in pb-12 w-full max-w-full overflow-hidden">
+    <div className="space-y-6 font-sans animate-fade-in pb-12 w-full max-w-full min-w-0">
       {/* 1. Institutional Header Banner */}
       <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs relative overflow-hidden">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">

@@ -683,7 +683,7 @@ export const HodDashboard: React.FC<Props> = ({ currentTab = 'dashboard', onNavi
   // View: Department Students Directory
   if (currentTab === 'students_mgmt') {
     return (
-      <div className="space-y-5 animate-fade-in w-full max-w-full overflow-hidden">
+      <div className="space-y-5 animate-fade-in w-full max-w-full">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-800 border border-blue-200">
@@ -1180,7 +1180,7 @@ export const HodDashboard: React.FC<Props> = ({ currentTab = 'dashboard', onNavi
   // Default Overview / Section 7 HOD Leadership Suite
   // ==============================================================
   return (
-    <div className="space-y-6 animate-fade-in font-sans w-full max-w-full overflow-hidden">
+    <div className="space-y-6 animate-fade-in font-sans w-full max-w-full">
       {/* 1. Page Header with Institutional Breadcrumbs */}
       <PageHeader
         breadcrumbs={[

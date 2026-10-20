@@ -71,10 +71,10 @@
     margin: 0;
     padding: 0;
     overflow-x: hidden;
+    overflow-x: clip;
     -webkit-tap-highlight-color: transparent;
     scroll-behavior: smooth;
-    overscroll-behavior: none;
-    overscroll-behavior-y: none;
+    -webkit-overflow-scrolling: touch;
   }
 
   body {
@@ -89,8 +89,9 @@
     margin: 0;
     padding: 0;
     overflow-x: hidden;
-    overscroll-behavior: none;
-    overscroll-behavior-y: none;
+    overflow-x: clip;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   #root {
@@ -99,9 +100,6 @@
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    overflow-x: hidden;
-    overscroll-behavior: none;
-    overscroll-behavior-y: none;
   }
 
   h1, h2, h3, h4, h5, h6, .font-display {

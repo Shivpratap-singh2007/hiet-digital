@@ -33,7 +33,7 @@ export const TeacherAchievementsView: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in w-full max-w-full overflow-hidden">
+    <div className="space-y-6 animate-fade-in w-full max-w-full">
       <div>
         <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
           <Trophy className="w-6 h-6 text-amber-600 dark:text-amber-400" />

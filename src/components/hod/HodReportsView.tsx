@@ -43,7 +43,7 @@ export const HodReportsView: React.FC = () => {
   const resolvedCount = complaints.filter(c => c.status === 'Resolved' || c.status === 'Closed').length;
 
   return (
-    <div className="space-y-4 sm:space-y-5 animate-fade-in font-sans pb-12 w-full max-w-full overflow-hidden">
+    <div className="space-y-4 sm:space-y-5 animate-fade-in font-sans pb-12 w-full max-w-full min-w-0">
       {/* Header */}
       <div className="bg-white border border-slate-200 rounded-3xl p-4 sm:p-5 shadow-xs">
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-50 text-purple-700 text-xs font-bold mb-1.5 border border-purple-100">

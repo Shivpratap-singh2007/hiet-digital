@@ -377,7 +377,7 @@ export const ManagingDirectorDashboard: React.FC<Props> = ({ currentTab, onNavig
   };
 
   return (
-    <div className="space-y-6 font-sans text-black dark:text-white w-full max-w-full overflow-hidden">
+    <div className="space-y-6 font-sans text-black dark:text-white w-full max-w-full">
       {/* 1. Header with Institutional Breadcrumbs (Strict Monochrome) */}
       <PageHeader
         breadcrumbs={[

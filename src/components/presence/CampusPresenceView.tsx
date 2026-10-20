@@ -533,7 +533,7 @@ export const CampusPresenceView: React.FC<Props> = ({ roleMode = 'principal', de
   }
 
   return (
-    <div className="space-y-6 font-sans animate-fade-in w-full max-w-full overflow-hidden">
+    <div className="space-y-6 font-sans animate-fade-in w-full max-w-full min-w-0">
       {/* 1. Header with Breadcrumbs */}
       <PageHeader
         breadcrumbs={[

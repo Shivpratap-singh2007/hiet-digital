@@ -215,7 +215,7 @@ export const CgpaView: React.FC<Props> = ({ initialTab = 'university_results' })
   }, [filteredClassTests]);
 
   return (
-    <div className="space-y-6 font-sans pb-24 w-full max-w-full overflow-hidden">
+    <div className="space-y-6 font-sans pb-24 w-full max-w-full min-w-0">
       {/* 1. Official Header Banner */}
       <div className="bg-[#0F2942] text-white rounded-3xl p-6 sm:p-7 shadow-sm border border-[#183B56] relative overflow-hidden">
         <div className="relative z-10">

@@ -125,7 +125,7 @@ export const AttendanceReconciliationView: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6 animate-fade-in font-sans max-w-5xl mx-auto pb-10 w-full max-w-full overflow-hidden">
+    <div className="space-y-6 animate-fade-in font-sans max-w-5xl mx-auto pb-10 w-full max-w-full min-w-0">
       {/* Top Banner */}
       <div className="bg-white border border-slate-200 rounded-3xl p-5 sm:p-6 shadow-xs relative overflow-hidden">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">

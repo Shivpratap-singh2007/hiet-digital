@@ -503,7 +503,7 @@ export const DepartmentStructureView: React.FC<Props> = ({ roleMode, initialDepa
   );
 
   return (
-    <div className="space-y-5 font-sans pb-12 animate-fade-in text-black dark:text-white w-full max-w-full overflow-hidden">
+    <div className="space-y-5 font-sans pb-12 animate-fade-in text-black dark:text-white w-full max-w-full min-w-0">
       {/* =========================================================================
           BREADCRUMBS & TOP LEVEL HEADER (Strict Monochrome)
       ========================================================================= */}

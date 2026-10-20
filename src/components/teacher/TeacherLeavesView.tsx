@@ -157,7 +157,7 @@ export const TeacherLeavesView: React.FC = () => {
     (isHod || user?.id === 'prof-tch-fac-cse-001' || user?.name?.includes('Anuj'));
 
   return (
-    <div className="space-y-6 animate-fade-in w-full max-w-full overflow-hidden">
+    <div className="space-y-6 animate-fade-in w-full max-w-full min-w-0">
       {/* Header & Filter Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>

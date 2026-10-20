@@ -239,7 +239,7 @@ const MainLayout: React.FC = () => {
 
   // 2. Authenticated Experience: Responsive shell with Sticky Top Header, Left Sidebar & Main Content
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex flex-col font-sans relative overflow-x-hidden selection:bg-[#0f2942] selection:text-white">
+    <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex flex-col font-sans relative selection:bg-[#0f2942] selection:text-white">
       {/* Sticky Top Header */}
       <Navbar
         onToggleSidebar={() => setIsMobileSidebarOpen(prev => !prev)}

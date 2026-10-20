@@ -311,7 +311,7 @@ export const AuditLogView: React.FC = () => {
   };
 
   return (
-    <div className="space-y-5 font-sans pb-12 animate-fade-in text-black dark:text-white w-full max-w-full overflow-hidden">
+    <div className="space-y-5 font-sans pb-12 animate-fade-in text-black dark:text-white w-full max-w-full">
       {/* 1. Header with Institutional Breadcrumbs */}
       <PageHeader
         breadcrumbs={[
@@ -475,7 +475,7 @@ export const AuditLogView: React.FC = () => {
           {/* ===================================================================
               DESKTOP & TABLET VIEW: REFINED COMPLIANCE TABLE (hidden on mobile)
           =================================================================== */}
-          <div className="hidden md:block bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl overflow-hidden shadow-2xs">
+          <div className="hidden md:block bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl w-full max-w-full overflow-hidden shadow-2xs">
             <div className="overflow-x-auto w-full">
               <table className="w-full text-left text-xs border-collapse">
                 <thead className="bg-neutral-100 dark:bg-neutral-800 text-black dark:text-white uppercase tracking-wider font-extrabold border-b border-neutral-200 dark:border-neutral-700 text-[11px]">

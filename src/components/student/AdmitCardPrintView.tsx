@@ -52,7 +52,7 @@ export const AdmitCardPrintView: React.FC<Props> = () => {
   };
 
   return (
-    <div className="w-full max-w-full overflow-hidden space-y-6 font-sans animate-fade-in pb-12">
+    <div className="w-full max-w-full min-w-0 space-y-6 font-sans animate-fade-in pb-12">
       {/* 1. Header Banner (Screen only) */}
       <div className="bg-white border border-[#E2E8F0] rounded-3xl p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 no-print">
         <div>
@@ -236,7 +236,7 @@ export const AdmitCardPrintView: React.FC<Props> = () => {
 
       {/* 2. Official HPTU Hall Ticket Paper (Printable Layout) */}
       {viewMode === 'ticket' && (
-        <div className="bg-white border-2 border-[#0F2942] rounded-2xl p-6 sm:p-10 shadow-lg max-w-4xl mx-auto text-[#111827] font-sans print:border-none print:shadow-none print:p-0">
+        <div className="bg-white border-2 border-[#0F2942] rounded-2xl p-6 sm:p-10 shadow-lg max-w-4xl mx-auto text-[#111827] font-sans print:border-none print:shadow-none print:p-0 w-full max-w-full overflow-hidden">
           {/* University & College Seal Header */}
           <div className="text-center border-b-2 border-[#0F2942] pb-4">
             <div className="flex items-center justify-center gap-3 mb-2">

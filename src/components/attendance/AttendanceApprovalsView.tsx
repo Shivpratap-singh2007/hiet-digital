@@ -239,7 +239,7 @@ export const AttendanceApprovalsView: React.FC<Props> = ({ roleMode, department,
   const info = getRoleHeaderInfo();
 
   return (
-    <div className="space-y-5 animate-fade-in font-sans w-full max-w-full overflow-hidden">
+    <div className="space-y-5 animate-fade-in font-sans w-full max-w-full min-w-0">
       {/* 1. Header Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>

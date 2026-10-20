@@ -307,7 +307,7 @@ export const SecurityScannerView: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in font-sans pb-10 w-full max-w-full overflow-hidden">
+    <div className="space-y-6 animate-fade-in font-sans pb-10 w-full max-w-full min-w-0">
       <PageHeader
         breadcrumb={[
           { label: 'Security & Campus Safety' },

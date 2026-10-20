@@ -414,7 +414,7 @@ export const MasterDataImportView: React.FC = () => {
   const ModuleIcon = MODULE_ICONS[selectedEntity] || GraduationCap;
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-12 w-full max-w-full overflow-hidden">
+    <div className="space-y-6 max-w-7xl mx-auto pb-12 w-full max-w-full min-w-0">
       {/* Top Header Card */}
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
