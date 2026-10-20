@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Building, 
   Building2,
@@ -100,14 +100,123 @@ export const ManagingDirectorDashboard: React.FC<Props> = ({ currentTab, onNavig
 
   // Distinct Academic Departments Across HIET Group of Institutions
   const departmentList = [
-    { code: 'CSE', name: 'Computer Science & Engineering', established: '2008', intake: 120 },
-    { code: 'ECE', name: 'Electronics & Communication Engineering', established: '2008', intake: 60 },
-    { code: 'CE', name: 'Civil Engineering', established: '2008', intake: 60 },
-    { code: 'ME', name: 'Mechanical Engineering', established: '2008', intake: 60 },
-    { code: 'EE', name: 'Electrical Engineering', established: '2009', intake: 60 },
-    { code: 'AS&H', name: 'Applied Sciences & Humanities', established: '2008', intake: 0 },
-    { code: 'BCA', name: 'Computer Applications & Management', established: '2018', intake: 60 }
+    { code: 'CSE', name: 'Department of Computer Science & Engineering', established: '2008', intake: 120 },
+    { code: 'ECE', name: 'Department of Electronics & Communication Engineering', established: '2008', intake: 60 },
+    { code: 'CE', name: 'Department of Civil Engineering', established: '2008', intake: 60 },
+    { code: 'ME', name: 'Department of Mechanical Engineering', established: '2008', intake: 60 },
+    { code: 'EE', name: 'Department of Electrical Engineering', established: '2009', intake: 60 },
+    { code: 'AS&H', name: 'Department of Applied Sciences & Humanities', established: '2008', intake: 0 },
+    { code: 'BCA', name: 'Department of Computer Applications & Management', established: '2018', intake: 60 }
   ];
+
+  // Dynamic Department Performance Calculation from Actual Application Records
+  const departmentPerformanceData = useMemo(() => {
+    const allGrades = dataStore.getGrades();
+
+    return departmentList.map(dept => {
+      // 1. Department Students (Scoped to department / branch codes)
+      const deptStudents = students.filter(s => {
+        const b = (s.branch || '').trim().toUpperCase();
+        const d = (s.department || '').trim().toUpperCase();
+        const code = dept.code.toUpperCase();
+        if (code === 'CSE') return b.includes('CSE') || d.includes('CSE') || b.includes('COMPUTER SCIENCE') || d.includes('COMPUTER SCIENCE');
+        if (code === 'ECE') return b === 'ECE' || d === 'ECE' || b.includes('ELECTRONICS') || d.includes('ELECTRONICS');
+        if (code === 'CE') return b === 'CE' || d === 'CE' || b.includes('CIVIL') || d.includes('CIVIL');
+        if (code === 'ME') return b === 'ME' || d === 'ME' || b.includes('MECHANICAL') || d.includes('MECHANICAL');
+        if (code === 'EE') return b === 'EE' || d === 'EE' || b.includes('ELECTRICAL') || d.includes('ELECTRICAL');
+        if (code === 'AS&H') return b.includes('AS&H') || d.includes('AS&H') || b.includes('APPLIED') || d.includes('APPLIED');
+        if (code === 'BCA') return b.includes('BCA') || d.includes('BCA') || b.includes('COMPUTER APPLICATIONS') || d.includes('COMPUTER APPLICATIONS');
+        return b.includes(code) || d.includes(code);
+      });
+      const studentCount = deptStudents.length;
+      const studentIds = new Set(deptStudents.map(s => s.id));
+
+      // 2. Department Faculty (Scoped to teaching faculty records)
+      const deptFaculty = teachers.filter(t => {
+        const tDept = (t.department || '').trim().toUpperCase();
+        const code = dept.code.toUpperCase();
+        if (code === 'CSE') return tDept.includes('CSE') || tDept.includes('COMPUTER SCIENCE');
+        if (code === 'ECE') return tDept === 'ECE' || tDept.includes('ELECTRONICS');
+        if (code === 'CE') return tDept === 'CE' || tDept.includes('CIVIL');
+        if (code === 'ME') return tDept === 'ME' || tDept.includes('MECHANICAL');
+        if (code === 'EE') return tDept === 'EE' || tDept.includes('ELECTRICAL');
+        if (code === 'AS&H') return tDept.includes('AS&H') || tDept.includes('APPLIED') || tDept.includes('HUMANITIES');
+        if (code === 'BCA') return tDept.includes('BCA') || tDept.includes('MANAGEMENT');
+        return tDept.includes(code);
+      });
+      const facultyCount = deptFaculty.length;
+
+      // 3. HOD Assignment Status (Authentic HOD lookup)
+      const assignedHod = teachers.find(t => {
+        const isHod = t.is_hod || t.role === 'hod' || t.designation?.toLowerCase().includes('hod');
+        if (!isHod) return false;
+        const tDept = (t.department || '').trim().toUpperCase();
+        const code = dept.code.toUpperCase();
+        return tDept === code || (code === 'CSE' && (tDept === 'CSE' || tDept.includes('COMPUTER SCIENCE')));
+      });
+      const hasHod = Boolean(assignedHod);
+
+      // 4. Attendance Rate (Calculated dynamically from real attendance records or batches)
+      let attendanceRate: number | null = null;
+      if (studentCount > 0) {
+        const deptAttendanceRecords = attendance.filter(a => studentIds.has(a.student_id));
+        if (deptAttendanceRecords.length > 0) {
+          const presentCount = deptAttendanceRecords.filter(a => a.status === 'Present').length;
+          attendanceRate = Math.round((presentCount / deptAttendanceRecords.length) * 100);
+        } else {
+          // Fallback to approved lecture batches for this department
+          const deptBatches = attendanceBatches.filter(b => {
+            const bDept = (b.department || '').toUpperCase();
+            const bBranch = (b.branch || '').toUpperCase();
+            const code = dept.code.toUpperCase();
+            return bDept.includes(code) || bBranch.includes(code);
+          });
+          if (deptBatches.length > 0) {
+            const totalP = deptBatches.reduce((acc, b) => acc + (b.present_count || 0), 0);
+            const totalS = deptBatches.reduce((acc, b) => acc + (b.total_students || 0), 0);
+            if (totalS > 0) {
+              attendanceRate = Math.round((totalP / totalS) * 100);
+            }
+          }
+        }
+      }
+
+      // 5. Academic Pass Rate (Calculated dynamically from real examination grades & sessionals)
+      let passRate: number | null = null;
+      if (studentCount > 0) {
+        const deptGrades = allGrades.filter(g => studentIds.has(g.student_id));
+        if (deptGrades.length > 0) {
+          const passedCount = deptGrades.filter(g => g.status === 'Pass' || (g.letter_grade && g.letter_grade !== 'F')).length;
+          passRate = Math.round((passedCount / deptGrades.length) * 100);
+        } else {
+          const deptSessionals = sessionals.filter(s => studentIds.has(s.student_id));
+          if (deptSessionals.length > 0) {
+            const passedSessionals = deptSessionals.filter(s => {
+              if (s.marks_obtained !== undefined && s.max_marks && s.max_marks > 0) {
+                return (s.marks_obtained / s.max_marks) >= 0.4;
+              }
+              return false;
+            }).length;
+            passRate = Math.round((passedSessionals / deptSessionals.length) * 100);
+          }
+        }
+      }
+
+      const isNoDataAvailable = studentCount === 0 && facultyCount === 0 && !hasHod;
+
+      return {
+        ...dept,
+        studentCount,
+        facultyCount,
+        assignedHod,
+        hasHod,
+        attendanceRate,
+        passRate,
+        isNoDataAvailable
+      };
+    });
+  }, [departmentList, students, teachers, attendance, attendanceBatches, sessionals]);
+
 
   // Calculated Real Institutional Metrics (Section 5.A)
   const totalActiveStudents = students.filter(s => s.status === 'active' || !s.status).length;
@@ -268,7 +377,7 @@ export const ManagingDirectorDashboard: React.FC<Props> = ({ currentTab, onNavig
   };
 
   return (
-    <div className="space-y-6 font-sans text-black dark:text-white">
+    <div className="space-y-6 font-sans text-black dark:text-white w-full max-w-full overflow-hidden">
       {/* 1. Header with Institutional Breadcrumbs (Strict Monochrome) */}
       <PageHeader
         breadcrumbs={[
@@ -787,8 +896,8 @@ export const ManagingDirectorDashboard: React.FC<Props> = ({ currentTab, onNavig
         )}
       </div>
 
-      {/* 4. SECTION 5.C: INSTITUTION-WIDE REPORTING (Department Breakdown Table) */}
-      <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
+      {/* 4. SECTION 5.C: INSTITUTION-WIDE REPORTING (Department Breakdown Table & Mobile Cards) */}
+      <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl p-4 sm:p-6 shadow-2xs space-y-4 w-full max-w-full overflow-hidden">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-neutral-200 dark:border-neutral-800 pb-3">
           <div>
             <h2 className="text-sm font-bold text-black dark:text-white uppercase tracking-wider">
@@ -807,79 +916,180 @@ export const ManagingDirectorDashboard: React.FC<Props> = ({ currentTab, onNavig
           </button>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-neutral-100 dark:bg-neutral-800 text-black dark:text-white uppercase tracking-wider font-bold border-b border-neutral-200 dark:border-neutral-700">
+        {/* ===================================================================
+            DESKTOP & TABLET VIEW: REFINED TABLE (hidden md:block)
+            - Consistent column widths, readable headers, proper row spacing
+            - Fully visible department names and values
+            - Isolated container horizontal scroll if viewport shrinks on tablet
+        =================================================================== */}
+        <div className="hidden md:block overflow-x-auto w-full">
+          <table className="w-full text-left text-xs border-collapse">
+            <thead className="bg-neutral-100 dark:bg-neutral-800 text-black dark:text-white uppercase tracking-wider font-extrabold border-b border-neutral-200 dark:border-neutral-700 text-[11px]">
               <tr>
-                <th className="px-4 py-3">Department</th>
-                <th className="px-4 py-3">Est. Year</th>
-                <th className="px-4 py-3">Student Strength</th>
-                <th className="px-4 py-3">Faculty Strength</th>
-                <th className="px-4 py-3">Attendance Rate</th>
-                <th className="px-4 py-3">Academic Pass Rate</th>
-                <th className="px-4 py-3 text-right">Status</th>
+                <th className="px-4 py-3 min-w-[240px]">Department</th>
+                <th className="px-4 py-3 min-w-[90px]">Est. Year</th>
+                <th className="px-4 py-3 min-w-[130px]">Student Strength</th>
+                <th className="px-4 py-3 min-w-[130px]">Faculty Strength</th>
+                <th className="px-4 py-3 min-w-[130px]">Attendance Rate</th>
+                <th className="px-4 py-3 min-w-[140px]">Academic Pass Rate</th>
+                <th className="px-4 py-3 min-w-[150px] text-right">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-200 dark:divide-neutral-800">
-              {departmentList.map(dept => {
-                const deptStudents = students.filter(s => {
-                  const b = (s.branch || '').toUpperCase();
-                  const d = (s.department || '').toUpperCase();
-                  if (dept.code === 'CSE') return b.includes('CSE') || d.includes('CSE');
-                  if (dept.code === 'ECE') return b === 'ECE' || d === 'ECE';
-                  return b.includes(dept.code) || d.includes(dept.code);
-                });
-                const deptFaculty = teachers.filter(t => (t.department || '').toUpperCase().includes(dept.code));
-                const studentCount = deptStudents.length;
-                const facultyCount = deptFaculty.length;
-                const hasHod = deptFaculty.some(f => f.is_hod || f.role === 'hod' || (f.designation && f.designation.toLowerCase().includes('hod')));
-                const attendanceRate = studentCount > 0 ? (dept.code === 'CSE' ? 84 : 86) : null;
-                const passRate = studentCount > 0 ? (dept.code === 'CSE' ? '92%' : '90%') : 'N/A';
-
-                return (
-                  <tr 
-                    key={dept.code} 
-                    onClick={() => onNavigateTab('department')}
-                    className="hover:bg-neutral-50 dark:hover:bg-neutral-800/40 transition cursor-pointer"
-                    title="Click to explore department hierarchy and student roster"
-                  >
-                    <td className="px-4 py-3">
-                      <div className="font-bold text-black dark:text-white hover:underline">{dept.name}</div>
-                      <div className="text-[11px] text-neutral-500 font-mono">Code: {dept.code} • Est. {dept.established}</div>
-                    </td>
-                    <td className="px-4 py-3 font-mono text-neutral-600 dark:text-neutral-400">{dept.established}</td>
-                    <td className="px-4 py-3 font-semibold text-black dark:text-white font-mono">
-                      {studentCount} {studentCount === 1 ? 'Student' : 'Students'}
-                    </td>
-                    <td className="px-4 py-3 font-semibold text-black dark:text-white font-mono">
-                      {facultyCount} {facultyCount === 1 ? 'Faculty' : 'Faculty'}
-                    </td>
-                    <td className="px-4 py-3">
-                      {attendanceRate !== null ? (
-                        <div className="flex items-center gap-2">
-                          <span className="font-extrabold font-mono text-black dark:text-white">{attendanceRate}%</span>
-                          <span className="w-2 h-2 rounded-full bg-black dark:bg-white" />
-                        </div>
-                      ) : (
-                        <span className="text-neutral-400 text-[11px] italic">0 Active Cohort</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 font-extrabold font-mono text-black dark:text-white">{passRate}</td>
-                    <td className="px-4 py-3 text-right">
-                      <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
-                        hasHod
-                          ? 'bg-neutral-900 text-white border-neutral-900 dark:bg-white dark:text-black'
-                          : 'bg-neutral-100 text-neutral-600 border-neutral-300 dark:bg-neutral-800 dark:text-neutral-400'
-                      }`}>
-                        {hasHod ? <CheckCircle2 className="w-3 h-3 text-white dark:text-black" /> : <AlertCircle className="w-3 h-3 text-neutral-500" />}
-                        <span>{hasHod ? 'HOD Active' : 'HOD Not Assigned'}</span>
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
+              {departmentPerformanceData.map(dept => (
+                <tr 
+                  key={dept.code} 
+                  onClick={() => onNavigateTab('department')}
+                  className="hover:bg-neutral-50 dark:hover:bg-neutral-800/40 transition cursor-pointer group"
+                  title="Click to explore department hierarchy and student roster"
+                >
+                  <td className="px-4 py-3.5">
+                    <div className="font-bold text-black dark:text-white group-hover:underline">{dept.name}</div>
+                    <div className="text-[11px] text-neutral-500 font-mono mt-0.5">
+                      Code: {dept.code} • {dept.assignedHod ? `HOD: ${dept.assignedHod.name}` : 'HOD Not Assigned'}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3.5 font-mono text-neutral-600 dark:text-neutral-400">{dept.established}</td>
+                  <td className="px-4 py-3.5 font-semibold text-black dark:text-white font-mono">
+                    {dept.studentCount} {dept.studentCount === 1 ? 'Student' : 'Students'}
+                  </td>
+                  <td className="px-4 py-3.5 font-semibold text-black dark:text-white font-mono">
+                    {dept.facultyCount} {dept.facultyCount === 1 ? 'Faculty' : 'Faculty'}
+                  </td>
+                  <td className="px-4 py-3.5">
+                    {dept.attendanceRate !== null ? (
+                      <div className="flex items-center gap-2">
+                        <span className="font-extrabold font-mono text-black dark:text-white">{dept.attendanceRate}%</span>
+                        <span className="w-2 h-2 rounded-full bg-black dark:bg-white" />
+                      </div>
+                    ) : (
+                      <span className="text-neutral-400 text-[11px]">N/A</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3.5 font-extrabold font-mono text-black dark:text-white">
+                    {dept.passRate !== null ? `${dept.passRate}%` : <span className="text-neutral-400 font-sans font-normal text-[11px]">N/A</span>}
+                  </td>
+                  <td className="px-4 py-3.5 text-right whitespace-nowrap">
+                    <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
+                      dept.hasHod
+                        ? 'bg-neutral-900 text-white border-neutral-900 dark:bg-white dark:text-black'
+                        : 'bg-neutral-100 text-neutral-700 border-neutral-300 dark:bg-neutral-800 dark:text-neutral-300'
+                    }`}>
+                      {dept.hasHod ? <CheckCircle2 className="w-3 h-3 text-white dark:text-black" /> : <AlertCircle className="w-3 h-3 text-neutral-500" />}
+                      <span>{dept.hasHod ? 'HOD Active' : 'HOD Not Assigned'}</span>
+                    </span>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
+        </div>
+
+        {/* ===================================================================
+            MOBILE VIEW: RESPONSIVE DEPARTMENT CARDS (md:hidden)
+            - Fits 320px, 360px, 390px, 430px screens with zero horizontal overflow
+            - Full Department Name prominently displayed
+            - Clean 2-column metrics grid with vertical stacking on narrow widths
+            - Clearly shows Faculty, Student, Attendance, Pass Rate, HOD Status
+        =================================================================== */}
+        <div className="md:hidden space-y-3">
+          {departmentPerformanceData.map(dept => (
+            <div
+              key={dept.code}
+              onClick={() => onNavigateTab('department')}
+              className="p-4 rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-2xs space-y-3 cursor-pointer hover:border-black dark:hover:border-white transition"
+            >
+              {/* Card Header: Full Department Name & HOD Status Badge */}
+              <div className="flex items-start justify-between gap-2 border-b border-neutral-200 dark:border-neutral-800 pb-2.5">
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-bold text-xs sm:text-sm text-black dark:text-white leading-snug break-words">
+                    {dept.name}
+                  </h3>
+                  <div className="text-[11px] text-neutral-500 font-mono mt-0.5">
+                    Code: {dept.code} • Est. {dept.established}
+                  </div>
+                </div>
+                <div className="shrink-0 pt-0.5">
+                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                    dept.hasHod
+                      ? 'bg-neutral-900 text-white border-neutral-900 dark:bg-white dark:text-black'
+                      : 'bg-neutral-100 text-neutral-700 border-neutral-300 dark:bg-neutral-800 dark:text-neutral-300'
+                  }`}>
+                    {dept.hasHod ? <CheckCircle2 className="w-3 h-3 text-white dark:text-black" /> : <AlertCircle className="w-3 h-3 text-neutral-500" />}
+                    <span>{dept.hasHod ? 'HOD Active' : 'HOD Not Assigned'}</span>
+                  </span>
+                </div>
+              </div>
+
+              {/* Metrics Grid: Clean 2-column grid */}
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                {/* Faculty Strength */}
+                <div className="p-2.5 rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800">
+                  <span className="text-[10px] uppercase font-bold text-neutral-400 block tracking-wider">
+                    Faculty Strength
+                  </span>
+                  <span className="font-mono font-bold text-black dark:text-white text-xs block mt-0.5">
+                    {dept.facultyCount} {dept.facultyCount === 1 ? 'Faculty' : 'Faculty'}
+                  </span>
+                </div>
+
+                {/* Student Strength */}
+                <div className="p-2.5 rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800">
+                  <span className="text-[10px] uppercase font-bold text-neutral-400 block tracking-wider">
+                    Student Strength
+                  </span>
+                  <span className="font-mono font-bold text-black dark:text-white text-xs block mt-0.5">
+                    {dept.studentCount} {dept.studentCount === 1 ? 'Student' : 'Students'}
+                  </span>
+                </div>
+
+                {/* Attendance Rate */}
+                <div className="p-2.5 rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800">
+                  <span className="text-[10px] uppercase font-bold text-neutral-400 block tracking-wider">
+                    Attendance Rate
+                  </span>
+                  <div className="mt-0.5 flex items-center gap-1.5 font-mono font-bold text-xs text-black dark:text-white">
+                    {dept.attendanceRate !== null ? (
+                      <>
+                        <span>{dept.attendanceRate}%</span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-black dark:bg-white" />
+                      </>
+                    ) : (
+                      <span className="text-neutral-400 font-sans font-normal text-[11px]">N/A</span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Academic Pass Rate */}
+                <div className="p-2.5 rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800">
+                  <span className="text-[10px] uppercase font-bold text-neutral-400 block tracking-wider">
+                    Academic Pass Rate
+                  </span>
+                  <span className="font-mono font-bold text-black dark:text-white text-xs block mt-0.5">
+                    {dept.passRate !== null ? `${dept.passRate}%` : <span className="text-neutral-400 font-sans font-normal text-[11px]">N/A</span>}
+                  </span>
+                </div>
+              </div>
+
+              {/* No Data Available Banner (When department has 0 cohort and 0 records) */}
+              {dept.isNoDataAvailable && (
+                <div className="px-2.5 py-1.5 rounded-lg bg-neutral-100 dark:bg-neutral-800/60 border border-neutral-200 dark:border-neutral-700 text-[10px] text-neutral-500 font-medium">
+                  No data available for current semester evaluation cohort.
+                </div>
+              )}
+
+              {/* Mobile Card Footer */}
+              <div className="pt-2 border-t border-neutral-100 dark:border-neutral-800 flex items-center justify-between text-xs text-black dark:text-white font-bold">
+                <span className="text-[11px] text-neutral-500 font-medium truncate max-w-[200px]">
+                  {dept.assignedHod ? `HOD: ${dept.assignedHod.name}` : 'Vacant HOD Post'}
+                </span>
+                <span className="text-[11px] hover:underline flex items-center gap-1 shrink-0">
+                  <span>View Details</span>
+                  <span>→</span>
+                </span>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
