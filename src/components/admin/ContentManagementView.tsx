@@ -72,7 +72,7 @@ export const ContentManagementView: React.FC = () => {
   });
 
   return (
-    <div className="space-y-6 font-sans">
+    <div className="space-y-6 font-sans w-full max-w-full overflow-hidden">
       <PageHeader
         breadcrumbs={[
           { label: 'Institutional Communications' },
@@ -131,59 +131,111 @@ export const ContentManagementView: React.FC = () => {
           }}
         />
       ) : (
-        <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-2xs">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider">
-                  <th className="py-3 px-4">Headline & Content</th>
-                  <th className="py-3 px-4">Audience</th>
-                  <th className="py-3 px-4">Priority</th>
-                  <th className="py-3 px-4">Published Date</th>
-                  <th className="py-3 px-4">Publisher</th>
-                  <th className="py-3 px-4">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-slate-700">
-                {filteredNotices.map(notice => (
-                  <tr key={notice.id} className="hover:bg-slate-50/60 transition-colors">
-                    <td className="py-3.5 px-4 font-medium text-slate-900 max-w-md">
-                      <div className="font-semibold text-slate-900 truncate">{notice.title}</div>
-                      <div className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">
-                        {notice.content}
-                      </div>
-                    </td>
-                    <td className="py-3.5 px-4">
-                      <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 font-semibold text-[11px]">
-                        {notice.audience}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4">
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                        notice.priority === 'Urgent'
-                          ? 'bg-rose-100 text-rose-800'
-                          : notice.priority === 'Important'
-                          ? 'bg-amber-100 text-amber-800'
-                          : 'bg-blue-50 text-blue-800'
-                      }`}>
-                        {notice.priority}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4 font-mono text-slate-500 whitespace-nowrap">
-                      {notice.created_at ? new Date(notice.created_at).toISOString().slice(0, 10) : '2026-03-01'}
-                    </td>
-                    <td className="py-3.5 px-4 text-slate-600">
-                      {notice.created_by_name || 'Principal Office'}
-                    </td>
-                    <td className="py-3.5 px-4">
-                      <StatusBadge status="Published" variant="published" />
-                    </td>
+        <>
+          {/* Desktop Table */}
+          <div className="hidden md:block bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-2xs">
+            <div className="overflow-x-auto w-full">
+              <table className="w-full text-left text-xs border-collapse min-w-[720px]">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider whitespace-nowrap">
+                    <th className="py-3 px-4 min-w-[220px]">Headline & Content</th>
+                    <th className="py-3 px-4 min-w-[100px]">Audience</th>
+                    <th className="py-3 px-4 min-w-[90px]">Priority</th>
+                    <th className="py-3 px-4 min-w-[110px]">Published Date</th>
+                    <th className="py-3 px-4 min-w-[140px]">Publisher</th>
+                    <th className="py-3 px-4 min-w-[90px]">Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-700">
+                  {filteredNotices.map(notice => (
+                    <tr key={notice.id} className="hover:bg-slate-50/60 transition-colors">
+                      <td className="py-3.5 px-4 font-medium text-slate-900 max-w-md">
+                        <div className="font-semibold text-slate-900 truncate">{notice.title}</div>
+                        <div className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">
+                          {notice.content}
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 font-semibold text-[11px]">
+                          {notice.audience}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          notice.priority === 'Urgent'
+                            ? 'bg-rose-100 text-rose-800'
+                            : notice.priority === 'Important'
+                            ? 'bg-amber-100 text-amber-800'
+                            : 'bg-blue-50 text-blue-800'
+                        }`}>
+                          {notice.priority}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 font-mono text-slate-500 whitespace-nowrap">
+                        {notice.created_at ? new Date(notice.created_at).toISOString().slice(0, 10) : '2026-03-01'}
+                      </td>
+                      <td className="py-3.5 px-4 text-slate-600">
+                        {notice.created_by_name || 'Principal Office'}
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <StatusBadge status="Published" variant="published" />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+
+          {/* Mobile Content Cards */}
+          <div className="md:hidden space-y-3">
+            {filteredNotices.map(notice => (
+              <div key={notice.id} className="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs space-y-3">
+                <div className="flex items-start justify-between gap-2">
+                  <h4 className="font-semibold text-slate-900 text-sm break-words min-w-0">
+                    {notice.title}
+                  </h4>
+                  <StatusBadge status="Published" variant="published" />
+                </div>
+
+                <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
+                  {notice.content}
+                </p>
+
+                <div className="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-slate-100">
+                  <div>
+                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">Audience</span>
+                    <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 font-semibold text-[10px] inline-block mt-0.5">
+                      {notice.audience}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">Priority</span>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold inline-block mt-0.5 ${
+                      notice.priority === 'Urgent'
+                        ? 'bg-rose-100 text-rose-800'
+                        : notice.priority === 'Important'
+                        ? 'bg-amber-100 text-amber-800'
+                        : 'bg-blue-50 text-blue-800'
+                    }`}>
+                      {notice.priority}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">Publisher</span>
+                    <span className="text-slate-600 truncate block">{notice.created_by_name || 'Principal Office'}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">Published Date</span>
+                    <span className="font-mono text-slate-500">
+                      {notice.created_at ? new Date(notice.created_at).toISOString().slice(0, 10) : '2026-03-01'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
       )}
 
       {/* Create Content Modal */}

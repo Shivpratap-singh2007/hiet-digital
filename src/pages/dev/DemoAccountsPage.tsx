@@ -271,7 +271,7 @@ export const DemoAccountsPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-800 p-4 sm:p-6 lg:p-8 font-sans selection:bg-[#0f2942] selection:text-white">
+    <div className="min-h-screen bg-[#f8fafc] text-slate-800 p-4 sm:p-6 lg:p-8 font-sans selection:bg-[#0f2942] selection:text-white w-full max-w-full overflow-hidden">
       <div className="max-w-7xl mx-auto space-y-6">
         
         {/* MANDATORY WARNING BANNER */}
@@ -467,17 +467,17 @@ export const DemoAccountsPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-slate-600">
-              <thead className="bg-slate-50 text-slate-500 text-xs font-semibold uppercase tracking-wider border-b border-slate-200">
+          <div className="hidden md:block overflow-x-auto w-full">
+            <table className="w-full text-left text-sm text-slate-600 min-w-[850px]">
+              <thead className="bg-slate-50 text-slate-500 text-xs font-semibold uppercase tracking-wider border-b border-slate-200 whitespace-nowrap">
                 <tr>
-                  <th className="px-5 py-3.5">Persona & Name</th>
-                  <th className="px-5 py-3.5">Login Email</th>
-                  <th className="px-5 py-3.5">Employee Code / Roll No</th>
-                  <th className="px-5 py-3.5">Roles & Department</th>
-                  <th className="px-5 py-3.5">Scope / Academic Allocation</th>
-                  <th className="px-5 py-3.5">Expected Dashboard</th>
-                  <th className="px-5 py-3.5 text-right">Actions</th>
+                  <th className="px-5 py-3.5 min-w-[160px]">Persona & Name</th>
+                  <th className="px-5 py-3.5 min-w-[150px]">Login Email</th>
+                  <th className="px-5 py-3.5 min-w-[140px]">Employee Code / Roll No</th>
+                  <th className="px-5 py-3.5 min-w-[140px]">Roles & Department</th>
+                  <th className="px-5 py-3.5 min-w-[180px]">Scope / Academic Allocation</th>
+                  <th className="px-5 py-3.5 min-w-[120px]">Expected Dashboard</th>
+                  <th className="px-5 py-3.5 min-w-[110px] text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
@@ -627,6 +627,103 @@ export const DemoAccountsPage: React.FC = () => {
                 })}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile Persona Cards */}
+          <div className="md:hidden space-y-3 p-3">
+            {filteredAccounts.map((acc) => {
+              const Icon = acc.icon;
+              const isLoggingIn = loggingInEmail === acc.email;
+
+              return (
+                <div key={`${acc.email}-${acc.identifier}`} className="p-4 rounded-xl border border-slate-200 bg-white shadow-2xs space-y-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2.5">
+                      <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
+                        acc.category === 'faculty' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                        acc.category === 'students-cse' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
+                        acc.category === 'students-ece' ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' :
+                        'bg-amber-50 text-amber-700 border border-amber-200'
+                      }`}>
+                        <Icon className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <h4 className="font-semibold text-slate-900 text-sm truncate">{acc.name}</h4>
+                        <p className="text-xs text-slate-500">{acc.department} {acc.semesterSection ? `• ${acc.semesterSection}` : ''}</p>
+                      </div>
+                    </div>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-700 shrink-0">
+                      {acc.expectedWorkspace}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-wrap gap-1">
+                    {acc.roles.map((r) => (
+                      <span 
+                        key={r}
+                        className="px-2 py-0.5 rounded text-[10px] font-semibold uppercase bg-slate-100 text-slate-700"
+                      >
+                        {r}
+                      </span>
+                    ))}
+                    <span className="text-[10px] text-slate-500 self-center ml-1">
+                      {acc.department}
+                    </span>
+                  </div>
+
+                  <div className="space-y-1.5 text-xs pt-2 border-t border-slate-100 font-mono">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-slate-400 text-[10px] uppercase font-sans">Email:</span>
+                      <div className="flex items-center gap-1">
+                        <span className="text-slate-800 text-[11px] truncate max-w-[200px]">{acc.email}</span>
+                        <button
+                          onClick={() => handleCopy(acc.email, `email-${acc.email}`)}
+                          className="p-1 text-slate-400 hover:text-slate-700"
+                        >
+                          {copiedKey === `email-${acc.email}` ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                        </button>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-slate-400 text-[10px] uppercase font-sans">Code/Roll:</span>
+                      <div className="flex items-center gap-1">
+                        <span className="text-slate-800 text-[11px]">{acc.identifier}</span>
+                        <button
+                          onClick={() => handleCopy(acc.identifier, `id-${acc.identifier}`)}
+                          className="p-1 text-slate-400 hover:text-slate-700"
+                        >
+                          {copiedKey === `id-${acc.identifier}` ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {acc.highlights && (
+                    <p className="text-[11px] text-slate-500 line-clamp-2 pt-1 border-t border-slate-100">
+                      {acc.highlights}
+                    </p>
+                  )}
+
+                  <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
+                    <button
+                      onClick={() => handleCopyCredentials(acc)}
+                      className="px-3 py-2 text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1.5 shrink-0"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                      <span>{copiedKey === `creds-${acc.email}` ? 'Copied' : 'Copy'}</span>
+                    </button>
+                    <button
+                      onClick={() => handleQuickLogin(acc)}
+                      disabled={loggingInEmail !== null}
+                      className="flex-1 py-2 bg-[#0f2942] hover:bg-[#163a5d] text-white text-xs font-semibold rounded-lg transition flex items-center justify-center gap-1.5 disabled:opacity-50 shadow-sm"
+                    >
+                      <LogIn className="w-3.5 h-3.5" />
+                      <span>{isLoggingIn ? 'Logging In...' : 'Quick Login'}</span>
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
 

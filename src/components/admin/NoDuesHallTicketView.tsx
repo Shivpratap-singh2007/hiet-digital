@@ -143,7 +143,7 @@ export const NoDuesHallTicketView: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 font-sans">
+    <div className="space-y-6 font-sans w-full max-w-full overflow-hidden">
       <PageHeader
         breadcrumbs={[
           { label: 'Academic & Administration' },
@@ -341,27 +341,52 @@ export const NoDuesHallTicketView: React.FC = () => {
             {/* Subjects Table */}
             <div>
               <h4 className="font-bold text-slate-800 text-xs mb-2">Permitted Subjects & Schedule</h4>
-              <div className="border border-slate-200 rounded-xl overflow-hidden">
-                <table className="w-full text-left text-xs border-collapse">
-                  <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-200 text-[11px]">
-                    <tr>
-                      <th className="p-2.5">Code</th>
-                      <th className="p-2.5">Subject Title</th>
-                      <th className="p-2.5">Date</th>
-                      <th className="p-2.5 text-right">Session</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {hallTicket.exam_subjects.map(s => (
-                      <tr key={s.code}>
-                        <td className="p-2.5 font-bold text-slate-900">{s.code}</td>
-                        <td className="p-2.5 text-slate-800 font-medium">{s.name}</td>
-                        <td className="p-2.5 text-slate-600">{s.date}</td>
-                        <td className="p-2.5 text-right font-semibold text-slate-700">{s.session} (09:30 AM)</td>
+              {/* Desktop / Tablet Table */}
+              <div className="hidden sm:block border border-slate-200 rounded-xl overflow-hidden">
+                <div className="overflow-x-auto w-full">
+                  <table className="w-full text-left text-xs border-collapse min-w-[500px]">
+                    <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-200 text-[11px] whitespace-nowrap">
+                      <tr>
+                        <th className="p-2.5 min-w-[80px]">Code</th>
+                        <th className="p-2.5 min-w-[180px]">Subject Title</th>
+                        <th className="p-2.5 min-w-[100px]">Date</th>
+                        <th className="p-2.5 min-w-[120px] text-right">Session</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {hallTicket.exam_subjects.map(s => (
+                        <tr key={s.code}>
+                          <td className="p-2.5 font-bold text-slate-900">{s.code}</td>
+                          <td className="p-2.5 text-slate-800 font-medium">{s.name}</td>
+                          <td className="p-2.5 text-slate-600">{s.date}</td>
+                          <td className="p-2.5 text-right font-semibold text-slate-700">{s.session} (09:30 AM)</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Mobile Subject Cards */}
+              <div className="sm:hidden space-y-2">
+                {hallTicket.exam_subjects.map(s => (
+                  <div key={s.code} className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs space-y-1.5">
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="font-mono font-bold text-slate-900 bg-white px-2 py-0.5 rounded border border-slate-200">
+                        {s.code}
+                      </span>
+                      <span className="font-semibold text-slate-700 text-[11px]">
+                        {s.session} (09:30 AM)
+                      </span>
+                    </div>
+                    <div className="font-medium text-slate-800 break-words">
+                      {s.name}
+                    </div>
+                    <div className="text-[11px] text-slate-500 pt-1 border-t border-slate-200/60">
+                      Exam Date: <span className="font-semibold text-slate-700">{s.date}</span>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
 

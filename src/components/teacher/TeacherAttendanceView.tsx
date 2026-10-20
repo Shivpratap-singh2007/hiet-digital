@@ -580,7 +580,7 @@ export const TeacherAttendanceView: React.FC = () => {
   }
 
   return (
-    <div className="space-y-4 animate-fade-in font-sans">
+    <div className="space-y-4 animate-fade-in font-sans w-full max-w-full overflow-hidden">
       {/* 1. Header with Title & Action Tabs (Strict Monochrome Theme) */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
@@ -1261,17 +1261,18 @@ export const TeacherAttendanceView: React.FC = () => {
             </span>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-neutral-100 text-neutral-800 font-bold border-b border-neutral-300">
+          {/* Desktop Table View (hidden md:block) */}
+          <div className="hidden md:block overflow-x-auto w-full">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead className="bg-neutral-100 text-neutral-800 font-bold border-b border-neutral-300 text-[11px] uppercase tracking-wider">
                 <tr>
-                  <th className="py-3 px-4">Student</th>
-                  <th className="py-3 px-4">Roll Number</th>
-                  <th className="py-3 px-4">Subject</th>
-                  <th className="py-3 px-4">Attendance %</th>
-                  <th className="py-3 px-4">Risk Level</th>
-                  <th className="py-3 px-4">Classes Needed</th>
-                  <th className="py-3 px-4">Recommended Action</th>
+                  <th className="py-3 px-4 min-w-[150px] whitespace-nowrap">Student</th>
+                  <th className="py-3 px-4 min-w-[120px] whitespace-nowrap">Roll Number</th>
+                  <th className="py-3 px-4 min-w-[140px] whitespace-nowrap">Subject</th>
+                  <th className="py-3 px-4 min-w-[120px] whitespace-nowrap">Attendance %</th>
+                  <th className="py-3 px-4 min-w-[100px] whitespace-nowrap">Risk Level</th>
+                  <th className="py-3 px-4 min-w-[110px] whitespace-nowrap">Classes Needed</th>
+                  <th className="py-3 px-4 min-w-[180px]">Recommended Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-200">
@@ -1288,16 +1289,16 @@ export const TeacherAttendanceView: React.FC = () => {
 
                   return (
                     <tr key={s.id} className="hover:bg-neutral-50 transition">
-                      <td className="py-3 px-4 font-bold text-black">
+                      <td className="py-3 px-4 font-bold text-black break-words">
                         {s.name}
                       </td>
-                      <td className="py-3 px-4 font-mono font-semibold text-black">
+                      <td className="py-3 px-4 font-mono font-semibold text-black whitespace-nowrap">
                         {s.roll_no}
                       </td>
-                      <td className="py-3 px-4 text-neutral-700">
+                      <td className="py-3 px-4 text-neutral-700 whitespace-nowrap">
                         {subject}
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="py-3 px-4 whitespace-nowrap">
                         <span className="font-extrabold text-black">
                           {risk.percentage.toFixed(2)}%
                         </span>
@@ -1305,7 +1306,7 @@ export const TeacherAttendanceView: React.FC = () => {
                           {attended}/{conducted} classes
                         </span>
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="py-3 px-4 whitespace-nowrap">
                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase border ${
                           risk.riskLevel === 'low'
                             ? 'bg-neutral-100 text-neutral-900 border-neutral-300'
@@ -1316,7 +1317,7 @@ export const TeacherAttendanceView: React.FC = () => {
                           {risk.riskLevel}
                         </span>
                       </td>
-                      <td className="py-3 px-4">
+                      <td className="py-3 px-4 whitespace-nowrap">
                         {risk.classesNeededForTarget > 0 ? (
                           <span className="font-bold text-black underline">
                             {risk.classesNeededForTarget} consecutive
@@ -1325,7 +1326,7 @@ export const TeacherAttendanceView: React.FC = () => {
                           <span className="text-neutral-400">—</span>
                         )}
                       </td>
-                      <td className="py-3 px-4 text-xs text-neutral-600 max-w-xs">
+                      <td className="py-3 px-4 text-xs text-neutral-600 max-w-xs break-words">
                         {risk.recommendation}
                       </td>
                     </tr>
@@ -1333,6 +1334,78 @@ export const TeacherAttendanceView: React.FC = () => {
                 })}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile View: Structured Risk Cards (md:hidden) */}
+          <div className="md:hidden space-y-3 p-1">
+            {displayStudents.map((s) => {
+              const studentAttendance = dataStore.getAttendance().filter(
+                a => a.student_id === s.id && (a.subject_name === subject || a.subject_id?.includes(branch.toLowerCase()))
+              );
+              const conducted = studentAttendance.length > 0 ? studentAttendance.length : 17;
+              const attended = studentAttendance.length > 0 
+                ? studentAttendance.filter(a => a.status === 'Present').length
+                : (s.roll_no === 'CSE001' ? 12 : s.roll_no === 'CSE002' ? 10 : 15);
+
+              const risk = calculateAttendanceRisk(attended, conducted, 75);
+
+              return (
+                <div
+                  key={s.id}
+                  className="p-4 rounded-2xl border border-neutral-300 bg-white shadow-2xs space-y-3 text-xs"
+                >
+                  <div className="flex items-start justify-between gap-2 border-b border-neutral-200 pb-2.5">
+                    <div className="min-w-0 flex-1">
+                      <div className="font-bold text-sm text-black break-words">{s.name}</div>
+                      <div className="text-[11px] text-neutral-500 font-mono mt-0.5">
+                        Roll: <span className="font-bold text-black">{s.roll_no}</span>
+                      </div>
+                    </div>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase border shrink-0 ${
+                      risk.riskLevel === 'low'
+                        ? 'bg-neutral-100 text-neutral-900 border-neutral-300'
+                        : risk.riskLevel === 'medium'
+                        ? 'bg-neutral-200 text-black border-neutral-400 font-bold'
+                        : 'bg-black text-white border-black font-extrabold'
+                    }`}>
+                      {risk.riskLevel}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="p-2.5 rounded-xl bg-neutral-50 border border-neutral-200">
+                      <span className="text-[10px] uppercase font-bold text-neutral-500 block">Attendance Rate</span>
+                      <span className="font-extrabold text-black text-sm block mt-0.5">
+                        {risk.percentage.toFixed(2)}%
+                      </span>
+                      <span className="text-[10px] text-neutral-500 block">
+                        {attended}/{conducted} classes
+                      </span>
+                    </div>
+
+                    <div className="p-2.5 rounded-xl bg-neutral-50 border border-neutral-200">
+                      <span className="text-[10px] uppercase font-bold text-neutral-500 block">Target Shortage</span>
+                      <span className="font-bold text-black text-xs block mt-0.5">
+                        {risk.classesNeededForTarget > 0 ? (
+                          <span className="underline">{risk.classesNeededForTarget} consecutive needed</span>
+                        ) : (
+                          <span className="text-neutral-500">Requirements met</span>
+                        )}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-neutral-50 border border-neutral-200 space-y-1">
+                    <span className="text-[10px] uppercase font-bold text-neutral-500 block">
+                      Recommended Pedagogical Action
+                    </span>
+                    <p className="text-xs text-neutral-800 font-medium break-words">
+                      {risk.recommendation}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
@@ -1588,14 +1661,14 @@ export const TeacherAttendanceView: React.FC = () => {
                 <h4 className="font-extrabold text-xs uppercase tracking-wider text-black mb-1.5">
                   Full Student Register ({displayStudents.length} Students)
                 </h4>
-                <div className="border border-neutral-300 rounded-xl overflow-hidden max-h-56 overflow-y-auto">
-                  <table className="w-full text-left text-xs">
+                <div className="border border-neutral-300 rounded-xl overflow-hidden max-h-56 overflow-y-auto overflow-x-auto w-full">
+                  <table className="w-full text-left text-xs min-w-[380px]">
                     <thead className="bg-neutral-100 text-neutral-800 font-bold border-b border-neutral-300">
                       <tr>
-                        <th className="p-2">Roll No</th>
-                        <th className="p-2">Student Name</th>
-                        <th className="p-2">Branch / Sec</th>
-                        <th className="p-2 text-right">Attendance Status</th>
+                        <th className="p-2 whitespace-nowrap">Roll No</th>
+                        <th className="p-2 min-w-[120px]">Student Name</th>
+                        <th className="p-2 min-w-[100px] whitespace-nowrap">Branch / Sec</th>
+                        <th className="p-2 text-right whitespace-nowrap">Attendance Status</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-neutral-200">
@@ -1932,14 +2005,14 @@ export const TeacherAttendanceView: React.FC = () => {
                 <h4 className="font-extrabold text-xs uppercase tracking-wider text-black mb-2">
                   Student Marked Roster ({selectedBatchForDetails.records.length})
                 </h4>
-                <div className="border border-neutral-300 rounded-xl overflow-hidden max-h-56 overflow-y-auto">
-                  <table className="w-full text-left text-xs">
+                <div className="border border-neutral-300 rounded-xl overflow-hidden max-h-56 overflow-y-auto overflow-x-auto w-full">
+                  <table className="w-full text-left text-xs min-w-[380px]">
                     <thead className="bg-neutral-100 font-bold border-b border-neutral-300">
                       <tr>
-                        <th className="p-2.5 text-black">Roll No</th>
-                        <th className="p-2.5 text-black">Student Full Name</th>
-                        <th className="p-2.5 text-black">Status</th>
-                        <th className="p-2.5 text-black">Remarks</th>
+                        <th className="p-2.5 text-black whitespace-nowrap">Roll No</th>
+                        <th className="p-2.5 text-black min-w-[120px]">Student Full Name</th>
+                        <th className="p-2.5 text-black whitespace-nowrap">Status</th>
+                        <th className="p-2.5 text-black min-w-[100px]">Remarks</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-neutral-200">

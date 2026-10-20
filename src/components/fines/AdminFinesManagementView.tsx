@@ -188,7 +188,7 @@ export const AdminFinesManagementView: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6 animate-fade-in font-sans max-w-5xl mx-auto pb-10">
+    <div className="space-y-6 animate-fade-in font-sans max-w-5xl mx-auto pb-10 w-full max-w-full overflow-hidden">
       {/* Header Banner */}
       <div className="bg-white border border-slate-200 rounded-3xl p-5 sm:p-6 shadow-xs relative overflow-hidden">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -302,34 +302,80 @@ export const AdminFinesManagementView: React.FC = () => {
             </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs text-left">
-              <thead>
-                <tr className="border-b border-slate-100 text-slate-500 font-bold text-[11px]">
-                  <th className="py-2.5 px-2">Student</th>
-                  <th className="py-2.5 px-2">Item & Category</th>
-                  <th className="py-2.5 px-2">Amount</th>
-                  <th className="py-2.5 px-2">Status</th>
-                  <th className="py-2.5 px-2">Due Date</th>
-                  <th className="py-2.5 px-2">Assessor</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {pagedFines.map((f) => (
-                  <tr key={f.id} className="hover:bg-slate-50/80 transition">
-                    <td className="py-3 px-2">
-                      <span className="font-bold text-slate-900">{f.student_name}</span>
-                      <span className="block text-[10px] font-mono text-slate-500">{f.student_roll}</span>
-                    </td>
-                    <td className="py-3 px-2 max-w-xs">
-                      <span className="font-semibold text-slate-800">{f.title}</span>
-                      <span className="block text-[10px] text-blue-700">{f.category}</span>
-                    </td>
-                    <td className="py-3 px-2 font-mono font-bold text-slate-900">
-                      ₹{f.amount}
-                    </td>
-                    <td className="py-3 px-2">
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+          <div className="w-full">
+            {/* Desktop Table */}
+            <div className="hidden md:block overflow-x-auto w-full">
+              <table className="w-full text-xs text-left min-w-[650px]">
+                <thead>
+                  <tr className="border-b border-slate-100 text-slate-500 font-bold text-[11px]">
+                    <th className="py-2.5 px-3 min-w-[150px] whitespace-nowrap">Student</th>
+                    <th className="py-2.5 px-3 min-w-[160px]">Item & Category</th>
+                    <th className="py-2.5 px-3 min-w-[90px] whitespace-nowrap">Amount</th>
+                    <th className="py-2.5 px-3 min-w-[110px] whitespace-nowrap">Status</th>
+                    <th className="py-2.5 px-3 min-w-[100px] whitespace-nowrap">Due Date</th>
+                    <th className="py-2.5 px-3 min-w-[120px] whitespace-nowrap">Assessor</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {pagedFines.map((f) => (
+                    <tr key={f.id} className="hover:bg-slate-50/80 transition">
+                      <td className="py-3 px-3">
+                        <span className="font-bold text-slate-900">{f.student_name}</span>
+                        <span className="block text-[10px] font-mono text-slate-500">{f.student_roll}</span>
+                      </td>
+                      <td className="py-3 px-3 max-w-xs">
+                        <span className="font-semibold text-slate-800">{f.title}</span>
+                        <span className="block text-[10px] text-blue-700">{f.category}</span>
+                      </td>
+                      <td className="py-3 px-3 font-mono font-bold text-slate-900">
+                        ₹{f.amount}
+                      </td>
+                      <td className="py-3 px-3">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          f.status === 'Paid'
+                            ? 'bg-emerald-100 text-emerald-800'
+                            : f.status === 'Waived'
+                            ? 'bg-blue-100 text-blue-800'
+                            : f.status === 'Under_Dispute'
+                            ? 'bg-amber-100 text-amber-800'
+                            : 'bg-rose-100 text-rose-800'
+                        }`}>
+                          {f.status.replace('_', ' ')}
+                        </span>
+                      </td>
+                      <td className="py-3 px-3 font-mono text-slate-600 text-[11px] whitespace-nowrap">{f.due_date}</td>
+                      <td className="py-3 px-3 text-slate-600 text-[11px] whitespace-nowrap">{f.issued_by_name}</td>
+                    </tr>
+                  ))}
+                  {pagedFines.length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="py-8 text-center text-slate-400">
+                        No assessed fines matching the selected filter.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Cards (320px - 768px) */}
+            <div className="md:hidden space-y-3">
+              {pagedFines.length === 0 ? (
+                <div className="py-8 text-center text-slate-400 text-xs">
+                  No assessed fines matching the selected filter.
+                </div>
+              ) : (
+                pagedFines.map((f) => (
+                  <div
+                    key={f.id}
+                    className="p-4 bg-white border border-slate-200 rounded-2xl shadow-xs space-y-3"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <h4 className="font-bold text-sm text-slate-900">{f.student_name}</h4>
+                        <span className="font-mono text-xs text-slate-500 font-semibold">{f.student_roll}</span>
+                      </div>
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0 ${
                         f.status === 'Paid'
                           ? 'bg-emerald-100 text-emerald-800'
                           : f.status === 'Waived'
@@ -340,20 +386,32 @@ export const AdminFinesManagementView: React.FC = () => {
                       }`}>
                         {f.status.replace('_', ' ')}
                       </span>
-                    </td>
-                    <td className="py-3 px-2 font-mono text-slate-600 text-[11px]">{f.due_date}</td>
-                    <td className="py-3 px-2 text-slate-600 text-[11px]">{f.issued_by_name}</td>
-                  </tr>
-                ))}
-                {pagedFines.length === 0 && (
-                  <tr>
-                    <td colSpan={6} className="py-8 text-center text-slate-400">
-                      No assessed fines matching the selected filter.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                    </div>
+
+                    <div className="flex items-baseline justify-between pt-1 border-t border-slate-100">
+                      <div>
+                        <span className="font-semibold text-slate-800 text-xs block">{f.title}</span>
+                        <span className="text-[10px] text-blue-700 font-medium">{f.category}</span>
+                      </div>
+                      <span className="font-mono font-extrabold text-slate-900 text-base">
+                        ₹{f.amount}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-100">
+                      <div>
+                        <span className="text-[10px] uppercase font-bold text-slate-400 block">Due Date</span>
+                        <span className="font-mono text-[11px] text-slate-600">{f.due_date}</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] uppercase font-bold text-slate-400 block">Assessor</span>
+                        <span className="text-[11px] text-slate-600 block truncate">{f.issued_by_name}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
 
           {/* Fines Pagination Controls */}

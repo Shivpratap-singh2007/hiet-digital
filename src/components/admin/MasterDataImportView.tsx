@@ -414,7 +414,7 @@ export const MasterDataImportView: React.FC = () => {
   const ModuleIcon = MODULE_ICONS[selectedEntity] || GraduationCap;
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-12">
+    <div className="space-y-6 max-w-7xl mx-auto pb-12 w-full max-w-full overflow-hidden">
       {/* Top Header Card */}
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -583,67 +583,139 @@ export const MasterDataImportView: React.FC = () => {
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-800">
-                  <tr>
-                    <th className="p-3">Date</th>
-                    <th className="p-3">Admin</th>
-                    <th className="p-3">Data Type</th>
-                    <th className="p-3">File Name</th>
-                    <th className="p-3 text-center">Total Rows</th>
-                    <th className="p-3 text-center text-emerald-700 dark:text-emerald-400">Imported</th>
-                    <th className="p-3 text-center text-blue-700 dark:text-blue-400">Updated</th>
-                    <th className="p-3 text-center text-amber-700 dark:text-amber-400">Skipped</th>
-                    <th className="p-3 text-center text-red-700 dark:text-red-400">Failed</th>
-                    <th className="p-3">Status</th>
-                    <th className="p-3 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
-                  {auditJobs.map((job) => (
-                    <tr key={job.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
-                      <td className="p-3 font-mono text-[11px] text-slate-500 dark:text-slate-400">
-                        {job.created_at ? new Date(job.created_at).toLocaleString() : 'N/A'}
-                      </td>
-                      <td className="p-3 font-medium text-slate-900 dark:text-white">
-                        {job.imported_by_name || 'Admin'}
-                      </td>
-                      <td className="p-3 uppercase font-mono font-bold text-slate-600 dark:text-slate-400">
-                        {job.target_entity}
-                      </td>
-                      <td className="p-3 font-medium text-slate-800 dark:text-slate-200 max-w-[150px] truncate" title={job.file_name}>
-                        {job.file_name}
-                      </td>
-                      <td className="p-3 text-center font-bold">{job.total_rows}</td>
-                      <td className="p-3 text-center font-bold text-emerald-700 dark:text-emerald-400">{job.successful_rows}</td>
-                      <td className="p-3 text-center font-bold text-blue-700 dark:text-blue-400">{job.updated_rows || 0}</td>
-                      <td className="p-3 text-center font-bold text-amber-700 dark:text-amber-400">{job.skipped_rows || 0}</td>
-                      <td className="p-3 text-center font-bold text-red-700 dark:text-red-400">{job.failed_rows}</td>
-                      <td className="p-3">
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
-                          job.status === 'Completed' || job.status === 'completed'
-                            ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900'
-                            : job.status === 'Failed' || job.status === 'failed' || job.status === 'rolled_back'
-                            ? 'bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-400 border-red-200 dark:border-red-900'
-                            : 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-900'
-                        }`}>
-                          {job.status}
-                        </span>
-                      </td>
-                      <td className="p-3 text-right">
-                        <button
-                          onClick={() => handleSelectAuditJob(job)}
-                          className="px-2.5 py-1 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/50 rounded-lg transition"
-                        >
-                          View Details
-                        </button>
-                      </td>
+            <>
+              {/* Desktop / Tablet Table */}
+              <div className="hidden md:block overflow-x-auto w-full rounded-xl border border-slate-200 dark:border-slate-800">
+                <table className="w-full text-left text-xs min-w-[850px]">
+                  <thead className="bg-slate-50 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-800 whitespace-nowrap">
+                    <tr>
+                      <th className="p-3 min-w-[120px]">Date</th>
+                      <th className="p-3 min-w-[100px]">Admin</th>
+                      <th className="p-3 min-w-[90px]">Data Type</th>
+                      <th className="p-3 min-w-[140px]">File Name</th>
+                      <th className="p-3 min-w-[70px] text-center">Total Rows</th>
+                      <th className="p-3 min-w-[70px] text-center text-emerald-700 dark:text-emerald-400">Imported</th>
+                      <th className="p-3 min-w-[70px] text-center text-blue-700 dark:text-blue-400">Updated</th>
+                      <th className="p-3 min-w-[70px] text-center text-amber-700 dark:text-amber-400">Skipped</th>
+                      <th className="p-3 min-w-[70px] text-center text-red-700 dark:text-red-400">Failed</th>
+                      <th className="p-3 min-w-[80px]">Status</th>
+                      <th className="p-3 min-w-[90px] text-right">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
+                    {auditJobs.map((job) => (
+                      <tr key={job.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
+                        <td className="p-3 font-mono text-[11px] text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                          {job.created_at ? new Date(job.created_at).toLocaleString() : 'N/A'}
+                        </td>
+                        <td className="p-3 font-medium text-slate-900 dark:text-white">
+                          {job.imported_by_name || 'Admin'}
+                        </td>
+                        <td className="p-3 uppercase font-mono font-bold text-slate-600 dark:text-slate-400">
+                          {job.target_entity}
+                        </td>
+                        <td className="p-3 font-medium text-slate-800 dark:text-slate-200 max-w-[150px] truncate" title={job.file_name}>
+                          {job.file_name}
+                        </td>
+                        <td className="p-3 text-center font-bold">{job.total_rows}</td>
+                        <td className="p-3 text-center font-bold text-emerald-700 dark:text-emerald-400">{job.successful_rows}</td>
+                        <td className="p-3 text-center font-bold text-blue-700 dark:text-blue-400">{job.updated_rows || 0}</td>
+                        <td className="p-3 text-center font-bold text-amber-700 dark:text-amber-400">{job.skipped_rows || 0}</td>
+                        <td className="p-3 text-center font-bold text-red-700 dark:text-red-400">{job.failed_rows}</td>
+                        <td className="p-3 whitespace-nowrap">
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                            job.status === 'Completed' || job.status === 'completed'
+                              ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900'
+                              : job.status === 'Failed' || job.status === 'failed' || job.status === 'rolled_back'
+                              ? 'bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-400 border-red-200 dark:border-red-900'
+                              : 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-900'
+                          }`}>
+                            {job.status}
+                          </span>
+                        </td>
+                        <td className="p-3 text-right">
+                          <button
+                            onClick={() => handleSelectAuditJob(job)}
+                            className="px-2.5 py-1 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/50 rounded-lg transition"
+                          >
+                            View Details
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile Audit Job Cards */}
+              <div className="md:hidden space-y-3">
+                {auditJobs.map((job) => (
+                  <div key={job.id} className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs space-y-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <span className="px-2 py-0.5 rounded-md font-mono font-bold text-[10px] uppercase bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                          {job.target_entity}
+                        </span>
+                        <h4 className="font-semibold text-slate-900 dark:text-white text-sm mt-1.5 break-all">
+                          {job.file_name}
+                        </h4>
+                      </div>
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border shrink-0 ${
+                        job.status === 'Completed' || job.status === 'completed'
+                          ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900'
+                          : job.status === 'Failed' || job.status === 'failed' || job.status === 'rolled_back'
+                          ? 'bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-400 border-red-200 dark:border-red-900'
+                          : 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-900'
+                      }`}>
+                        {job.status}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-100 dark:border-slate-800">
+                      <div>
+                        <span className="text-slate-400 text-[10px] uppercase font-semibold block">Date</span>
+                        <span className="font-mono text-slate-600 dark:text-slate-400 text-[11px]">
+                          {job.created_at ? new Date(job.created_at).toLocaleDateString() : 'N/A'}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 text-[10px] uppercase font-semibold block">Admin</span>
+                        <span className="font-medium text-slate-800 dark:text-slate-200">{job.imported_by_name || 'Admin'}</span>
+                      </div>
+                    </div>
+
+                    {/* Stat Badges Grid */}
+                    <div className="grid grid-cols-4 gap-1.5 p-2 bg-slate-50 dark:bg-slate-800/50 rounded-lg text-center text-xs">
+                      <div>
+                        <div className="text-[10px] text-slate-400">Total</div>
+                        <div className="font-bold text-slate-800 dark:text-slate-200">{job.total_rows}</div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] text-emerald-600">Imported</div>
+                        <div className="font-bold text-emerald-600">{job.successful_rows}</div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] text-blue-600">Updated</div>
+                        <div className="font-bold text-blue-600">{job.updated_rows || 0}</div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] text-red-600">Failed</div>
+                        <div className="font-bold text-red-600">{job.failed_rows}</div>
+                      </div>
+                    </div>
+
+                    <div className="pt-1">
+                      <button
+                        onClick={() => handleSelectAuditJob(job)}
+                        className="w-full py-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/50 hover:bg-blue-100 rounded-lg transition text-center"
+                      >
+                        View Details & Audit Log
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
           )}
 
           {/* Audit Job Detail Modal */}
@@ -1088,14 +1160,14 @@ export const MasterDataImportView: React.FC = () => {
                 <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">
                   Data Preview (First 50 Rows):
                 </span>
-                <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 max-h-80 overflow-y-auto">
-                  <table className="w-full text-left text-xs whitespace-nowrap">
+                <div className="overflow-x-auto w-full rounded-xl border border-slate-200 dark:border-slate-800 max-h-80 overflow-y-auto">
+                  <table className="w-full text-left text-xs whitespace-nowrap min-w-[500px]">
                     <thead className="bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-800 sticky top-0 z-10">
                       <tr>
-                        <th className="p-2.5 bg-slate-50 dark:bg-slate-800">Row</th>
-                        <th className="p-2.5 bg-slate-50 dark:bg-slate-800">Status</th>
+                        <th className="p-2.5 bg-slate-50 dark:bg-slate-800 min-w-[60px]">Row</th>
+                        <th className="p-2.5 bg-slate-50 dark:bg-slate-800 min-w-[90px]">Status</th>
                         {selectedConfig.headers.map(h => (
-                          <th key={h} className="p-2.5 bg-slate-50 dark:bg-slate-800 font-mono text-[11px]">
+                          <th key={h} className="p-2.5 bg-slate-50 dark:bg-slate-800 font-mono text-[11px] min-w-[130px]">
                             {h}
                           </th>
                         ))}

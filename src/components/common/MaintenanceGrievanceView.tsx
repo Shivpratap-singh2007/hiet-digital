@@ -138,7 +138,7 @@ export const MaintenanceGrievanceView: React.FC = () => {
   const resolvedCount = tickets.filter(t => t.status === 'Resolved').length;
 
   return (
-    <div className="space-y-6 font-sans">
+    <div className="space-y-6 font-sans w-full max-w-full overflow-hidden">
       <PageHeader
         breadcrumbs={[
           { label: 'Campus Operations' },
@@ -225,17 +225,17 @@ export const MaintenanceGrievanceView: React.FC = () => {
           </div>
         </div>
 
-        {/* Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
+        {/* Desktop / Tablet Table */}
+        <div className="hidden md:block overflow-x-auto w-full">
+          <table className="w-full text-left border-collapse text-xs min-w-[750px]">
             <thead>
-              <tr className="bg-slate-50/80 text-slate-500 font-bold border-b border-slate-200 uppercase tracking-wider text-[11px]">
-                <th className="py-3 px-4">Ticket</th>
-                <th className="py-3 px-4">Category & Location</th>
-                <th className="py-3 px-4">Priority</th>
-                <th className="py-3 px-4">SLA Resolution Timer</th>
-                <th className="py-3 px-4">Status</th>
-                <th className="py-3 px-4 text-right">Actions</th>
+              <tr className="bg-slate-50/80 text-slate-500 font-bold border-b border-slate-200 uppercase tracking-wider text-[11px] whitespace-nowrap">
+                <th className="py-3 px-4 min-w-[150px]">Ticket</th>
+                <th className="py-3 px-4 min-w-[160px]">Category & Location</th>
+                <th className="py-3 px-4 min-w-[90px]">Priority</th>
+                <th className="py-3 px-4 min-w-[150px]">SLA Resolution Timer</th>
+                <th className="py-3 px-4 min-w-[90px]">Status</th>
+                <th className="py-3 px-4 min-w-[90px] text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -306,6 +306,87 @@ export const MaintenanceGrievanceView: React.FC = () => {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Ticket Cards */}
+        <div className="md:hidden space-y-3 p-3">
+          {filteredTickets.length === 0 ? (
+            <div className="text-center py-8 text-slate-400">
+              <Wrench className="w-8 h-8 mx-auto mb-2 opacity-40" />
+              <p className="text-xs">No grievance or maintenance tickets found</p>
+            </div>
+          ) : (
+            filteredTickets.map(t => (
+              <div key={t.id} className="bg-slate-50/70 border border-slate-200 rounded-xl p-3.5 space-y-2.5">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <span className="font-mono text-xs font-bold text-slate-900 bg-white px-2 py-0.5 rounded border border-slate-200">
+                      {t.ticket_number}
+                    </span>
+                    <h4 className="font-bold text-slate-900 text-sm mt-1.5 break-words">
+                      {t.title}
+                    </h4>
+                  </div>
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0 ${
+                    t.status === 'Resolved' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                    t.status === 'Escalated' ? 'bg-rose-50 text-rose-700 border border-rose-200' :
+                    t.status === 'In Progress' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+                    'bg-blue-50 text-blue-700 border border-blue-200'
+                  }`}>
+                    {t.status}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-200/60">
+                  <div>
+                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">Category</span>
+                    <span className="font-semibold text-slate-700">{t.category}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">Priority</span>
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase inline-block mt-0.5 ${
+                      t.priority === 'Emergency' ? 'bg-rose-100 text-rose-800 font-black' :
+                      t.priority === 'High' ? 'bg-amber-50 text-amber-800 border border-amber-200' :
+                      t.priority === 'Medium' ? 'bg-blue-50 text-blue-700' :
+                      'bg-slate-100 text-slate-600'
+                    }`}>
+                      {t.priority}
+                    </span>
+                  </div>
+                  <div className="col-span-2">
+                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">Location</span>
+                    <div className="text-slate-700 flex items-center gap-1 font-medium mt-0.5">
+                      <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                      <span className="break-words">{t.location}</span>
+                    </div>
+                  </div>
+                  <div className="col-span-2">
+                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">SLA Window</span>
+                    {t.is_sla_breached ? (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200 mt-0.5">
+                        <AlertTriangle className="w-3 h-3" /> SLA Breached (&gt;48h)
+                      </span>
+                    ) : (
+                      <span className="text-[11px] text-slate-600 font-medium flex items-center gap-1 mt-0.5">
+                        <Clock className="w-3 h-3 text-slate-400" />
+                        Within 48h Window
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-slate-200/60 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedTicketForDetail(t)}
+                    className="w-full sm:w-auto px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 font-bold text-xs transition text-center"
+                  >
+                    View Details & Update
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
 

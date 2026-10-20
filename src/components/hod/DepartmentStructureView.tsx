@@ -368,8 +368,142 @@ export const DepartmentStructureView: React.FC<Props> = ({ roleMode, initialDepa
     setCurrentLevel('roster');
   };
 
+  const renderStudentCards = () => (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {classStudents.map(student => {
+        const isRollCopied = copiedId === `roll-card-${student.id}`;
+        const isEmailCopied = copiedId === `email-card-${student.id}`;
+        const isPhoneCopied = copiedId === `phone-card-${student.id}`;
+        const isParentPhoneCopied = copiedId === `parent-phone-card-${student.id}`;
+
+        return (
+          <div
+            key={student.id}
+            className="p-5 rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-2xs space-y-4"
+          >
+            {/* Student Card Top Bar */}
+            <div className="flex items-center justify-between border-b border-neutral-200 dark:border-neutral-800 pb-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-neutral-100 dark:bg-neutral-800 text-black dark:text-white font-extrabold flex items-center justify-center font-mono border border-neutral-300 dark:border-neutral-700">
+                  {student.name[0] || 'S'}
+                </div>
+                <div>
+                  <h4 className="font-bold text-sm text-black dark:text-white">
+                    {student.name}
+                  </h4>
+                  <span className="text-[11px] text-neutral-500 font-mono">
+                    {student.course} — {student.branch}
+                  </span>
+                </div>
+              </div>
+
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-neutral-100 dark:bg-neutral-800 text-black dark:text-white border border-neutral-300 dark:border-neutral-700">
+                {student.attendance_percentage ?? 85}% Att.
+              </span>
+            </div>
+
+            {/* Group 1: Student Information (Section 7) */}
+            <div className="space-y-2">
+              <span className="text-[10px] uppercase font-bold text-neutral-400 block tracking-wider">
+                Student Information
+              </span>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="p-2.5 rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800">
+                  <span className="text-[10px] uppercase font-bold text-neutral-400 block">Roll Number</span>
+                  <div className="font-mono font-bold text-black dark:text-white flex items-center justify-between">
+                    <span className="truncate">{student.roll_no}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleCopy(student.roll_no, `roll-card-${student.id}`)}
+                      className="p-1 rounded text-neutral-400 hover:text-black dark:hover:text-white transition cursor-pointer"
+                    >
+                      {isRollCopied ? <Check className="w-3.5 h-3.5 text-black" /> : <Copy className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="p-2.5 rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800">
+                  <span className="text-[10px] uppercase font-bold text-neutral-400 block">Class Cadre</span>
+                  <span className="font-mono font-bold text-black dark:text-white">
+                    Sem {student.semester} — Sec {student.section}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Group 2: Contact & Guardian Information (Section 7) */}
+            <div className="space-y-2 pt-1 border-t border-neutral-200 dark:border-neutral-800">
+              <span className="text-[10px] uppercase font-bold text-neutral-400 block tracking-wider">
+                Contact & Guardian Information
+              </span>
+
+              <div className="space-y-2 text-xs">
+                {/* College Email */}
+                <div className="p-2.5 rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 truncate">
+                    <Mail className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+                    <span className="font-mono text-neutral-700 dark:text-neutral-300 truncate">
+                      {student.college_email}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleCopy(student.college_email, `email-card-${student.id}`)}
+                    className="p-1 rounded text-neutral-400 hover:text-black dark:hover:text-white transition shrink-0 cursor-pointer"
+                  >
+                    {isEmailCopied ? <Check className="w-3.5 h-3.5 text-black" /> : <Copy className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+
+                {/* Guardian Details & Phones */}
+                <div className="p-2.5 rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 space-y-1.5">
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="text-neutral-500">Father: <strong className="text-black dark:text-white">{student.father_name || 'Not Recorded'}</strong></span>
+                    {student.mother_name && (
+                      <span className="text-neutral-500">Mother: <strong className="text-black dark:text-white">{student.mother_name}</strong></span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between gap-2 pt-1 border-t border-neutral-200 dark:border-neutral-800 font-mono text-[11px]">
+                    <div className="flex items-center gap-1.5">
+                      <Phone className="w-3 h-3 text-neutral-400" />
+                      <span>Student: {student.phone}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleCopy(student.phone, `phone-card-${student.id}`)}
+                      className="p-1 rounded text-neutral-400 hover:text-black dark:hover:text-white transition cursor-pointer"
+                    >
+                      {isPhoneCopied ? <Check className="w-3.5 h-3.5 text-black" /> : <Copy className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+
+                  {student.parent_phone && (
+                    <div className="flex items-center justify-between gap-2 font-mono text-[11px] text-neutral-500">
+                      <div className="flex items-center gap-1.5">
+                        <Phone className="w-3 h-3 text-neutral-400" />
+                        <span>Parent: {student.parent_phone}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleCopy(student.parent_phone, `parent-phone-card-${student.id}`)}
+                        className="p-1 rounded text-neutral-400 hover:text-black dark:hover:text-white transition cursor-pointer"
+                      >
+                        {isParentPhoneCopied ? <Check className="w-3.5 h-3.5 text-black" /> : <Copy className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+
   return (
-    <div className="space-y-5 font-sans pb-12 animate-fade-in text-black dark:text-white">
+    <div className="space-y-5 font-sans pb-12 animate-fade-in text-black dark:text-white w-full max-w-full overflow-hidden">
       {/* =========================================================================
           BREADCRUMBS & TOP LEVEL HEADER (Strict Monochrome)
       ========================================================================= */}
@@ -951,7 +1085,9 @@ export const DepartmentStructureView: React.FC<Props> = ({ roleMode, initialDepa
                - Contained Parents/Guardian & College Email Layouts
                - Copy buttons for roll numbers and emails
             =================================================================== */
-            <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl overflow-hidden shadow-2xs">
+            <>
+              {/* DESKTOP ROSTER TABLE (hidden md:block) */}
+              <div className="hidden md:block bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl overflow-hidden shadow-2xs">
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead className="bg-neutral-100 dark:bg-neutral-800 text-black dark:text-white uppercase tracking-wider font-extrabold border-b border-neutral-200 dark:border-neutral-700 text-[11px]">
@@ -1085,144 +1221,14 @@ export const DepartmentStructureView: React.FC<Props> = ({ roleMode, initialDepa
                 </table>
               </div>
             </div>
-          ) : (
-            /* ===================================================================
-               MOBILE-FIRST RESPONSIVE STUDENT DETAIL CARDS (SECTION 7)
-               Two clear groups on the same card:
-               - Student Information
-               - Contact & Guardian Information
-            =================================================================== */
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {classStudents.map(student => {
-                const isRollCopied = copiedId === `roll-card-${student.id}`;
-                const isEmailCopied = copiedId === `email-card-${student.id}`;
-                const isPhoneCopied = copiedId === `phone-card-${student.id}`;
-                const isParentPhoneCopied = copiedId === `parent-phone-card-${student.id}`;
 
-                return (
-                  <div
-                    key={student.id}
-                    className="p-5 rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-2xs space-y-4"
-                  >
-                    {/* Student Card Top Bar */}
-                    <div className="flex items-center justify-between border-b border-neutral-200 dark:border-neutral-800 pb-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-neutral-100 dark:bg-neutral-800 text-black dark:text-white font-extrabold flex items-center justify-center font-mono border border-neutral-300 dark:border-neutral-700">
-                          {student.name[0] || 'S'}
-                        </div>
-                        <div>
-                          <h4 className="font-bold text-sm text-black dark:text-white">
-                            {student.name}
-                          </h4>
-                          <span className="text-[11px] text-neutral-500 font-mono">
-                            {student.course} — {student.branch}
-                          </span>
-                        </div>
-                      </div>
-
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-neutral-100 dark:bg-neutral-800 text-black dark:text-white border border-neutral-300 dark:border-neutral-700">
-                        {student.attendance_percentage ?? 85}% Att.
-                      </span>
-                    </div>
-
-                    {/* Group 1: Student Information (Section 7) */}
-                    <div className="space-y-2">
-                      <span className="text-[10px] uppercase font-bold text-neutral-400 block tracking-wider">
-                        Student Information
-                      </span>
-                      <div className="grid grid-cols-2 gap-2 text-xs">
-                        <div className="p-2.5 rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800">
-                          <span className="text-[10px] uppercase font-bold text-neutral-400 block">Roll Number</span>
-                          <div className="font-mono font-bold text-black dark:text-white flex items-center justify-between">
-                            <span className="truncate">{student.roll_no}</span>
-                            <button
-                              type="button"
-                              onClick={() => handleCopy(student.roll_no, `roll-card-${student.id}`)}
-                              className="p-1 rounded text-neutral-400 hover:text-black dark:hover:text-white transition"
-                            >
-                              {isRollCopied ? <Check className="w-3.5 h-3.5 text-black" /> : <Copy className="w-3.5 h-3.5" />}
-                            </button>
-                          </div>
-                        </div>
-
-                        <div className="p-2.5 rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800">
-                          <span className="text-[10px] uppercase font-bold text-neutral-400 block">Class Cadre</span>
-                          <span className="font-mono font-bold text-black dark:text-white">
-                            Sem {student.semester} — Sec {student.section}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Group 2: Contact & Guardian Information (Section 7) */}
-                    <div className="space-y-2 pt-1 border-t border-neutral-200 dark:border-neutral-800">
-                      <span className="text-[10px] uppercase font-bold text-neutral-400 block tracking-wider">
-                        Contact & Guardian Information
-                      </span>
-
-                      <div className="space-y-2 text-xs">
-                        {/* College Email */}
-                        <div className="p-2.5 rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2 truncate">
-                            <Mail className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
-                            <span className="font-mono text-neutral-700 dark:text-neutral-300 truncate">
-                              {student.college_email}
-                            </span>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => handleCopy(student.college_email, `email-card-${student.id}`)}
-                            className="p-1 rounded text-neutral-400 hover:text-black dark:hover:text-white transition shrink-0"
-                          >
-                            {isEmailCopied ? <Check className="w-3.5 h-3.5 text-black" /> : <Copy className="w-3.5 h-3.5" />}
-                          </button>
-                        </div>
-
-                        {/* Guardian Details & Phones */}
-                        <div className="p-2.5 rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 space-y-1.5">
-                          <div className="flex items-center justify-between text-[11px]">
-                            <span className="text-neutral-500">Father: <strong className="text-black dark:text-white">{student.father_name || 'Not Recorded'}</strong></span>
-                            {student.mother_name && (
-                              <span className="text-neutral-500">Mother: <strong className="text-black dark:text-white">{student.mother_name}</strong></span>
-                            )}
-                          </div>
-
-                          <div className="flex items-center justify-between gap-2 pt-1 border-t border-neutral-200 dark:border-neutral-800 font-mono text-[11px]">
-                            <div className="flex items-center gap-1.5">
-                              <Phone className="w-3 h-3 text-neutral-400" />
-                              <span>Student: {student.phone}</span>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => handleCopy(student.phone, `phone-card-${student.id}`)}
-                              className="p-1 rounded text-neutral-400 hover:text-black dark:hover:text-white transition"
-                            >
-                              {isPhoneCopied ? <Check className="w-3 h-3 text-black" /> : <Copy className="w-3 h-3" />}
-                            </button>
-                          </div>
-
-                          {student.parent_phone && (
-                            <div className="flex items-center justify-between gap-2 font-mono text-[11px] text-neutral-500">
-                              <div className="flex items-center gap-1.5">
-                                <Phone className="w-3 h-3 text-neutral-400" />
-                                <span>Parent: {student.parent_phone}</span>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => handleCopy(student.parent_phone, `parent-phone-card-${student.id}`)}
-                                className="p-1 rounded text-neutral-400 hover:text-black dark:hover:text-white transition"
-                              >
-                                {isParentPhoneCopied ? <Check className="w-3 h-3 text-black" /> : <Copy className="w-3 h-3" />}
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+            {/* Mobile View: Compact vertically structured student detail cards (md:hidden) */}
+            <div className="md:hidden">
+              {renderStudentCards()}
             </div>
+          </>
+          ) : (
+            renderStudentCards()
           )}
         </div>
       )}

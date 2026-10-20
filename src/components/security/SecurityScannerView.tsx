@@ -307,7 +307,7 @@ export const SecurityScannerView: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in font-sans pb-10">
+    <div className="space-y-6 animate-fade-in font-sans pb-10 w-full max-w-full overflow-hidden">
       <PageHeader
         breadcrumb={[
           { label: 'Security & Campus Safety' },
@@ -569,39 +569,83 @@ export const SecurityScannerView: React.FC = () => {
           </span>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs text-left">
-            <thead>
-              <tr className="border-b border-slate-100 text-slate-500 font-bold text-[11px]">
-                <th className="py-2 px-2">Timestamp</th>
-                <th className="py-2 px-2">Student</th>
-                <th className="py-2 px-2">Direction</th>
-                <th className="py-2 px-2">Status</th>
-                <th className="py-2 px-2">Gate</th>
-                <th className="py-2 px-2">Guard</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {scanLogs.map((log) => (
-                <tr key={log.id} className="hover:bg-slate-50/80 transition">
-                  <td className="py-2.5 px-2 font-mono text-slate-500 text-[11px] whitespace-nowrap">
-                    {new Date(log.scanned_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-                  </td>
-                  <td className="py-2.5 px-2">
-                    <span className="font-bold text-slate-800">{log.student_name}</span>
-                    <span className="block text-[10px] font-mono text-slate-500">{log.student_roll}</span>
-                  </td>
-                  <td className="py-2.5 px-2">
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                      log.scan_direction === 'Exit'
-                        ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                        : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                    }`}>
-                      {log.scan_direction}
-                    </span>
-                  </td>
-                  <td className="py-2.5 px-2">
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+        <div className="w-full">
+          {/* Desktop Table */}
+          <div className="hidden md:block overflow-x-auto w-full">
+            <table className="w-full text-xs text-left min-w-[650px]">
+              <thead>
+                <tr className="border-b border-slate-100 text-slate-500 font-bold text-[11px]">
+                  <th className="py-2.5 px-3 min-w-[100px] whitespace-nowrap">Timestamp</th>
+                  <th className="py-2.5 px-3 min-w-[150px] whitespace-nowrap">Student</th>
+                  <th className="py-2.5 px-3 min-w-[90px] whitespace-nowrap">Direction</th>
+                  <th className="py-2.5 px-3 min-w-[120px] whitespace-nowrap">Status</th>
+                  <th className="py-2.5 px-3 min-w-[120px] whitespace-nowrap">Gate</th>
+                  <th className="py-2.5 px-3 min-w-[120px] whitespace-nowrap">Guard</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {scanLogs.map((log) => (
+                  <tr key={log.id} className="hover:bg-slate-50/80 transition">
+                    <td className="py-2.5 px-3 font-mono text-slate-500 text-[11px] whitespace-nowrap">
+                      {new Date(log.scanned_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                    </td>
+                    <td className="py-2.5 px-3">
+                      <span className="font-bold text-slate-800">{log.student_name}</span>
+                      <span className="block text-[10px] font-mono text-slate-500">{log.student_roll}</span>
+                    </td>
+                    <td className="py-2.5 px-3">
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                        log.scan_direction === 'Exit'
+                          ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                          : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                      }`}>
+                        {log.scan_direction}
+                      </span>
+                    </td>
+                    <td className="py-2.5 px-3">
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                        log.verification_status === 'Valid'
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : log.verification_status === 'Manual_Override'
+                          ? 'bg-amber-100 text-amber-800'
+                          : 'bg-rose-100 text-rose-800'
+                      }`}>
+                        {log.verification_status.replace('_', ' ')}
+                      </span>
+                    </td>
+                    <td className="py-2.5 px-3 text-slate-600 text-[11px] whitespace-nowrap">{log.gate_location}</td>
+                    <td className="py-2.5 px-3 text-slate-600 text-[11px] whitespace-nowrap">{log.guard_name}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile Cards (320px - 768px) */}
+          <div className="md:hidden space-y-3">
+            {scanLogs.map((log) => (
+              <div
+                key={log.id}
+                className="p-4 bg-slate-50/60 border border-slate-200 rounded-2xl shadow-xs space-y-2.5"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <h4 className="font-bold text-sm text-slate-900">{log.student_name}</h4>
+                    <p className="font-mono text-xs font-bold text-slate-500 mt-0.5">{log.student_roll}</p>
+                  </div>
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0 ${
+                    log.scan_direction === 'Exit'
+                      ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                      : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                  }`}>
+                    {log.scan_direction}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-200/60">
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Status</span>
+                    <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
                       log.verification_status === 'Valid'
                         ? 'bg-emerald-100 text-emerald-800'
                         : log.verification_status === 'Manual_Override'
@@ -610,13 +654,25 @@ export const SecurityScannerView: React.FC = () => {
                     }`}>
                       {log.verification_status.replace('_', ' ')}
                     </span>
-                  </td>
-                  <td className="py-2.5 px-2 text-slate-600 text-[11px]">{log.gate_location}</td>
-                  <td className="py-2.5 px-2 text-slate-600 text-[11px]">{log.guard_name}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  </div>
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Time</span>
+                    <span className="font-mono text-[11px] text-slate-600">
+                      {new Date(log.scanned_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Gate</span>
+                    <span className="text-slate-700 text-[11px] font-medium">{log.gate_location}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Verified By</span>
+                    <span className="text-slate-700 text-[11px] font-medium truncate block">{log.guard_name}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>

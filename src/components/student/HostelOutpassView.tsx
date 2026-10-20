@@ -254,7 +254,7 @@ export const HostelOutpassView: React.FC<Props> = ({ onNavigateTab }) => {
   const overdueCount = outpasses.filter(p => p.status === 'Overdue').length;
 
   return (
-    <div className="space-y-6 font-sans">
+    <div className="space-y-6 font-sans w-full max-w-full overflow-hidden">
       <PageHeader
         breadcrumbs={[
           { label: 'Campus Services' },
@@ -365,17 +365,17 @@ export const HostelOutpassView: React.FC<Props> = ({ onNavigateTab }) => {
           </div>
         </div>
 
-        {/* Outpasses Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
+        {/* Desktop Outpasses Table */}
+        <div className="hidden md:block overflow-x-auto w-full">
+          <table className="w-full text-left border-collapse text-xs min-w-[850px]">
             <thead>
               <tr className="bg-slate-50/80 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 font-bold border-b border-slate-200 dark:border-slate-700 uppercase tracking-wider text-[11px]">
-                <th className="py-3 px-4">Student Details</th>
-                <th className="py-3 px-4">Assigned Hostel & Room</th>
-                <th className="py-3 px-4">Destination & Reason</th>
-                <th className="py-3 px-4">Departure & Return</th>
-                <th className="py-3 px-4">Status</th>
-                <th className="py-3 px-4 text-right">Actions</th>
+                <th className="py-3 px-4 min-w-[170px] whitespace-nowrap">Student Details</th>
+                <th className="py-3 px-4 min-w-[160px]">Assigned Hostel & Room</th>
+                <th className="py-3 px-4 min-w-[160px]">Destination & Reason</th>
+                <th className="py-3 px-4 min-w-[160px] whitespace-nowrap">Departure & Return</th>
+                <th className="py-3 px-4 min-w-[110px] whitespace-nowrap">Status</th>
+                <th className="py-3 px-4 text-right min-w-[120px] whitespace-nowrap">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -388,13 +388,11 @@ export const HostelOutpassView: React.FC<Props> = ({ onNavigateTab }) => {
                 </tr>
               ) : (
                 filteredPasses.map(pass => {
-                  // Resolve authoritative student master record
                   const studentMaster = allStudents.find(s => 
                     (pass.student_id && s.id === pass.student_id) || 
                     (pass.student_roll && s.roll_no.toUpperCase() === pass.student_roll.toUpperCase())
                   );
 
-                  // Perform strict institutional validation
                   const verification = verifyHostelAllocation(
                     studentMaster,
                     pass.hostel_block,
@@ -435,7 +433,7 @@ export const HostelOutpassView: React.FC<Props> = ({ onNavigateTab }) => {
                         </div>
                       </td>
 
-                      {/* 2. Assigned Hostel & Room with Data Integrity Indicators */}
+                      {/* 2. Assigned Hostel & Room */}
                       <td className="py-3 px-4">
                         {isMismatched ? (
                           <div className="space-y-1">
@@ -495,10 +493,10 @@ export const HostelOutpassView: React.FC<Props> = ({ onNavigateTab }) => {
 
                       {/* 4. Departure & Return */}
                       <td className="py-3 px-4">
-                        <div className="text-slate-800 dark:text-slate-200">
+                        <div className="text-slate-800 dark:text-slate-200 whitespace-nowrap">
                           Out: <span className="font-semibold">{pass.departure_date}</span> ({pass.departure_time || '16:00'})
                         </div>
-                        <div className="text-slate-500 dark:text-slate-400 text-[11px]">
+                        <div className="text-slate-500 dark:text-slate-400 text-[11px] whitespace-nowrap">
                           In: <span className="font-semibold">{pass.expected_return_date}</span> ({pass.expected_return_time || '20:00'})
                         </div>
                       </td>
@@ -555,6 +553,122 @@ export const HostelOutpassView: React.FC<Props> = ({ onNavigateTab }) => {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Outpasses Cards (320px - 768px) */}
+        <div className="md:hidden space-y-3 p-3">
+          {filteredPasses.length === 0 ? (
+            <div className="text-center py-8 text-slate-400 text-xs">
+              <Home className="w-8 h-8 mx-auto mb-2 opacity-40" />
+              No hostel outpass records found matching criteria
+            </div>
+          ) : (
+            filteredPasses.map(pass => {
+              const studentMaster = allStudents.find(s => 
+                (pass.student_id && s.id === pass.student_id) || 
+                (pass.student_roll && s.roll_no.toUpperCase() === pass.student_roll.toUpperCase())
+              );
+
+              const verification = verifyHostelAllocation(
+                studentMaster,
+                pass.hostel_block,
+                pass.room_number || pass.room_no
+              );
+
+              const isMismatched = verification.status === 'gender_mismatch';
+
+              return (
+                <div
+                  key={pass.id}
+                  className={`p-4 bg-white dark:bg-slate-900 border rounded-2xl shadow-xs space-y-3 ${
+                    isMismatched ? 'border-rose-300 dark:border-rose-900 bg-rose-50/20' : 'border-slate-200 dark:border-slate-800'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <h4 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-1.5 flex-wrap">
+                        <span>{pass.student_name}</span>
+                        {studentMaster?.gender && (
+                          <span 
+                            className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                              studentMaster.gender.toLowerCase() === 'female'
+                                ? 'bg-purple-50 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300 border border-purple-200 dark:border-purple-800'
+                                : 'bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-sky-300 border border-blue-200 dark:border-blue-800'
+                            }`}
+                          >
+                            {studentMaster.gender}
+                          </span>
+                        )}
+                      </h4>
+                      <p className="text-[11px] font-mono text-slate-500 dark:text-slate-400 mt-0.5">
+                        Roll: {pass.student_roll} • {studentMaster?.department || pass.branch || 'CSE'}
+                      </p>
+                    </div>
+                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold shrink-0 ${
+                      pass.status === 'Approved' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-200' :
+                      pass.status === 'Pending' ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400 border border-amber-200' :
+                      pass.status === 'Exited' ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-sky-400 border border-blue-200' :
+                      pass.status === 'Overdue' ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400 border border-rose-200' :
+                      'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
+                    }`}>
+                      {pass.status}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-100 dark:border-slate-800">
+                    <div>
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">Hostel & Room</span>
+                      <span className="font-semibold text-slate-800 dark:text-slate-200">{verification.displayHostel}</span>
+                      <span className="block text-[10px] text-slate-500 font-mono">Room #{verification.displayRoom}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">Out / Return</span>
+                      <span className="text-slate-700 dark:text-slate-300 font-medium block text-[11px]">{pass.departure_date}</span>
+                      <span className="text-slate-500 text-[10px] block">to {pass.expected_return_date}</span>
+                    </div>
+                    <div className="col-span-2 pt-1 border-t border-slate-50 dark:border-slate-800/60">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">Destination & Reason</span>
+                      <p className="font-semibold text-slate-800 dark:text-slate-200 text-xs">{pass.destination}</p>
+                      <p className="text-slate-500 text-xs line-clamp-2 mt-0.5">{pass.reason}</p>
+                    </div>
+                  </div>
+
+                  {(pass.status === 'Approved' || (isWarden && pass.status === 'Pending')) && (
+                    <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                      {pass.status === 'Approved' && (
+                        <button
+                          type="button"
+                          onClick={() => setSelectedPassForQR(pass)}
+                          className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 transition cursor-pointer"
+                        >
+                          <QrCode className="w-3.5 h-3.5" />
+                          <span>View Pass QR</span>
+                        </button>
+                      )}
+                      {isWarden && pass.status === 'Pending' && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => handleWardenAction(pass.id, 'Approved')}
+                            className="px-3 py-1.5 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 font-bold text-xs transition cursor-pointer"
+                          >
+                            Approve
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleWardenAction(pass.id, 'Rejected')}
+                            className="px-3 py-1.5 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 font-bold text-xs transition cursor-pointer"
+                          >
+                            Reject
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
 

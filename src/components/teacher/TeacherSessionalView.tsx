@@ -276,7 +276,7 @@ export const TeacherSessionalView: React.FC = () => {
   });
 
   return (
-    <div className="space-y-5 animate-fade-in font-sans">
+    <div className="space-y-5 animate-fade-in font-sans w-full max-w-full overflow-hidden">
       {/* 1. Header with Institutional Description (Strict Monochrome Theme) */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
@@ -601,19 +601,20 @@ export const TeacherSessionalView: React.FC = () => {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-neutral-100 text-neutral-800 font-bold border-b border-neutral-300">
+        {/* Desktop Table View (hidden md:block) */}
+        <div className="hidden md:block overflow-x-auto w-full">
+          <table className="w-full text-left text-xs border-collapse">
+            <thead className="bg-neutral-100 text-neutral-800 font-bold border-b border-neutral-300 text-[11px] uppercase tracking-wider">
               <tr>
-                <th className="py-2.5 px-3">Roll No</th>
-                <th className="py-2.5 px-3">Student Name</th>
-                <th className="py-2.5 px-3">Course Subject</th>
-                <th className="py-2.5 px-3">Assessment</th>
-                <th className="py-2.5 px-3 text-center">Score</th>
-                <th className="py-2.5 px-3 text-center">%</th>
-                <th className="py-2.5 px-3">Workflow Status</th>
-                <th className="py-2.5 px-3">Student Portal</th>
-                <th className="py-2.5 px-3 text-right">Audit</th>
+                <th className="py-2.5 px-3 min-w-[110px] whitespace-nowrap">Roll No</th>
+                <th className="py-2.5 px-3 min-w-[150px] whitespace-nowrap">Student Name</th>
+                <th className="py-2.5 px-3 min-w-[160px] whitespace-nowrap">Course Subject</th>
+                <th className="py-2.5 px-3 min-w-[110px] whitespace-nowrap">Assessment</th>
+                <th className="py-2.5 px-3 text-center min-w-[90px] whitespace-nowrap">Score</th>
+                <th className="py-2.5 px-3 text-center min-w-[70px] whitespace-nowrap">%</th>
+                <th className="py-2.5 px-3 min-w-[130px] whitespace-nowrap">Workflow Status</th>
+                <th className="py-2.5 px-3 min-w-[120px] whitespace-nowrap">Student Portal</th>
+                <th className="py-2.5 px-3 text-right min-w-[90px] whitespace-nowrap">Audit</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-200">
@@ -626,14 +627,14 @@ export const TeacherSessionalView: React.FC = () => {
               ) : (
                 filteredResults.map(res => (
                   <tr key={res.id} className="hover:bg-neutral-50">
-                    <td className="py-2.5 px-3 font-mono font-bold text-black">{res.student_roll}</td>
+                    <td className="py-2.5 px-3 font-mono font-bold text-black whitespace-nowrap">{res.student_roll}</td>
                     <td className="py-2.5 px-3 font-bold text-black break-words">{res.student_name}</td>
-                    <td className="py-2.5 px-3 text-neutral-700">{res.subject_name} ({res.subject_code || 'CS-601'})</td>
-                    <td className="py-2.5 px-3 font-semibold text-neutral-800">{res.exam_type}</td>
-                    <td className="py-2.5 px-3 text-center font-bold text-black">{res.marks_obtained} / {res.max_marks}</td>
-                    <td className="py-2.5 px-3 text-center font-mono font-black text-black">{res.percentage}%</td>
-                    <td className="py-2.5 px-3">{getWorkflowBadge(res.status, res.is_published)}</td>
-                    <td className="py-2.5 px-3">
+                    <td className="py-2.5 px-3 text-neutral-700 whitespace-nowrap">{res.subject_name} ({res.subject_code || 'CS-601'})</td>
+                    <td className="py-2.5 px-3 font-semibold text-neutral-800 whitespace-nowrap">{res.exam_type}</td>
+                    <td className="py-2.5 px-3 text-center font-bold text-black whitespace-nowrap">{res.marks_obtained} / {res.max_marks}</td>
+                    <td className="py-2.5 px-3 text-center font-mono font-black text-black whitespace-nowrap">{res.percentage}%</td>
+                    <td className="py-2.5 px-3 whitespace-nowrap">{getWorkflowBadge(res.status, res.is_published)}</td>
+                    <td className="py-2.5 px-3 whitespace-nowrap">
                       {res.is_published ? (
                         <span className="text-[11px] font-bold text-black flex items-center gap-1">
                           <CheckCircle2 className="w-3.5 h-3.5" /> Published
@@ -644,7 +645,7 @@ export const TeacherSessionalView: React.FC = () => {
                         </span>
                       )}
                     </td>
-                    <td className="py-2.5 px-3 text-right">
+                    <td className="py-2.5 px-3 text-right whitespace-nowrap">
                       <button
                         type="button"
                         onClick={() => setShowAuditModal(res)}
@@ -658,6 +659,83 @@ export const TeacherSessionalView: React.FC = () => {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile View: Structured Sessional Marks Cards (md:hidden) */}
+        <div className="md:hidden space-y-3 p-1">
+          {filteredResults.length === 0 ? (
+            <div className="p-6 text-center text-neutral-500 text-xs">
+              No sessional records found.
+            </div>
+          ) : (
+            filteredResults.map(res => (
+              <div
+                key={res.id}
+                className="p-4 rounded-2xl border border-neutral-300 bg-white shadow-2xs space-y-3 text-xs"
+              >
+                {/* Header: Student Name + Roll Number + Status Badge */}
+                <div className="flex items-start justify-between gap-2 border-b border-neutral-200 pb-2.5">
+                  <div className="min-w-0 flex-1">
+                    <div className="font-bold text-sm text-black break-words">{res.student_name}</div>
+                    <div className="text-[11px] text-neutral-500 font-mono mt-0.5">
+                      Roll: <span className="font-bold text-black">{res.student_roll}</span>
+                    </div>
+                  </div>
+                  <div className="shrink-0 pt-0.5">
+                    {getWorkflowBadge(res.status, res.is_published)}
+                  </div>
+                </div>
+
+                {/* Score & Assessment Details Grid */}
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="p-2.5 rounded-xl bg-neutral-50 border border-neutral-200">
+                    <span className="text-[10px] uppercase font-bold text-neutral-500 block">Assessment</span>
+                    <span className="font-bold text-black text-xs block mt-0.5 break-words">
+                      {res.exam_type}
+                    </span>
+                    <span className="text-[11px] text-neutral-600 block truncate mt-0.5">
+                      {res.subject_name}
+                    </span>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-neutral-50 border border-neutral-200">
+                    <span className="text-[10px] uppercase font-bold text-neutral-500 block">Score & %</span>
+                    <div className="flex items-baseline gap-1.5 mt-0.5">
+                      <span className="font-extrabold text-black text-sm">
+                        {res.marks_obtained}/{res.max_marks}
+                      </span>
+                      <span className="font-mono font-bold text-xs text-neutral-600">
+                        ({res.percentage}%)
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer: Publication Status + Audit Button */}
+                <div className="pt-2 border-t border-neutral-200 flex items-center justify-between text-xs">
+                  <div>
+                    {res.is_published ? (
+                      <span className="text-[11px] font-bold text-black flex items-center gap-1">
+                        <CheckCircle2 className="w-3.5 h-3.5" /> Published to Portal
+                      </span>
+                    ) : (
+                      <span className="text-[11px] text-neutral-500 flex items-center gap-1 font-medium">
+                        <Lock className="w-3.5 h-3.5" /> Unpublished
+                      </span>
+                    )}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowAuditModal(res)}
+                    className="px-2.5 py-1 rounded-lg bg-neutral-100 hover:bg-neutral-200 border border-neutral-300 text-black text-[11px] font-bold transition cursor-pointer"
+                  >
+                    Audit Trail
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
 

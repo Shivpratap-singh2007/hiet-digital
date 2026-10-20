@@ -179,7 +179,7 @@ export const CampusZonesManagementView: React.FC = () => {
   });
 
   return (
-    <div className="space-y-6 font-sans animate-fade-in">
+    <div className="space-y-6 font-sans animate-fade-in w-full max-w-full overflow-hidden">
       {/* 1. Header */}
       <PageHeader
         breadcrumbs={[
@@ -346,19 +346,20 @@ export const CampusZonesManagementView: React.FC = () => {
             </div>
           </div>
 
-          {/* Zones Table */}
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
+          {/* Zones Table (Dual Layout) */}
+          {/* Desktop Table */}
+          <div className="hidden md:block bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
+            <div className="overflow-x-auto w-full">
+              <table className="w-full text-left border-collapse text-xs min-w-[700px]">
                 <thead>
-                  <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[10px]">
-                    <th className="p-3.5">Zone Code</th>
-                    <th className="p-3.5">Zone Name</th>
-                    <th className="p-3.5">Type</th>
-                    <th className="p-3.5">Building & Floor</th>
-                    <th className="p-3.5">Capacity</th>
-                    <th className="p-3.5">Status</th>
-                    <th className="p-3.5 text-right">Actions</th>
+                  <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[10px] whitespace-nowrap">
+                    <th className="p-3.5 min-w-[100px]">Zone Code</th>
+                    <th className="p-3.5 min-w-[180px]">Zone Name</th>
+                    <th className="p-3.5 min-w-[90px]">Type</th>
+                    <th className="p-3.5 min-w-[150px]">Building & Floor</th>
+                    <th className="p-3.5 min-w-[100px]">Capacity</th>
+                    <th className="p-3.5 min-w-[90px]">Status</th>
+                    <th className="p-3.5 min-w-[90px] text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -414,6 +415,67 @@ export const CampusZonesManagementView: React.FC = () => {
               </table>
             </div>
           </div>
+
+          {/* Mobile Zone Cards */}
+          <div className="md:hidden space-y-3">
+            {filteredZones.map((z) => (
+              <div key={z.zone_id || z.id} className="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs space-y-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <span className="font-mono text-xs font-bold text-blue-900 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded">
+                      {z.zone_code || z.code}
+                    </span>
+                    <h4 className="font-bold text-slate-800 text-sm mt-1.5 break-words">
+                      {z.zone_name || z.name}
+                      {z.room_code && (
+                        <span className="ml-1.5 text-xs text-slate-400 font-normal">
+                          (Room {z.room_code})
+                        </span>
+                      )}
+                    </h4>
+                  </div>
+                  <span className={`px-2 py-0.5 rounded-md font-bold text-[10px] shrink-0 ${
+                    z.is_active !== false
+                      ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                      : 'bg-rose-100 text-rose-800 border border-rose-200'
+                  }`}>
+                    {z.is_active !== false ? 'Active' : 'Inactive'}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-slate-100">
+                  <div>
+                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">Type</span>
+                    <span className="px-2 py-0.5 rounded-md font-bold text-[10px] uppercase bg-slate-100 text-slate-700 border border-slate-200 inline-block mt-0.5">
+                      {z.zone_type || 'General'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">Capacity</span>
+                    <span className="font-medium text-slate-700">{z.capacity || 50} persons</span>
+                  </div>
+                  <div className="col-span-2">
+                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">Building & Floor</span>
+                    <p className="font-medium text-slate-800">{z.building_name || 'Academic Block'}</p>
+                    <p className="text-[10px] text-slate-400">{z.floor_name || 'First Floor'}</p>
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-slate-100 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTokenTargetZone(z.zone_id || z.id || 'zone-01');
+                      setIsGenerateTokenOpen(true);
+                    }}
+                    className="w-full sm:w-auto px-3 py-1.5 text-xs bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg font-bold transition text-center"
+                  >
+                    Generate New QR Token
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
@@ -442,19 +504,20 @@ export const CampusZonesManagementView: React.FC = () => {
             </button>
           </div>
 
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
+          {/* Desktop BLE Beacons Table */}
+          <div className="hidden md:block bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs">
+            <div className="overflow-x-auto w-full">
+              <table className="w-full text-left border-collapse text-xs min-w-[780px]">
                 <thead>
-                  <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[10px]">
-                    <th className="p-3.5">Beacon Code</th>
-                    <th className="p-3.5">Zone & Building</th>
-                    <th className="p-3.5">UUID</th>
-                    <th className="p-3.5">Major / Minor</th>
-                    <th className="p-3.5">Tx Power</th>
-                    <th className="p-3.5">Battery</th>
-                    <th className="p-3.5">Calibration Notes</th>
-                    <th className="p-3.5">Status</th>
+                  <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[10px] whitespace-nowrap">
+                    <th className="p-3.5 min-w-[110px]">Beacon Code</th>
+                    <th className="p-3.5 min-w-[160px]">Zone & Building</th>
+                    <th className="p-3.5 min-w-[140px]">UUID</th>
+                    <th className="p-3.5 min-w-[100px]">Major / Minor</th>
+                    <th className="p-3.5 min-w-[80px]">Tx Power</th>
+                    <th className="p-3.5 min-w-[80px]">Battery</th>
+                    <th className="p-3.5 min-w-[150px]">Calibration Notes</th>
+                    <th className="p-3.5 min-w-[80px]">Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -491,6 +554,50 @@ export const CampusZonesManagementView: React.FC = () => {
                 </tbody>
               </table>
             </div>
+          </div>
+
+          {/* Mobile BLE Beacon Cards */}
+          <div className="md:hidden space-y-3">
+            {beacons.map((b) => (
+              <div key={b.beacon_id} className="bg-white border border-purple-200 rounded-xl p-4 shadow-2xs space-y-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <span className="font-mono text-xs font-bold text-purple-900 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded">
+                      {b.beacon_code}
+                    </span>
+                    <h4 className="font-bold text-slate-800 text-sm mt-1.5 break-words">
+                      {b.zone_name || 'Academic Block — First Floor'}
+                    </h4>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-md font-bold text-[10px] bg-emerald-100 text-emerald-800 border border-emerald-200 shrink-0">
+                    {b.is_active ? 'Active' : 'Inactive'}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-slate-100">
+                  <div>
+                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">Major / Minor</span>
+                    <span className="font-mono text-slate-700">{b.major_value} / {b.minor_value}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">Battery</span>
+                    <span className="font-semibold text-emerald-700">{b.battery_status || '98%'}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">Tx Power</span>
+                    <span className="font-mono text-slate-600">{b.tx_power} dBm</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">Calibration</span>
+                    <span className="text-slate-600 text-[11px] truncate block">{b.calibration_notes || 'Calibrated at installation site'}</span>
+                  </div>
+                  <div className="col-span-2">
+                    <span className="text-slate-400 block text-[10px] uppercase font-semibold">UUID</span>
+                    <span className="font-mono text-[10px] text-slate-500 break-all">{b.uuid_value || 'fda50693-a4e2-4fb1-afcf-c6eb07647825'}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}

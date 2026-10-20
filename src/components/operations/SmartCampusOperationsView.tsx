@@ -94,7 +94,7 @@ export const SmartCampusOperationsView: React.FC<Props> = ({
   });
 
   return (
-    <div className="space-y-6 font-sans animate-fade-in">
+    <div className="space-y-6 font-sans animate-fade-in w-full max-w-full overflow-hidden">
       {/* 1. Header with Breadcrumbs */}
       <PageHeader
         breadcrumbs={[
@@ -322,45 +322,89 @@ export const SmartCampusOperationsView: React.FC<Props> = ({
             </span>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
-                  <th className="p-3">Timestamp</th>
-                  <th className="p-3">Zone Code</th>
-                  <th className="p-3">Headcount</th>
-                  <th className="p-3">Load %</th>
-                  <th className="p-3">Crowd Level</th>
-                  <th className="p-3">Model Conf.</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 font-mono">
-                {occupancyData.recentEvents.map((evt) => (
-                  <tr key={evt.occupancy_event_id} className="hover:bg-slate-50/60 transition">
-                    <td className="p-3 text-slate-500 text-[11px]">
-                      {new Date(evt.event_timestamp).toLocaleTimeString()}
-                    </td>
-                    <td className="p-3 font-bold text-blue-900">{evt.zone_code}</td>
-                    <td className="p-3 text-slate-800 font-bold text-sm">
-                      {evt.person_count}
-                    </td>
-                    <td className="p-3 text-slate-600">{evt.occupancy_percentage}%</td>
-                    <td className="p-3">
-                      <span
-                        className={`px-2 py-0.5 rounded-md text-[10px] font-bold border uppercase ${getCrowdBadge(
-                          evt.crowd_level
-                        )}`}
-                      >
-                        {evt.crowd_level}
-                      </span>
-                    </td>
-                    <td className="p-3 text-slate-500 text-[11px]">
-                      {evt.model_confidence}%
-                    </td>
+          <div className="w-full">
+            {/* Desktop Table */}
+            <div className="hidden md:block overflow-x-auto w-full">
+              <table className="w-full text-left border-collapse text-xs min-w-[560px]">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
+                    <th className="p-3 min-w-[90px] whitespace-nowrap">Timestamp</th>
+                    <th className="p-3 min-w-[110px] whitespace-nowrap">Zone Code</th>
+                    <th className="p-3 min-w-[90px] whitespace-nowrap">Headcount</th>
+                    <th className="p-3 min-w-[80px] whitespace-nowrap">Load %</th>
+                    <th className="p-3 min-w-[110px] whitespace-nowrap">Crowd Level</th>
+                    <th className="p-3 min-w-[90px] whitespace-nowrap">Model Conf.</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-100 font-mono">
+                  {occupancyData.recentEvents.map((evt) => (
+                    <tr key={evt.occupancy_event_id} className="hover:bg-slate-50/60 transition">
+                      <td className="p-3 text-slate-500 text-[11px] whitespace-nowrap">
+                        {new Date(evt.event_timestamp).toLocaleTimeString()}
+                      </td>
+                      <td className="p-3 font-bold text-blue-900">{evt.zone_code}</td>
+                      <td className="p-3 text-slate-800 font-bold text-sm">
+                        {evt.person_count}
+                      </td>
+                      <td className="p-3 text-slate-600">{evt.occupancy_percentage}%</td>
+                      <td className="p-3">
+                        <span
+                          className={`px-2 py-0.5 rounded-md text-[10px] font-bold border uppercase ${getCrowdBadge(
+                            evt.crowd_level
+                          )}`}
+                        >
+                          {evt.crowd_level}
+                        </span>
+                      </td>
+                      <td className="p-3 text-slate-500 text-[11px]">
+                        {evt.model_confidence}%
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Cards (320px - 768px) */}
+            <div className="md:hidden space-y-3">
+              {occupancyData.recentEvents.map((evt) => (
+                <div
+                  key={evt.occupancy_event_id}
+                  className="p-3.5 bg-slate-50/70 border border-slate-200 rounded-xl space-y-2.5 font-mono text-xs"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <span className="font-bold text-blue-950 text-sm">{evt.zone_code}</span>
+                      <span className="block text-[10px] text-slate-500 mt-0.5">
+                        {new Date(evt.event_timestamp).toLocaleTimeString()}
+                      </span>
+                    </div>
+                    <span
+                      className={`px-2 py-0.5 rounded-md text-[10px] font-bold border uppercase shrink-0 ${getCrowdBadge(
+                        evt.crowd_level
+                      )}`}
+                    >
+                      {evt.crowd_level}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-200/60">
+                    <div>
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block font-sans">Headcount</span>
+                      <span className="font-bold text-slate-900 text-sm">{evt.person_count}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block font-sans">Load</span>
+                      <span className="font-bold text-slate-700 text-sm">{evt.occupancy_percentage}%</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block font-sans">Conf.</span>
+                      <span className="text-slate-600 text-xs">{evt.model_confidence}%</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 

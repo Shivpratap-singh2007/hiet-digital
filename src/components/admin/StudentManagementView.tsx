@@ -142,7 +142,7 @@ export const StudentManagementView: React.FC<Props> = ({ onNavigateTab }) => {
   };
 
   return (
-    <div className="space-y-6 font-sans">
+    <div className="space-y-6 font-sans w-full max-w-full overflow-hidden">
       <PageHeader
         breadcrumbs={[
           { label: 'Academic Governance' },
@@ -254,13 +254,13 @@ export const StudentManagementView: React.FC<Props> = ({ onNavigateTab }) => {
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider">
-                    <th className="py-3 px-4">Student Name</th>
-                    <th className="py-3 px-4">Roll No</th>
-                    <th className="py-3 px-4">Department</th>
-                    <th className="py-3 px-4">Semester</th>
-                    <th className="py-3 px-4">Status</th>
-                    <th className="py-3 px-4 text-right">Actions</th>
+                  <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[11px]">
+                    <th className="py-3 px-4 min-w-[180px]">Student Name</th>
+                    <th className="py-3 px-4 min-w-[120px] whitespace-nowrap">Roll No</th>
+                    <th className="py-3 px-4 min-w-[120px] whitespace-nowrap">Department</th>
+                    <th className="py-3 px-4 min-w-[110px] whitespace-nowrap">Semester</th>
+                    <th className="py-3 px-4 min-w-[90px] whitespace-nowrap">Status</th>
+                    <th className="py-3 px-4 text-right min-w-[90px] whitespace-nowrap">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-slate-700">

@@ -43,7 +43,7 @@ export const HodReportsView: React.FC = () => {
   const resolvedCount = complaints.filter(c => c.status === 'Resolved' || c.status === 'Closed').length;
 
   return (
-    <div className="space-y-4 sm:space-y-5 animate-fade-in font-sans pb-12">
+    <div className="space-y-4 sm:space-y-5 animate-fade-in font-sans pb-12 w-full max-w-full overflow-hidden">
       {/* Header */}
       <div className="bg-white border border-slate-200 rounded-3xl p-4 sm:p-5 shadow-xs">
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-50 text-purple-700 text-xs font-bold mb-1.5 border border-purple-100">
@@ -127,33 +127,66 @@ export const HodReportsView: React.FC = () => {
             </span>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 text-slate-500 uppercase font-bold border-b border-slate-200">
-                <tr>
-                  <th className="px-4 py-2.5">Roll No</th>
-                  <th className="px-4 py-2.5">Student Name</th>
-                  <th className="px-4 py-2.5">Branch</th>
-                  <th className="px-4 py-2.5">Attendance</th>
-                  <th className="px-4 py-2.5">Compliance Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {defaulters.map(r => (
-                  <tr key={r.student.id} className="hover:bg-rose-50/40 transition">
-                    <td className="px-4 py-2.5 font-mono font-bold text-blue-700">{r.student.roll_no}</td>
-                    <td className="px-4 py-2.5 font-bold text-slate-900">{r.student.name}</td>
-                    <td className="px-4 py-2.5 text-slate-600">{r.student.branch}</td>
-                    <td className="px-4 py-2.5 font-mono font-bold text-rose-600">{r.percentage}%</td>
-                    <td className="px-4 py-2.5">
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800">
-                        Defaulter Warning Sent
-                      </span>
-                    </td>
+          <div className="w-full">
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto w-full">
+              <table className="w-full text-left text-xs min-w-[620px]">
+                <thead className="bg-slate-50 text-slate-500 uppercase font-bold border-b border-slate-200">
+                  <tr>
+                    <th className="px-4 py-2.5 min-w-[110px] whitespace-nowrap">Roll No</th>
+                    <th className="px-4 py-2.5 min-w-[160px] whitespace-nowrap">Student Name</th>
+                    <th className="px-4 py-2.5 min-w-[100px] whitespace-nowrap">Branch</th>
+                    <th className="px-4 py-2.5 min-w-[110px] whitespace-nowrap">Attendance</th>
+                    <th className="px-4 py-2.5 min-w-[140px] whitespace-nowrap">Compliance Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {defaulters.map(r => (
+                    <tr key={r.student.id} className="hover:bg-rose-50/40 transition">
+                      <td className="px-4 py-2.5 font-mono font-bold text-blue-700">{r.student.roll_no}</td>
+                      <td className="px-4 py-2.5 font-bold text-slate-900">{r.student.name}</td>
+                      <td className="px-4 py-2.5 text-slate-600">{r.student.branch}</td>
+                      <td className="px-4 py-2.5 font-mono font-bold text-rose-600">{r.percentage}%</td>
+                      <td className="px-4 py-2.5">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800">
+                          Defaulter Warning Sent
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Cards (320px - 768px) */}
+            <div className="md:hidden space-y-3">
+              {defaulters.map(r => (
+                <div
+                  key={r.student.id}
+                  className="p-4 bg-slate-50/60 border border-slate-200 rounded-2xl shadow-xs space-y-3"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <h4 className="font-bold text-sm text-slate-900">{r.student.name}</h4>
+                      <p className="font-mono text-xs font-bold text-blue-700 mt-0.5">{r.student.roll_no}</p>
+                    </div>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 shrink-0">
+                      Defaulter
+                    </span>
+                  </div>
+
+                  <div className="flex items-baseline justify-between pt-1 border-t border-slate-200/60">
+                    <span className="text-[10px] uppercase font-bold text-slate-400">Department</span>
+                    <span className="text-xs font-semibold text-slate-700">{r.student.branch}</span>
+                  </div>
+
+                  <div className="flex items-baseline justify-between pt-1 border-t border-slate-200/60">
+                    <span className="text-[10px] uppercase font-bold text-slate-400">Attendance Rate</span>
+                    <span className="font-mono font-black text-rose-600 text-base">{r.percentage}%</span>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}

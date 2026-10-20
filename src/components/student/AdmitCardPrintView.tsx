@@ -52,7 +52,7 @@ export const AdmitCardPrintView: React.FC<Props> = () => {
   };
 
   return (
-    <div className="space-y-6 font-sans animate-fade-in pb-12">
+    <div className="w-full max-w-full overflow-hidden space-y-6 font-sans animate-fade-in pb-12">
       {/* 1. Header Banner (Screen only) */}
       <div className="bg-white border border-[#E2E8F0] rounded-3xl p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 no-print">
         <div>
@@ -325,16 +325,16 @@ export const AdmitCardPrintView: React.FC<Props> = () => {
             <h4 className="text-xs font-bold uppercase tracking-wider text-[#0F2942] mb-2">
               Schedule of Theory Examinations
             </h4>
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs border border-[#0F2942]">
+            <div className="overflow-x-auto w-full">
+              <table className="w-full text-xs border border-[#0F2942] min-w-[600px]">
                 <thead>
                   <tr className="bg-[#F8FAFC] text-[#0F2942] font-bold border-b-2 border-[#0F2942] text-left">
-                    <th className="py-2.5 px-2.5 border-r border-[#E2E8F0]">Course Code</th>
-                    <th className="py-2.5 px-2.5 border-r border-[#E2E8F0]">Subject Name</th>
-                    <th className="py-2.5 px-2.5 border-r border-[#E2E8F0]">Date</th>
-                    <th className="py-2.5 px-2.5 border-r border-[#E2E8F0]">Time</th>
-                    <th className="py-2.5 px-2.5 border-r border-[#E2E8F0] text-center">Room/Hall</th>
-                    <th className="py-2.5 px-2.5 text-center">Invigilator Initial</th>
+                    <th className="py-2.5 px-2.5 border-r border-[#E2E8F0] min-w-[90px] whitespace-nowrap">Course Code</th>
+                    <th className="py-2.5 px-2.5 border-r border-[#E2E8F0] min-w-[180px]">Subject Name</th>
+                    <th className="py-2.5 px-2.5 border-r border-[#E2E8F0] min-w-[100px] whitespace-nowrap">Date</th>
+                    <th className="py-2.5 px-2.5 border-r border-[#E2E8F0] min-w-[130px] whitespace-nowrap">Time</th>
+                    <th className="py-2.5 px-2.5 border-r border-[#E2E8F0] text-center min-w-[80px] whitespace-nowrap">Room/Hall</th>
+                    <th className="py-2.5 px-2.5 text-center min-w-[110px] whitespace-nowrap">Invigilator Initial</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#E2E8F0]">

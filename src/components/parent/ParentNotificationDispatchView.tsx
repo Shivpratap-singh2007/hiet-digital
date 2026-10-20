@@ -166,7 +166,7 @@ export const ParentNotificationDispatchView: React.FC<Props> = ({ onNavigate: _o
   };
 
   return (
-    <div className="space-y-6 font-sans">
+    <div className="space-y-6 font-sans w-full max-w-full overflow-hidden">
       {/* Header */}
       <PageHeader
         breadcrumbs={[
@@ -536,16 +536,17 @@ export const ParentNotificationDispatchView: React.FC<Props> = ({ onNavigate: _o
           </span>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
+        {/* Desktop / Tablet Table */}
+        <div className="hidden md:block overflow-x-auto w-full">
+          <table className="w-full text-left text-xs border-collapse min-w-[720px]">
             <thead>
-              <tr className="border-b border-slate-200 bg-slate-50 text-slate-600 font-bold">
-                <th className="py-2.5 px-3">Timestamp</th>
-                <th className="py-2.5 px-3">Parent Recipient</th>
-                <th className="py-2.5 px-3 text-center">Channel</th>
-                <th className="py-2.5 px-3">Template / Event</th>
-                <th className="py-2.5 px-3">Message Snippet</th>
-                <th className="py-2.5 px-3 text-right">Delivery Status</th>
+              <tr className="border-b border-slate-200 bg-slate-50 text-slate-600 font-bold whitespace-nowrap">
+                <th className="py-2.5 px-3 min-w-[90px]">Timestamp</th>
+                <th className="py-2.5 px-3 min-w-[140px]">Parent Recipient</th>
+                <th className="py-2.5 px-3 min-w-[110px] text-center">Channel</th>
+                <th className="py-2.5 px-3 min-w-[140px]">Template / Event</th>
+                <th className="py-2.5 px-3 min-w-[180px]">Message Snippet</th>
+                <th className="py-2.5 px-3 min-w-[110px] text-right">Delivery Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-medium text-slate-800">
@@ -584,6 +585,47 @@ export const ParentNotificationDispatchView: React.FC<Props> = ({ onNavigate: _o
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Dispatch Log Cards */}
+        <div className="md:hidden space-y-3">
+          {deliveryLogs.slice(0, 10).map(log => (
+            <div key={log.id} className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/60 space-y-2.5">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <span className="font-bold block text-slate-900 text-xs">{log.recipient_name}</span>
+                  <span className="font-mono text-[10px] text-slate-500">{log.recipient_phone}</span>
+                </div>
+                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
+                  DELIVERED
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-200/60 text-xs">
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase inline-flex items-center gap-1 ${
+                  log.channel === 'whatsapp'
+                    ? 'bg-emerald-100 text-emerald-800'
+                    : 'bg-blue-100 text-blue-800'
+                }`}>
+                  {log.channel === 'whatsapp' ? <MessageSquare className="w-2.5 h-2.5" /> : <Smartphone className="w-2.5 h-2.5" />}
+                  <span>{log.channel === 'whatsapp' ? 'WhatsApp' : 'SIM SMS'}</span>
+                </span>
+                <span className="font-mono text-[10px] text-slate-400">
+                  {log.sent_at ? new Date(log.sent_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : 'Just now'}
+                </span>
+              </div>
+
+              <div className="pt-1 border-t border-slate-200/60 text-xs space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-slate-800">{log.title}</span>
+                  <span className="text-[10px] text-slate-400 capitalize">{log.template_type?.replace(/_/g, ' ')}</span>
+                </div>
+                <p className="text-[11px] text-slate-600 line-clamp-2 leading-relaxed bg-white p-2 rounded-lg border border-slate-100">
+                  {log.message.replace(/\*/g, '')}
+                </p>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>

@@ -533,7 +533,7 @@ export const CampusPresenceView: React.FC<Props> = ({ roleMode = 'principal', de
   }
 
   return (
-    <div className="space-y-6 font-sans animate-fade-in">
+    <div className="space-y-6 font-sans animate-fade-in w-full max-w-full overflow-hidden">
       {/* 1. Header with Breadcrumbs */}
       <PageHeader
         breadcrumbs={[
@@ -694,7 +694,7 @@ export const CampusPresenceView: React.FC<Props> = ({ roleMode = 'principal', de
       </div>
 
       {/* 5. Real-Time Student Presence Table (Section 50) */}
-      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs space-y-0">
+      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs space-y-0 w-full max-w-full">
         <div className="p-4 sm:p-5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h2 className="text-base font-bold text-[#0f2942] flex items-center gap-2">
@@ -743,32 +743,108 @@ export const CampusPresenceView: React.FC<Props> = ({ roleMode = 'principal', de
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[10px]">
-                  <th className="py-3 px-4">Student Details</th>
-                  <th className="py-3 px-4">Presence Status</th>
-                  <th className="py-3 px-4">Current Zone</th>
-                  <th className="py-3 px-4">Detection Source</th>
-                  <th className="py-3 px-4">Confidence Level</th>
-                  <th className="py-3 px-4">Last Detected</th>
-                  <th className="py-3 px-4 text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {filteredRecords.map(rec => (
-                  <tr key={rec.id} className="hover:bg-slate-50/70 transition">
-                    <td className="py-3.5 px-4 font-medium text-slate-900">
-                      <div>
-                        <span className="font-bold text-slate-900">{rec.student_name}</span>
-                        <div className="text-[11px] text-slate-500 mt-0.5">
-                          Roll: <span className="font-mono font-semibold">{rec.student_roll}</span> • {rec.department} (Sem {rec.semester})
+          <div className="w-full">
+            {/* Desktop Table View (hidden on mobile) */}
+            <div className="hidden md:block overflow-x-auto w-full">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[10px]">
+                    <th className="py-3 px-4 min-w-[200px]">Student Details</th>
+                    <th className="py-3 px-4 min-w-[130px]">Presence Status</th>
+                    <th className="py-3 px-4 min-w-[140px]">Current Zone</th>
+                    <th className="py-3 px-4 min-w-[160px]">Detection Source</th>
+                    <th className="py-3 px-4 min-w-[120px]">Confidence Level</th>
+                    <th className="py-3 px-4 min-w-[130px]">Last Detected</th>
+                    <th className="py-3 px-4 min-w-[70px] text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {filteredRecords.map(rec => (
+                    <tr key={rec.id} className="hover:bg-slate-50/70 transition">
+                      <td className="py-3.5 px-4 font-medium text-slate-900">
+                        <div>
+                          <span className="font-bold text-slate-900">{rec.student_name}</span>
+                          <div className="text-[11px] text-slate-500 mt-0.5">
+                            Roll: <span className="font-mono font-semibold">{rec.student_roll}</span> • {rec.department} (Sem {rec.semester})
+                          </div>
                         </div>
-                      </div>
-                    </td>
+                      </td>
 
-                    <td className="py-3.5 px-4">
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold ${
+                          rec.status === 'Present'
+                            ? 'bg-emerald-100 text-emerald-800'
+                            : rec.status === 'Exited'
+                            ? 'bg-slate-100 text-slate-700'
+                            : 'bg-amber-100 text-amber-800'
+                        }`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${
+                            rec.status === 'Present' ? 'bg-emerald-600 animate-pulse' : 'bg-slate-400'
+                          }`} />
+                          {rec.status}
+                        </span>
+                      </td>
+
+                      <td className="py-3.5 px-4">
+                        <div className="flex items-center gap-1.5 text-slate-800 font-semibold">
+                          <MapPin className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                          <span>{rec.current_zone}</span>
+                        </div>
+                      </td>
+
+                      <td className="py-3.5 px-4 text-slate-600 font-mono text-[11px]">
+                        {rec.detection_source}
+                      </td>
+
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md">
+                          <Shield className="w-3 h-3 text-blue-600" />
+                          {rec.confidence}
+                        </span>
+                      </td>
+
+                      <td className="py-3.5 px-4 text-slate-600 font-medium whitespace-nowrap">
+                        <div className="flex items-center gap-1">
+                          <Clock className="w-3.5 h-3.5 text-slate-400" />
+                          <span>{rec.last_detected}</span>
+                        </div>
+                      </td>
+
+                      <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedStudent(rec)}
+                          className="p-1.5 rounded-lg text-slate-600 hover:text-[#0f2942] hover:bg-slate-100 transition"
+                          title="View presence details"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile View: Responsive Student Presence Cards (md:hidden) */}
+            <div className="md:hidden p-3 space-y-3">
+              {filteredRecords.map(rec => (
+                <div
+                  key={rec.id}
+                  onClick={() => setSelectedStudent(rec)}
+                  className="p-4 rounded-2xl border border-slate-200 bg-white shadow-2xs space-y-3 cursor-pointer hover:border-slate-400 transition"
+                >
+                  {/* 1. Header: Student Name + Roll Number + Status Badge */}
+                  <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-2.5">
+                    <div className="min-w-0 flex-1">
+                      <div className="font-bold text-sm text-slate-900 break-words">
+                        {rec.student_name}
+                      </div>
+                      <div className="text-[11px] text-slate-500 font-mono mt-0.5">
+                        Roll: <span className="font-bold text-slate-700">{rec.student_roll}</span>
+                      </div>
+                    </div>
+                    <div className="shrink-0 pt-0.5">
                       <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold ${
                         rec.status === 'Present'
                           ? 'bg-emerald-100 text-emerald-800'
@@ -781,47 +857,76 @@ export const CampusPresenceView: React.FC<Props> = ({ roleMode = 'principal', de
                         }`} />
                         {rec.status}
                       </span>
-                    </td>
+                    </div>
+                  </div>
 
-                    <td className="py-3.5 px-4">
-                      <div className="flex items-center gap-1.5 text-slate-800 font-semibold">
-                        <MapPin className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                        <span>{rec.current_zone}</span>
-                      </div>
-                    </td>
-
-                    <td className="py-3.5 px-4 text-slate-600 font-mono text-[11px]">
-                      {rec.detection_source}
-                    </td>
-
-                    <td className="py-3.5 px-4">
-                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md">
-                        <Shield className="w-3 h-3 text-blue-600" />
-                        {rec.confidence}
+                  {/* 2. Structured Label-Value Details Grid */}
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    {/* Department & Semester */}
+                    <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">
+                        Department & Sem
                       </span>
-                    </td>
+                      <span className="font-semibold text-slate-800 text-xs block mt-0.5 break-words">
+                        {rec.department} (Sem {rec.semester})
+                      </span>
+                    </div>
 
-                    <td className="py-3.5 px-4 text-slate-600 font-medium">
-                      <div className="flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5 text-slate-400" />
-                        <span>{rec.last_detected}</span>
+                    {/* Current Zone */}
+                    <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">
+                        Current Zone
+                      </span>
+                      <div className="flex items-center gap-1 text-slate-800 font-bold text-xs mt-0.5">
+                        <MapPin className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                        <span className="truncate">{rec.current_zone}</span>
                       </div>
-                    </td>
+                    </div>
 
-                    <td className="py-3.5 px-4 text-right">
-                      <button
-                        type="button"
-                        onClick={() => setSelectedStudent(rec)}
-                        className="p-1.5 rounded-lg text-slate-600 hover:text-[#0f2942] hover:bg-slate-100 transition"
-                        title="View presence details"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    {/* Detection Source */}
+                    <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">
+                        Detection Source
+                      </span>
+                      <span className="font-mono text-slate-700 text-[11px] block mt-0.5 break-words">
+                        {rec.detection_source}
+                      </span>
+                    </div>
+
+                    {/* Confidence Level */}
+                    <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">
+                        Confidence Level
+                      </span>
+                      <div className="flex items-center gap-1 font-bold text-slate-800 text-xs mt-0.5">
+                        <Shield className="w-3 h-3 text-blue-600 shrink-0" />
+                        <span>{rec.confidence}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 3. Footer: Last Detected Time + Action Button */}
+                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-1.5 text-slate-500 font-medium text-[11px]">
+                      <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                      <span>Last detected: <strong className="text-slate-700 font-semibold">{rec.last_detected}</strong></span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedStudent(rec);
+                      }}
+                      className="text-xs font-bold text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1 cursor-pointer"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      <span>Details</span>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>

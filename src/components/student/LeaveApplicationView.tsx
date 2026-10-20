@@ -154,7 +154,7 @@ export const LeaveApplicationView: React.FC = () => {
   const isPending = (s: string) => s.toLowerCase().startsWith('pending');
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in w-full max-w-full overflow-hidden">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -258,12 +258,12 @@ export const LeaveApplicationView: React.FC = () => {
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-50 dark:bg-slate-900 text-slate-500 uppercase tracking-wider font-semibold border-b border-slate-200 dark:border-slate-700">
               <tr>
-                <th className="px-4 py-3">Applied On</th>
-                <th className="px-4 py-3">Leave Duration</th>
-                <th className="px-4 py-3">Reason / Details</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Review Remarks</th>
-                <th className="px-4 py-3 text-right">Workflow</th>
+                <th className="px-4 py-3 min-w-[130px] whitespace-nowrap">Applied On</th>
+                <th className="px-4 py-3 min-w-[140px] whitespace-nowrap">Leave Duration</th>
+                <th className="px-4 py-3 min-w-[180px]">Reason / Details</th>
+                <th className="px-4 py-3 min-w-[130px] whitespace-nowrap">Status</th>
+                <th className="px-4 py-3 min-w-[160px]">Review Remarks</th>
+                <th className="px-4 py-3 text-right min-w-[110px] whitespace-nowrap">Workflow</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">

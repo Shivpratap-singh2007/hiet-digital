@@ -33,7 +33,7 @@ export const TeacherAchievementsView: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in w-full max-w-full overflow-hidden">
       <div>
         <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
           <Trophy className="w-6 h-6 text-amber-600 dark:text-amber-400" />
@@ -44,74 +44,142 @@ export const TeacherAchievementsView: React.FC = () => {
         </p>
       </div>
 
-      <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 rounded-2xl overflow-hidden shadow-xs">
-        <table className="w-full text-left text-xs">
-          <thead className="bg-slate-50 dark:bg-slate-900 text-slate-500 uppercase tracking-wider font-semibold border-b border-slate-200 dark:border-slate-700">
-            <tr>
-              <th className="px-4 py-3">Student</th>
-              <th className="px-4 py-3">Category</th>
-              <th className="px-4 py-3">Title & Summary</th>
-              <th className="px-4 py-3">Certificate</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3 text-right">Action</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
-            {achievements.map(ach => (
-              <tr key={ach.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-750">
-                <td className="px-4 py-3">
-                  <div className="font-bold text-slate-800 dark:text-slate-200">{ach.student_name}</div>
-                  <div className="font-mono text-[11px] text-blue-700 dark:text-blue-400">
-                    Roll: {ach.student_roll}
-                  </div>
-                </td>
-                <td className="px-4 py-3">
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-amber-100 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300">
-                    {ach.category}
-                  </span>
-                </td>
-                <td className="px-4 py-3 max-w-xs">
-                  <div className="font-semibold text-slate-800 dark:text-slate-200">{ach.title}</div>
-                  <p className="line-clamp-1 text-slate-500 text-[11px] mt-0.5">{ach.description}</p>
-                </td>
-                <td className="px-4 py-3">
-                  {ach.certificate_url ? (
-                    <a
-                      href={ach.certificate_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 font-semibold hover:underline"
-                    >
-                      <ExternalLink className="w-3.5 h-3.5" />
-                      View Link
-                    </a>
-                  ) : (
-                    <span className="text-slate-400">None</span>
-                  )}
-                </td>
-                <td className="px-4 py-3">
-                  <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${
-                    ach.verification_status === 'Verified'
-                      ? 'bg-emerald-100 text-emerald-800'
-                      : ach.verification_status === 'Pending'
-                      ? 'bg-amber-100 text-amber-800'
-                      : 'bg-rose-100 text-rose-800'
-                  }`}>
-                    {ach.verification_status}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-right">
-                  <button
-                    onClick={() => { setSelectedAch(ach); setRemarks(ach.remarks || ''); }}
-                    className="px-3 py-1 bg-slate-100 dark:bg-slate-700 hover:bg-blue-100 text-slate-700 dark:text-slate-200 hover:text-blue-700 rounded-lg text-xs font-semibold transition"
-                  >
-                    Verify
-                  </button>
-                </td>
+      {/* Desktop / Tablet Table */}
+      <div className="hidden md:block bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 rounded-2xl overflow-hidden shadow-xs">
+        <div className="overflow-x-auto w-full">
+          <table className="w-full text-left text-xs min-w-[700px]">
+            <thead className="bg-slate-50 dark:bg-slate-900 text-slate-500 uppercase tracking-wider font-semibold border-b border-slate-200 dark:border-slate-700 whitespace-nowrap">
+              <tr>
+                <th className="px-4 py-3 min-w-[140px]">Student</th>
+                <th className="px-4 py-3 min-w-[100px]">Category</th>
+                <th className="px-4 py-3 min-w-[200px]">Title & Summary</th>
+                <th className="px-4 py-3 min-w-[100px]">Certificate</th>
+                <th className="px-4 py-3 min-w-[90px]">Status</th>
+                <th className="px-4 py-3 min-w-[80px] text-right">Action</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
+              {achievements.map(ach => (
+                <tr key={ach.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-750">
+                  <td className="px-4 py-3">
+                    <div className="font-bold text-slate-800 dark:text-slate-200">{ach.student_name}</div>
+                    <div className="font-mono text-[11px] text-blue-700 dark:text-blue-400">
+                      Roll: {ach.student_roll}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-amber-100 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300">
+                      {ach.category}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 max-w-xs">
+                    <div className="font-semibold text-slate-800 dark:text-slate-200">{ach.title}</div>
+                    <p className="line-clamp-1 text-slate-500 text-[11px] mt-0.5">{ach.description}</p>
+                  </td>
+                  <td className="px-4 py-3">
+                    {ach.certificate_url ? (
+                      <a
+                        href={ach.certificate_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 font-semibold hover:underline"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        View Link
+                      </a>
+                    ) : (
+                      <span className="text-slate-400">None</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${
+                      ach.verification_status === 'Verified'
+                        ? 'bg-emerald-100 text-emerald-800'
+                        : ach.verification_status === 'Pending'
+                        ? 'bg-amber-100 text-amber-800'
+                        : 'bg-rose-100 text-rose-800'
+                    }`}>
+                      {ach.verification_status}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <button
+                      onClick={() => { setSelectedAch(ach); setRemarks(ach.remarks || ''); }}
+                      className="px-3 py-1 bg-slate-100 dark:bg-slate-700 hover:bg-blue-100 text-slate-700 dark:text-slate-200 hover:text-blue-700 rounded-lg text-xs font-semibold transition"
+                    >
+                      Verify
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Mobile Achievement Cards */}
+      <div className="md:hidden space-y-3">
+        {achievements.map(ach => (
+          <div key={ach.id} className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 rounded-xl p-4 shadow-2xs space-y-3">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <h4 className="font-bold text-slate-900 dark:text-white text-sm">
+                  {ach.student_name}
+                </h4>
+                <span className="font-mono text-xs text-blue-700 dark:text-blue-400">
+                  Roll: {ach.student_roll}
+                </span>
+              </div>
+              <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold shrink-0 ${
+                ach.verification_status === 'Verified'
+                  ? 'bg-emerald-100 text-emerald-800'
+                  : ach.verification_status === 'Pending'
+                  ? 'bg-amber-100 text-amber-800'
+                  : 'bg-rose-100 text-rose-800'
+              }`}>
+                {ach.verification_status}
+              </span>
+            </div>
+
+            <div className="space-y-1 text-xs">
+              <div className="flex items-center gap-2">
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-amber-100 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300">
+                  {ach.category}
+                </span>
+                <span className="font-semibold text-slate-800 dark:text-slate-200 truncate">
+                  {ach.title}
+                </span>
+              </div>
+              <p className="text-slate-600 dark:text-slate-400 text-[11px] leading-relaxed pt-1">
+                {ach.description}
+              </p>
+            </div>
+
+            <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100 dark:border-slate-700/60 text-xs">
+              <div>
+                {ach.certificate_url ? (
+                  <a
+                    href={ach.certificate_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 font-semibold hover:underline text-[11px]"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    View Certificate
+                  </a>
+                ) : (
+                  <span className="text-slate-400 text-[11px]">No document</span>
+                )}
+              </div>
+              <button
+                onClick={() => { setSelectedAch(ach); setRemarks(ach.remarks || ''); }}
+                className="px-3 py-1.5 bg-blue-50 dark:bg-blue-950/50 hover:bg-blue-100 text-blue-700 dark:text-blue-300 rounded-lg text-xs font-bold transition"
+              >
+                Verify & Review
+              </button>
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Verification Modal */}

@@ -107,7 +107,7 @@ export const TeacherManagementView: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in w-full max-w-full overflow-hidden">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -159,18 +159,18 @@ export const TeacherManagementView: React.FC = () => {
         </div>
       </div>
 
-      {/* Teachers Table */}
-      <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 rounded-2xl overflow-x-auto shadow-xs">
-        <table className="w-full text-left text-xs min-w-[580px]">
+      {/* Desktop Teachers Table */}
+      <div className="hidden md:block bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 rounded-2xl overflow-x-auto shadow-xs w-full">
+        <table className="w-full text-left text-xs min-w-[640px]">
           <thead className="bg-slate-50 dark:bg-slate-900 text-slate-500 uppercase tracking-wider font-semibold border-b border-slate-200 dark:border-slate-700">
             <tr>
-              <th className="px-4 py-3">Faculty ID</th>
-              <th className="px-4 py-3">Faculty Name</th>
-              <th className="px-4 py-3">Department</th>
-              <th className="px-4 py-3">Designation</th>
-              <th className="px-4 py-3">Official Email</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3 text-right">Actions</th>
+              <th className="px-4 py-3 min-w-[110px] whitespace-nowrap">Faculty ID</th>
+              <th className="px-4 py-3 min-w-[160px] whitespace-nowrap">Faculty Name</th>
+              <th className="px-4 py-3 min-w-[100px] whitespace-nowrap">Department</th>
+              <th className="px-4 py-3 min-w-[130px] whitespace-nowrap">Designation</th>
+              <th className="px-4 py-3 min-w-[180px] whitespace-nowrap">Official Email</th>
+              <th className="px-4 py-3 min-w-[90px] whitespace-nowrap">Status</th>
+              <th className="px-4 py-3 text-right min-w-[90px] whitespace-nowrap">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
@@ -187,7 +187,7 @@ export const TeacherManagementView: React.FC = () => {
                 </td>
                 <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{t.department}</td>
                 <td className="px-4 py-3 text-slate-600 dark:text-slate-300 font-medium">{t.designation}</td>
-                <td className="px-4 py-3 font-mono text-slate-500">{t.college_email}</td>
+                <td className="px-4 py-3 font-mono text-slate-500 break-all">{t.college_email}</td>
                 <td className="px-4 py-3">
                   <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
                     t.status === 'active'
@@ -200,14 +200,14 @@ export const TeacherManagementView: React.FC = () => {
                 <td className="px-4 py-3 text-right space-x-1">
                   <button
                     onClick={() => startEdit(t)}
-                    className="p-1.5 text-slate-400 hover:text-blue-600 rounded-lg hover:bg-slate-100"
+                    className="p-1.5 text-slate-400 hover:text-blue-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
                     title="Edit Record"
                   >
                     <Edit className="w-3.5 h-3.5" />
                   </button>
                   <button
                     onClick={() => handleToggleStatus(t.id)}
-                    className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-slate-100"
+                    className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
                     title={t.status === 'active' ? 'Disable Faculty' : 'Activate Faculty'}
                   >
                     <UserX className="w-3.5 h-3.5" />
@@ -217,6 +217,71 @@ export const TeacherManagementView: React.FC = () => {
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile Teachers Cards (320px - 768px) */}
+      <div className="md:hidden space-y-3">
+        {filtered.map(t => (
+          <div
+            key={t.id}
+            className="p-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 rounded-2xl shadow-xs space-y-3"
+          >
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h4 className="font-bold text-sm text-slate-900 dark:text-white">{t.name}</h4>
+                  {t.is_hod && (
+                    <span className="px-1.5 py-0.5 rounded bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 font-bold text-[10px]">
+                      HOD
+                    </span>
+                  )}
+                </div>
+                <p className="font-mono text-xs font-semibold text-amber-700 dark:text-amber-400 mt-0.5">
+                  {t.faculty_id}
+                </p>
+              </div>
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase shrink-0 ${
+                t.status === 'active'
+                  ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
+                  : 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300'
+              }`}>
+                {t.status}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-100 dark:border-slate-700/50">
+              <div>
+                <span className="text-[10px] uppercase font-semibold text-slate-400 block">Department</span>
+                <span className="font-medium text-slate-700 dark:text-slate-200">{t.department}</span>
+              </div>
+              <div>
+                <span className="text-[10px] uppercase font-semibold text-slate-400 block">Designation</span>
+                <span className="font-medium text-slate-700 dark:text-slate-200">{t.designation}</span>
+              </div>
+              <div className="col-span-2">
+                <span className="text-[10px] uppercase font-semibold text-slate-400 block">Official Email</span>
+                <span className="font-mono text-slate-600 dark:text-slate-300 break-all text-[11px]">{t.college_email}</span>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-700/50">
+              <button
+                onClick={() => startEdit(t)}
+                className="px-3 py-1.5 bg-slate-100 hover:bg-blue-50 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 hover:text-blue-600 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition"
+              >
+                <Edit className="w-3.5 h-3.5" />
+                Edit
+              </button>
+              <button
+                onClick={() => handleToggleStatus(t.id)}
+                className="px-3 py-1.5 bg-slate-100 hover:bg-rose-50 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 hover:text-rose-600 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition"
+              >
+                <UserX className="w-3.5 h-3.5" />
+                {t.status === 'active' ? 'Deactivate' : 'Activate'}
+              </button>
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Add / Edit Modal */}

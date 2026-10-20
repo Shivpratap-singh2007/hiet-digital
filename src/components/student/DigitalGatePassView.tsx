@@ -242,7 +242,7 @@ export const DigitalGatePassView: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in font-sans max-w-4xl mx-auto pb-10">
+    <div className="space-y-6 animate-fade-in font-sans max-w-4xl mx-auto pb-10 w-full max-w-full overflow-hidden">
       {/* Header Banner */}
       <div className="bg-white border border-slate-200 rounded-3xl p-5 sm:p-6 shadow-xs relative overflow-hidden">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -397,65 +397,156 @@ export const DigitalGatePassView: React.FC = () => {
             No gate pass requests found in records.
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs text-left">
-              <thead>
-                <tr className="border-b border-slate-100 text-slate-500 font-bold text-[11px]">
-                  <th className="py-2.5 px-2">Student</th>
-                  <th className="py-2.5 px-2">Type & Date</th>
-                  <th className="py-2.5 px-2">Timing Window</th>
-                  <th className="py-2.5 px-2">Reason</th>
-                  <th className="py-2.5 px-2">Status</th>
-                  <th className="py-2.5 px-2 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {displayedRequests.map((req) => (
-                  <tr key={req.id} className="hover:bg-slate-50/80 transition">
-                    <td className="py-3 px-2">
-                      <span className="font-bold text-slate-900">{req.student_name}</span>
-                      <span className="block text-[10px] font-mono text-slate-500">
+          <div className="w-full">
+            {/* Desktop Table */}
+            <div className="hidden md:block overflow-x-auto w-full">
+              <table className="w-full text-xs text-left min-w-[680px]">
+                <thead>
+                  <tr className="border-b border-slate-100 text-slate-500 font-bold text-[11px]">
+                    <th className="py-2.5 px-3 min-w-[150px] whitespace-nowrap">Student</th>
+                    <th className="py-2.5 px-3 min-w-[120px] whitespace-nowrap">Type & Date</th>
+                    <th className="py-2.5 px-3 min-w-[140px] whitespace-nowrap">Timing Window</th>
+                    <th className="py-2.5 px-3 min-w-[180px]">Reason</th>
+                    <th className="py-2.5 px-3 min-w-[100px] whitespace-nowrap">Status</th>
+                    <th className="py-2.5 px-3 text-right min-w-[120px] whitespace-nowrap">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {displayedRequests.map((req) => (
+                    <tr key={req.id} className="hover:bg-slate-50/80 transition">
+                      <td className="py-3 px-3">
+                        <span className="font-bold text-slate-900">{req.student_name}</span>
+                        <span className="block text-[10px] font-mono text-slate-500">
+                          {req.student_roll} • {req.branch} (Sem {req.semester})
+                        </span>
+                      </td>
+                      <td className="py-3 px-3">
+                        <span className="font-semibold text-slate-800">{req.pass_type}</span>
+                        <span className="block text-[10px] text-slate-500">{req.valid_date}</span>
+                      </td>
+                      <td className="py-3 px-3 text-slate-600 font-mono text-[11px] whitespace-nowrap">
+                        {req.departure_time} - {req.expected_return_time}
+                      </td>
+                      <td className="py-3 px-3 text-slate-600 max-w-xs">
+                        <p className="line-clamp-2">{req.reason}</p>
+                        {req.approver_comments && (
+                          <span className="text-[10px] text-blue-700 block italic mt-0.5">
+                            Note: {req.approver_comments}
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-3 px-3">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          req.status === 'Approved'
+                            ? 'bg-emerald-100 text-emerald-800'
+                            : req.status === 'Pending'
+                            ? 'bg-amber-100 text-amber-800'
+                            : req.status === 'Rejected'
+                            ? 'bg-rose-100 text-rose-800'
+                            : 'bg-slate-100 text-slate-700'
+                        }`}>
+                          {req.status}
+                        </span>
+                      </td>
+                      <td className="py-3 px-3 text-right whitespace-nowrap">
+                        {isApprover && req.status === 'Pending' && (
+                          <div className="inline-flex items-center gap-1.5">
+                            <button
+                              onClick={() => {
+                                setActionTargetRequest(req);
+                                setActionType('Approve');
+                                setApproverComments('');
+                              }}
+                              className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-[11px] shadow-2xs transition"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => {
+                                setActionTargetRequest(req);
+                                setActionType('Reject');
+                                setApproverComments('');
+                              }}
+                              className="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-lg text-[11px] shadow-2xs transition"
+                            >
+                              Reject
+                            </button>
+                          </div>
+                        )}
+                        {!isApprover && req.status === 'Pending' && (
+                          <button
+                            onClick={() => handleCancelRequest(req.id)}
+                            className="px-2 py-1 text-rose-600 hover:text-rose-800 font-bold hover:underline text-[11px]"
+                          >
+                            Cancel
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Gate Pass Cards (320px - 768px) */}
+            <div className="md:hidden space-y-3">
+              {displayedRequests.map((req) => (
+                <div
+                  key={req.id}
+                  className="p-4 bg-white border border-slate-200 rounded-2xl shadow-xs space-y-3"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <h4 className="font-bold text-sm text-slate-900">{req.student_name}</h4>
+                      <p className="text-[10px] font-mono text-slate-500 mt-0.5">
                         {req.student_roll} • {req.branch} (Sem {req.semester})
-                      </span>
-                    </td>
-                    <td className="py-3 px-2">
+                      </p>
+                    </div>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0 ${
+                      req.status === 'Approved'
+                        ? 'bg-emerald-100 text-emerald-800'
+                        : req.status === 'Pending'
+                        ? 'bg-amber-100 text-amber-800'
+                        : req.status === 'Rejected'
+                        ? 'bg-rose-100 text-rose-800'
+                        : 'bg-slate-100 text-slate-700'
+                    }`}>
+                      {req.status}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-100">
+                    <div>
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">Type & Date</span>
                       <span className="font-semibold text-slate-800">{req.pass_type}</span>
                       <span className="block text-[10px] text-slate-500">{req.valid_date}</span>
-                    </td>
-                    <td className="py-3 px-2 text-slate-600 font-mono text-[11px]">
-                      {req.departure_time} - {req.expected_return_time}
-                    </td>
-                    <td className="py-3 px-2 text-slate-600 max-w-xs">
-                      <p className="line-clamp-2">{req.reason}</p>
+                    </div>
+                    <div>
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">Timing Window</span>
+                      <span className="font-mono text-slate-700 text-xs block">{req.departure_time} - {req.expected_return_time}</span>
+                    </div>
+                    <div className="col-span-2 pt-1 border-t border-slate-50">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">Reason</span>
+                      <p className="text-slate-600 text-xs line-clamp-2">{req.reason}</p>
                       {req.approver_comments && (
-                        <span className="text-[10px] text-blue-700 block italic mt-0.5">
+                        <span className="text-[10px] text-blue-700 block italic mt-1">
                           Note: {req.approver_comments}
                         </span>
                       )}
-                    </td>
-                    <td className="py-3 px-2">
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                        req.status === 'Approved'
-                          ? 'bg-emerald-100 text-emerald-800'
-                          : req.status === 'Pending'
-                          ? 'bg-amber-100 text-amber-800'
-                          : req.status === 'Rejected'
-                          ? 'bg-rose-100 text-rose-800'
-                          : 'bg-slate-100 text-slate-700'
-                      }`}>
-                        {req.status}
-                      </span>
-                    </td>
-                    <td className="py-3 px-2 text-right">
-                      {isApprover && req.status === 'Pending' && (
-                        <div className="inline-flex items-center gap-1.5">
+                    </div>
+                  </div>
+
+                  {((isApprover && req.status === 'Pending') || (!isApprover && req.status === 'Pending')) && (
+                    <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                      {isApprover && (
+                        <>
                           <button
                             onClick={() => {
                               setActionTargetRequest(req);
                               setActionType('Approve');
                               setApproverComments('');
                             }}
-                            className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-[11px] shadow-2xs transition"
+                            className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs shadow-2xs transition"
                           >
                             Approve
                           </button>
@@ -465,25 +556,25 @@ export const DigitalGatePassView: React.FC = () => {
                               setActionType('Reject');
                               setApproverComments('');
                             }}
-                            className="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-lg text-[11px] shadow-2xs transition"
+                            className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-lg text-xs shadow-2xs transition"
                           >
                             Reject
                           </button>
-                        </div>
+                        </>
                       )}
-                      {!isApprover && req.status === 'Pending' && (
+                      {!isApprover && (
                         <button
                           onClick={() => handleCancelRequest(req.id)}
-                          className="px-2 py-1 text-rose-600 hover:text-rose-800 font-bold hover:underline text-[11px]"
+                          className="px-3 py-1.5 text-rose-600 hover:bg-rose-50 font-bold rounded-lg text-xs transition"
                         >
-                          Cancel
+                          Cancel Request
                         </button>
                       )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>

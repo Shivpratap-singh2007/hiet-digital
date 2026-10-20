@@ -239,7 +239,7 @@ export const AttendanceApprovalsView: React.FC<Props> = ({ roleMode, department,
   const info = getRoleHeaderInfo();
 
   return (
-    <div className="space-y-5 animate-fade-in font-sans">
+    <div className="space-y-5 animate-fade-in font-sans w-full max-w-full overflow-hidden">
       {/* 1. Header Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
@@ -692,14 +692,14 @@ export const AttendanceApprovalsView: React.FC<Props> = ({ roleMode, department,
                 <h4 className="font-extrabold text-xs uppercase tracking-wider text-slate-900 dark:text-white mb-2">
                   Student-wise Attendance Verification
                 </h4>
-                <div className="border border-slate-200 dark:border-neutral-800 rounded-xl overflow-hidden max-h-64 overflow-y-auto">
-                  <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-50 dark:bg-neutral-800 font-bold border-b border-slate-200 dark:border-neutral-700">
+                <div className="border border-slate-200 dark:border-neutral-800 rounded-xl overflow-x-auto max-h-64 overflow-y-auto w-full">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead className="bg-slate-50 dark:bg-neutral-800 font-bold border-b border-slate-200 dark:border-neutral-700 text-[11px] uppercase tracking-wider">
                       <tr>
-                        <th className="p-2.5">Roll No</th>
-                        <th className="p-2.5">Student Full Name</th>
-                        <th className="p-2.5">Status</th>
-                        <th className="p-2.5">Notes</th>
+                        <th className="p-2.5 min-w-[100px] whitespace-nowrap">Roll No</th>
+                        <th className="p-2.5 min-w-[160px]">Student Full Name</th>
+                        <th className="p-2.5 min-w-[90px] whitespace-nowrap">Status</th>
+                        <th className="p-2.5 min-w-[110px]">Notes</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-neutral-800">

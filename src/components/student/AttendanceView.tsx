@@ -323,7 +323,7 @@ export const AttendanceView: React.FC = () => {
     : null;
 
   return (
-    <div className="space-y-6 animate-fade-in font-sans">
+    <div className="space-y-6 animate-fade-in font-sans w-full max-w-full overflow-hidden">
       {/* Header with Scan Button & Dev Mode Toggle */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -1051,10 +1051,10 @@ export const AttendanceView: React.FC = () => {
           <table className="w-full text-left text-xs">
             <thead className="sticky top-0 bg-slate-50 dark:bg-neutral-850 text-slate-500 dark:text-neutral-400 uppercase tracking-wider font-semibold border-b border-slate-200 dark:border-neutral-800">
               <tr>
-                <th className="px-4 py-3">Date</th>
-                <th className="px-4 py-3">Subject</th>
-                <th className="px-4 py-3">Course Code</th>
-                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3 min-w-[110px] whitespace-nowrap">Date</th>
+                <th className="px-4 py-3 min-w-[160px] whitespace-nowrap">Subject</th>
+                <th className="px-4 py-3 min-w-[120px] whitespace-nowrap">Course Code</th>
+                <th className="px-4 py-3 min-w-[100px] whitespace-nowrap">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-neutral-800">

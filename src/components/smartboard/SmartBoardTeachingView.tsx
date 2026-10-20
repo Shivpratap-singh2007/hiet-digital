@@ -226,7 +226,7 @@ export const SmartBoardTeachingView: React.FC<Props> = ({ roleMode }) => {
   const uniqueTeachersCount = new Set(lessons.map(l => l.teacher_id)).size;
 
   return (
-    <div className="space-y-6 animate-fade-in font-sans">
+    <div className="space-y-6 animate-fade-in font-sans w-full max-w-full overflow-hidden">
       {/* 1. Header */}
       <PageHeader
         breadcrumbs={[
@@ -368,16 +368,17 @@ export const SmartBoardTeachingView: React.FC<Props> = ({ roleMode }) => {
           <span className="text-xs text-slate-400 font-medium">HOD & Principal Synchronized</span>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+        {/* Desktop / Tablet Table */}
+        <div className="hidden md:block overflow-x-auto w-full">
+          <table className="w-full text-left text-xs min-w-[750px]">
             <thead className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
               <tr>
-                <th className="py-3 px-4">Date & Time</th>
-                <th className="py-3 px-4">Faculty Member</th>
-                <th className="py-3 px-4">Subject & Unit</th>
-                <th className="py-3 px-4">Topic Covered</th>
-                <th className="py-3 px-4">Board Artifact</th>
-                <th className="py-3 px-4 text-right">Sync Status</th>
+                <th className="py-3 px-4 min-w-[140px] whitespace-nowrap">Date & Time</th>
+                <th className="py-3 px-4 min-w-[150px] whitespace-nowrap">Faculty Member</th>
+                <th className="py-3 px-4 min-w-[140px] whitespace-nowrap">Subject & Unit</th>
+                <th className="py-3 px-4 min-w-[180px] whitespace-nowrap">Topic Covered</th>
+                <th className="py-3 px-4 min-w-[130px] whitespace-nowrap">Board Artifact</th>
+                <th className="py-3 px-4 min-w-[100px] whitespace-nowrap text-right">Sync Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -434,6 +435,62 @@ export const SmartBoardTeachingView: React.FC<Props> = ({ roleMode }) => {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Lesson Cards */}
+        <div className="md:hidden divide-y divide-slate-100">
+          {filteredLessons.map(l => (
+            <div key={l.id} className="p-4 space-y-3 bg-white hover:bg-slate-50/50 transition">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <span className="font-bold text-xs text-slate-900 block">{formatDate(l.class_date)}</span>
+                  <span className="text-[11px] text-slate-500 font-mono">{l.start_time} - {l.end_time} ({l.duration_minutes} min)</span>
+                </div>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-emerald-100 text-emerald-800 border border-emerald-200 shrink-0">
+                  <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                  {l.sync_status}
+                </span>
+              </div>
+
+              <div>
+                <span className="font-bold text-xs text-slate-900 block">{l.subject_name}</span>
+                <span className="text-[11px] text-slate-500 font-mono">{l.subject_code} • {l.unit}</span>
+              </div>
+
+              <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 text-xs">
+                <span className="font-semibold text-slate-800 block">{l.topic}</span>
+                {l.notes_summary && <p className="text-[11px] text-slate-500 mt-0.5">{l.notes_summary}</p>}
+                {l.ai_summary && (
+                  <div className="mt-2">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedLessonForSummary(l)}
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition"
+                    >
+                      <Sparkles className="w-2.5 h-2.5 text-indigo-500" />
+                      <span>AI Summary ({l.ai_summary_status === 'edited' ? 'Reviewed' : 'Generated'})</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between gap-2 pt-1 text-xs">
+                <div>
+                  <span className="font-bold text-slate-800 text-[11px] block">{l.teacher_name}</span>
+                  <span className="text-[10px] text-slate-400">{l.department} • Room {l.room_number || 'Smart Lab'}</span>
+                </div>
+                <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-blue-50 border border-blue-200 text-[#0f2942] text-[10px] font-bold shrink-0">
+                  <FileText className="w-3 h-3" />
+                  <span className="max-w-[120px] truncate">{l.file_name || 'Board_Export.pdf'}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+          {filteredLessons.length === 0 && (
+            <div className="p-8 text-center text-xs text-slate-400">
+              No Smart Board lesson sessions found matching the filter criteria.
+            </div>
+          )}
         </div>
       </div>
 

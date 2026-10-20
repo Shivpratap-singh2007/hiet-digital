@@ -215,7 +215,7 @@ export const CgpaView: React.FC<Props> = ({ initialTab = 'university_results' })
   }, [filteredClassTests]);
 
   return (
-    <div className="space-y-6 font-sans pb-24 w-full max-w-full">
+    <div className="space-y-6 font-sans pb-24 w-full max-w-full overflow-hidden">
       {/* 1. Official Header Banner */}
       <div className="bg-[#0F2942] text-white rounded-3xl p-6 sm:p-7 shadow-sm border border-[#183B56] relative overflow-hidden">
         <div className="relative z-10">
@@ -590,17 +590,17 @@ export const CgpaView: React.FC<Props> = ({ initialTab = 'university_results' })
                 <table className="w-full text-left text-xs border-collapse">
                   <thead className="bg-[#F8FAFC] text-[#64748B] uppercase tracking-wider font-bold border-b border-[#E2E8F0]">
                     <tr>
-                      <th className="px-4 py-3">Code</th>
-                      <th className="px-4 py-3">Subject Name</th>
-                      <th className="px-3 py-3 text-center">Credits</th>
-                      <th className="px-3 py-3 text-center">Internal</th>
-                      <th className="px-3 py-3 text-center">Sessional</th>
-                      <th className="px-3 py-3 text-center">Practical</th>
-                      <th className="px-3 py-3 text-center">External</th>
-                      <th className="px-3 py-3 text-center">Total (100)</th>
-                      <th className="px-3 py-3 text-center">Grade</th>
-                      <th className="px-3 py-3 text-center">Grade Point</th>
-                      <th className="px-4 py-3 text-center">Status</th>
+                      <th className="px-4 py-3 min-w-[90px] whitespace-nowrap">Code</th>
+                      <th className="px-4 py-3 min-w-[180px]">Subject Name</th>
+                      <th className="px-3 py-3 text-center min-w-[65px] whitespace-nowrap">Credits</th>
+                      <th className="px-3 py-3 text-center min-w-[70px] whitespace-nowrap">Internal</th>
+                      <th className="px-3 py-3 text-center min-w-[75px] whitespace-nowrap">Sessional</th>
+                      <th className="px-3 py-3 text-center min-w-[75px] whitespace-nowrap">Practical</th>
+                      <th className="px-3 py-3 text-center min-w-[75px] whitespace-nowrap">External</th>
+                      <th className="px-3 py-3 text-center min-w-[85px] whitespace-nowrap">Total (100)</th>
+                      <th className="px-3 py-3 text-center min-w-[65px] whitespace-nowrap">Grade</th>
+                      <th className="px-3 py-3 text-center min-w-[85px] whitespace-nowrap">Grade Point</th>
+                      <th className="px-4 py-3 text-center min-w-[75px] whitespace-nowrap">Status</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#E2E8F0] text-slate-800">
@@ -923,21 +923,22 @@ export const CgpaView: React.FC<Props> = ({ initialTab = 'university_results' })
               </div>
 
               {/* Desktop Table (>= sm) */}
-              <div className="hidden sm:block bg-white border border-[#E2E8F0] rounded-2xl overflow-hidden shadow-xs">
-                <table className="w-full text-left text-xs border-collapse">
-                  <thead className="bg-[#F8FAFC] text-[#64748B] uppercase tracking-wider font-bold border-b border-[#E2E8F0]">
-                    <tr>
-                      <th className="px-4 py-3">Code</th>
-                      <th className="px-4 py-3">Subject Name</th>
-                      <th className="px-4 py-3">Assessment Name</th>
-                      <th className="px-3 py-3 text-center">Date</th>
-                      <th className="px-3 py-3 text-center">Marks Obtained</th>
-                      <th className="px-3 py-3 text-center">Max Marks</th>
-                      <th className="px-3 py-3 text-center">Percentage</th>
-                      <th className="px-4 py-3 text-center">Status</th>
-                      <th className="px-4 py-3">Faculty / Remarks</th>
-                    </tr>
-                  </thead>
+              <div className="hidden sm:block bg-white border border-[#E2E8F0] rounded-2xl overflow-hidden shadow-xs w-full">
+                <div className="overflow-x-auto w-full">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead className="bg-[#F8FAFC] text-[#64748B] uppercase tracking-wider font-bold border-b border-[#E2E8F0]">
+                      <tr>
+                        <th className="px-4 py-3 min-w-[90px] whitespace-nowrap">Code</th>
+                        <th className="px-4 py-3 min-w-[160px]">Subject Name</th>
+                        <th className="px-4 py-3 min-w-[150px]">Assessment Name</th>
+                        <th className="px-3 py-3 text-center min-w-[100px] whitespace-nowrap">Date</th>
+                        <th className="px-3 py-3 text-center min-w-[90px] whitespace-nowrap">Marks Obtained</th>
+                        <th className="px-3 py-3 text-center min-w-[80px] whitespace-nowrap">Max Marks</th>
+                        <th className="px-3 py-3 text-center min-w-[80px] whitespace-nowrap">Percentage</th>
+                        <th className="px-4 py-3 text-center min-w-[80px] whitespace-nowrap">Status</th>
+                        <th className="px-4 py-3 min-w-[160px]">Faculty / Remarks</th>
+                      </tr>
+                    </thead>
                   <tbody className="divide-y divide-[#E2E8F0] text-slate-800">
                     {filteredClassTests.map(ct => (
                       <tr key={ct.id} className="hover:bg-slate-50 transition">
@@ -975,7 +976,8 @@ export const CgpaView: React.FC<Props> = ({ initialTab = 'university_results' })
                   </tbody>
                 </table>
               </div>
-            </>
+            </div>
+          </>
           )}
         </div>
       )}

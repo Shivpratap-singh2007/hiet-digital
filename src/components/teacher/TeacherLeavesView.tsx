@@ -157,7 +157,7 @@ export const TeacherLeavesView: React.FC = () => {
     (isHod || user?.id === 'prof-tch-fac-cse-001' || user?.name?.includes('Anuj'));
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in w-full max-w-full overflow-hidden">
       {/* Header & Filter Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -222,70 +222,130 @@ export const TeacherLeavesView: React.FC = () => {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto w-full min-w-0">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 dark:bg-slate-900 text-slate-500 uppercase tracking-wider font-semibold border-b border-slate-200 dark:border-slate-700">
-                <tr>
-                  <th className="px-4 py-3">Applied On</th>
-                  <th className="px-4 py-3">Student</th>
-                  <th className="px-4 py-3">Duration</th>
-                  <th className="px-4 py-3">Reason & Document</th>
-                  <th className="px-4 py-3">Current Status</th>
-                  <th className="px-4 py-3 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
-                {filteredLeaves.map(l => (
-                  <tr key={l.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-750 transition">
-                    <td className="px-4 py-3 text-slate-600 dark:text-slate-300 whitespace-nowrap font-medium">
-                      {formatIndiaDateTime(l.submitted_at ?? l.created_at)}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="font-bold text-slate-800 dark:text-slate-200">{l.student_name}</div>
-                      <div className="font-mono text-[11px] text-blue-700 dark:text-blue-400">
-                        Roll: {l.student_roll || '210101'} • {l.student_branch || 'CSE'} (Sem {l.student_semester || 1}{l.student_section ? `-${l.student_section}` : ''})
-                      </div>
-                      <span className="text-[10px] text-slate-400 block mt-0.5">Applied: {formatIndiaDateTime(l.submitted_at ?? l.created_at)}</span>
-                    </td>
-                    <td className="px-4 py-3 font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap">
-                      <div>{formatDate(l.start_date)} — {formatDate(l.end_date)}</div>
-                      <span className="text-[10px] text-slate-400 font-normal">
-                        {l.total_days || 1} {(l.total_days || 1) === 1 ? 'day' : 'days'}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 max-w-xs">
-                      <p className="line-clamp-2 text-slate-600 dark:text-slate-300">{l.reason}</p>
-                      {l.document_url && (
-                        <a
-                          href={l.document_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-[11px] text-blue-600 dark:text-blue-400 mt-1 hover:underline"
-                        >
-                          <FileText className="w-3 h-3" /> View Supporting Slip
-                        </a>
-                      )}
-                      {l.remarks && (
-                        <div className="mt-1 text-[10px] text-slate-500 bg-slate-50 dark:bg-slate-900/60 p-1.5 rounded-md border border-slate-200/60 dark:border-slate-800">
-                          <span className="font-semibold text-slate-700 dark:text-slate-300">Prior Remark:</span> {l.remarks}
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      {getStatusBadge(l.status)}
-                    </td>
-                    <td className="px-4 py-3 text-right whitespace-nowrap">
-                      <button
-                        onClick={() => { setSelectedLeave(l); setRemarks(l.remarks || ''); }}
-                        className="px-3 py-1 bg-slate-100 dark:bg-slate-700 hover:bg-blue-100 dark:hover:bg-blue-900/40 text-slate-700 dark:text-slate-200 hover:text-blue-700 rounded-lg text-xs font-semibold transition cursor-pointer"
-                      >
-                        Review Application
-                      </button>
-                    </td>
+          <div className="w-full">
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto w-full">
+              <table className="w-full text-left text-xs min-w-[720px]">
+                <thead className="bg-slate-50 dark:bg-slate-900 text-slate-500 uppercase tracking-wider font-semibold border-b border-slate-200 dark:border-slate-700">
+                  <tr>
+                    <th className="px-4 py-3 min-w-[130px] whitespace-nowrap">Applied On</th>
+                    <th className="px-4 py-3 min-w-[180px] whitespace-nowrap">Student</th>
+                    <th className="px-4 py-3 min-w-[140px] whitespace-nowrap">Duration</th>
+                    <th className="px-4 py-3 min-w-[200px]">Reason & Document</th>
+                    <th className="px-4 py-3 min-w-[130px] whitespace-nowrap">Current Status</th>
+                    <th className="px-4 py-3 text-right min-w-[130px] whitespace-nowrap">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
+                  {filteredLeaves.map(l => (
+                    <tr key={l.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-750 transition">
+                      <td className="px-4 py-3 text-slate-600 dark:text-slate-300 whitespace-nowrap font-medium">
+                        {formatIndiaDateTime(l.submitted_at ?? l.created_at)}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="font-bold text-slate-800 dark:text-slate-200">{l.student_name}</div>
+                        <div className="font-mono text-[11px] text-blue-700 dark:text-blue-400">
+                          Roll: {l.student_roll || '210101'} • {l.student_branch || 'CSE'} (Sem {l.student_semester || 1}{l.student_section ? `-${l.student_section}` : ''})
+                        </div>
+                        <span className="text-[10px] text-slate-400 block mt-0.5">Applied: {formatIndiaDateTime(l.submitted_at ?? l.created_at)}</span>
+                      </td>
+                      <td className="px-4 py-3 font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap">
+                        <div>{formatDate(l.start_date)} — {formatDate(l.end_date)}</div>
+                        <span className="text-[10px] text-slate-400 font-normal">
+                          {l.total_days || 1} {(l.total_days || 1) === 1 ? 'day' : 'days'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 max-w-xs">
+                        <p className="line-clamp-2 text-slate-600 dark:text-slate-300">{l.reason}</p>
+                        {l.document_url && (
+                          <a
+                            href={l.document_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-[11px] text-blue-600 dark:text-blue-400 mt-1 hover:underline"
+                          >
+                            <FileText className="w-3 h-3" /> View Supporting Slip
+                          </a>
+                        )}
+                        {l.remarks && (
+                          <div className="mt-1 text-[10px] text-slate-500 bg-slate-50 dark:bg-slate-900/60 p-1.5 rounded-md border border-slate-200/60 dark:border-slate-800">
+                            <span className="font-semibold text-slate-700 dark:text-slate-300">Prior Remark:</span> {l.remarks}
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        {getStatusBadge(l.status)}
+                      </td>
+                      <td className="px-4 py-3 text-right whitespace-nowrap">
+                        <button
+                          onClick={() => { setSelectedLeave(l); setRemarks(l.remarks || ''); }}
+                          className="px-3 py-1 bg-slate-100 dark:bg-slate-700 hover:bg-blue-100 dark:hover:bg-blue-900/40 text-slate-700 dark:text-slate-200 hover:text-blue-700 rounded-lg text-xs font-semibold transition cursor-pointer"
+                        >
+                          Review Application
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Leave Cards (320px - 768px) */}
+            <div className="md:hidden space-y-3 p-3">
+              {filteredLeaves.map(l => (
+                <div
+                  key={l.id}
+                  className="p-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 rounded-xl shadow-xs space-y-3"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <h4 className="font-bold text-sm text-slate-900 dark:text-white">
+                        {l.student_name}
+                      </h4>
+                      <p className="font-mono text-xs text-blue-600 dark:text-blue-400 font-semibold mt-0.5">
+                        Roll: {l.student_roll || '210101'} • {l.student_branch || 'CSE'} (Sem {l.student_semester || 1})
+                      </p>
+                    </div>
+                    <div className="shrink-0">
+                      {getStatusBadge(l.status)}
+                    </div>
+                  </div>
+
+                  <div className="p-2.5 bg-slate-50 dark:bg-slate-900/60 rounded-lg border border-slate-100 dark:border-slate-800 space-y-1.5 text-xs">
+                    <div className="flex items-center justify-between text-slate-600 dark:text-slate-300">
+                      <span className="text-[10px] uppercase font-bold text-slate-400">Duration</span>
+                      <span className="font-semibold">{formatDate(l.start_date)} — {formatDate(l.end_date)} ({l.total_days || 1} d)</span>
+                    </div>
+                    <div className="text-slate-600 dark:text-slate-300">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Reason</span>
+                      <p className="line-clamp-2 text-xs">{l.reason}</p>
+                    </div>
+                    {l.document_url && (
+                      <a
+                        href={l.document_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-[11px] text-blue-600 dark:text-blue-400 hover:underline pt-0.5"
+                      >
+                        <FileText className="w-3 h-3" /> View Supporting Document
+                      </a>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-slate-700/50">
+                    <span className="text-[10px] text-slate-400">
+                      {formatIndiaDateTime(l.submitted_at ?? l.created_at)}
+                    </span>
+                    <button
+                      onClick={() => { setSelectedLeave(l); setRemarks(l.remarks || ''); }}
+                      className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold transition"
+                    >
+                      Review
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>

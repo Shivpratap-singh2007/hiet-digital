@@ -35,7 +35,7 @@ export const SyllabusPyqView: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in w-full max-w-full overflow-hidden">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -165,42 +165,83 @@ export const SyllabusPyqView: React.FC = () => {
           ))}
         </div>
       ) : (
-        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 rounded-2xl overflow-hidden shadow-xs">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 dark:bg-slate-900 text-slate-500 uppercase tracking-wider font-semibold border-b border-slate-200 dark:border-slate-700">
-              <tr>
-                <th className="px-4 py-3">Subject Code</th>
-                <th className="px-4 py-3">Subject Title</th>
-                <th className="px-4 py-3">Exam Session</th>
-                <th className="px-4 py-3">Academic Year</th>
-                <th className="px-4 py-3 text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
-              {filteredPyqs.map(p => (
-                <tr key={p.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-750">
-                  <td className="px-4 py-3 font-mono font-bold text-purple-700 dark:text-purple-400">{p.subject_code}</td>
-                  <td className="px-4 py-3 font-medium text-slate-800 dark:text-slate-200">{p.subject_name}</td>
-                  <td className="px-4 py-3">
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300">
-                      {p.exam_type}
+        <>
+          {/* Desktop / Tablet Table */}
+          <div className="hidden md:block bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 rounded-2xl overflow-hidden shadow-xs">
+            <div className="overflow-x-auto w-full">
+              <table className="w-full text-left text-xs min-w-[650px]">
+                <thead className="bg-slate-50 dark:bg-slate-900 text-slate-500 uppercase tracking-wider font-semibold border-b border-slate-200 dark:border-slate-700 whitespace-nowrap">
+                  <tr>
+                    <th className="px-4 py-3 min-w-[110px]">Subject Code</th>
+                    <th className="px-4 py-3 min-w-[200px]">Subject Title</th>
+                    <th className="px-4 py-3 min-w-[110px]">Exam Session</th>
+                    <th className="px-4 py-3 min-w-[90px]">Academic Year</th>
+                    <th className="px-4 py-3 min-w-[120px] text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
+                  {filteredPyqs.map(p => (
+                    <tr key={p.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-750">
+                      <td className="px-4 py-3 font-mono font-bold text-purple-700 dark:text-purple-400">{p.subject_code}</td>
+                      <td className="px-4 py-3 font-medium text-slate-800 dark:text-slate-200">{p.subject_name}</td>
+                      <td className="px-4 py-3">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300">
+                          {p.exam_type}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 font-semibold text-slate-700 dark:text-slate-300">{p.year}</td>
+                      <td className="px-4 py-3 text-right">
+                        <button
+                          onClick={() => handleDownload(`${p.subject_code}_${p.year}_${p.exam_type}.pdf`)}
+                          className="inline-flex items-center gap-1 px-3 py-1 bg-slate-100 dark:bg-slate-700 hover:bg-purple-100 dark:hover:bg-purple-900/40 hover:text-purple-700 dark:hover:text-purple-300 text-slate-700 dark:text-slate-200 rounded-lg transition font-medium text-xs"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                          Download PYQ
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Mobile PYQ Cards */}
+          <div className="md:hidden space-y-3">
+            {filteredPyqs.map(p => (
+              <div key={p.id} className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 rounded-xl p-4 shadow-2xs space-y-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <span className="font-mono text-xs font-bold text-purple-700 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/40 px-2 py-0.5 rounded border border-purple-200 dark:border-purple-800">
+                      {p.subject_code}
                     </span>
-                  </td>
-                  <td className="px-4 py-3 font-semibold text-slate-700 dark:text-slate-300">{p.year}</td>
-                  <td className="px-4 py-3 text-right">
-                    <button
-                      onClick={() => handleDownload(`${p.subject_code}_${p.year}_${p.exam_type}.pdf`)}
-                      className="inline-flex items-center gap-1 px-3 py-1 bg-slate-100 dark:bg-slate-700 hover:bg-purple-100 dark:hover:bg-purple-900/40 hover:text-purple-700 dark:hover:text-purple-300 text-slate-700 dark:text-slate-200 rounded-lg transition font-medium text-xs"
-                    >
-                      <Download className="w-3.5 h-3.5" />
-                      Download PYQ
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                    <h4 className="font-semibold text-slate-800 dark:text-slate-200 text-sm mt-1.5 break-words">
+                      {p.subject_name}
+                    </h4>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 shrink-0">
+                    {p.exam_type}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between gap-2 text-xs pt-1 border-t border-slate-100 dark:border-slate-700/60">
+                  <span className="text-slate-400 text-[11px]">Academic Year:</span>
+                  <span className="font-semibold text-slate-700 dark:text-slate-300">{p.year}</span>
+                </div>
+
+                <div className="pt-1">
+                  <button
+                    onClick={() => handleDownload(`${p.subject_code}_${p.year}_${p.exam_type}.pdf`)}
+                    className="w-full py-2 bg-purple-50 dark:bg-purple-950/40 hover:bg-purple-100 text-purple-700 dark:text-purple-300 rounded-lg transition font-semibold text-xs flex items-center justify-center gap-1.5 border border-purple-200 dark:border-purple-800"
+                  >
+                    <Download className="w-4 h-4" />
+                    Download Examination Paper
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );

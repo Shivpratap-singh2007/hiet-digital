@@ -125,7 +125,7 @@ export const AttendanceReconciliationView: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6 animate-fade-in font-sans max-w-5xl mx-auto pb-10">
+    <div className="space-y-6 animate-fade-in font-sans max-w-5xl mx-auto pb-10 w-full max-w-full overflow-hidden">
       {/* Top Banner */}
       <div className="bg-white border border-slate-200 rounded-3xl p-5 sm:p-6 shadow-xs relative overflow-hidden">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -274,28 +274,29 @@ export const AttendanceReconciliationView: React.FC = () => {
           </span>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs text-left">
+        {/* Desktop Table View (hidden md:block) */}
+        <div className="hidden md:block overflow-x-auto w-full">
+          <table className="w-full text-xs text-left border-collapse">
             <thead>
-              <tr className="border-b border-slate-100 text-slate-500 font-bold text-[11px]">
-                <th className="py-2.5 px-2">Student</th>
-                <th className="py-2.5 px-2">Gate Transit Log</th>
-                <th className="py-2.5 px-2">Campus State</th>
-                <th className="py-2.5 px-2">Lecture 1 Time</th>
-                <th className="py-2.5 px-2">Class Attendance</th>
-                <th className="py-2.5 px-2">Discrepancy Status</th>
+              <tr className="border-b border-slate-100 text-slate-500 font-bold text-[11px] uppercase tracking-wider">
+                <th className="py-2.5 px-3 min-w-[170px] whitespace-nowrap">Student</th>
+                <th className="py-2.5 px-3 min-w-[130px] whitespace-nowrap">Gate Transit Log</th>
+                <th className="py-2.5 px-3 min-w-[110px] whitespace-nowrap">Campus State</th>
+                <th className="py-2.5 px-3 min-w-[110px] whitespace-nowrap">Lecture 1 Time</th>
+                <th className="py-2.5 px-3 min-w-[120px] whitespace-nowrap">Class Attendance</th>
+                <th className="py-2.5 px-3 min-w-[160px]">Discrepancy Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredRecords.map((rec) => (
                 <tr key={rec.student_id} className="hover:bg-slate-50/80 transition">
-                  <td className="py-3 px-2">
-                    <span className="font-bold text-slate-900">{rec.student_name}</span>
-                    <span className="block text-[10px] font-mono text-slate-500">
+                  <td className="py-3 px-3">
+                    <span className="font-bold text-slate-900 break-words block">{rec.student_name}</span>
+                    <span className="block text-[10px] font-mono text-slate-500 whitespace-nowrap">
                       {rec.student_roll} • {rec.branch} (Sem {rec.semester})
                     </span>
                   </td>
-                  <td className="py-3 px-2 text-slate-700 font-mono text-[11px]">
+                  <td className="py-3 px-3 text-slate-700 font-mono text-[11px] whitespace-nowrap">
                     {rec.gate_entry_time ? (
                       <span>In: {rec.gate_entry_time}</span>
                     ) : (
@@ -305,7 +306,7 @@ export const AttendanceReconciliationView: React.FC = () => {
                       <span className="block text-slate-500 text-[10px]">Out: {rec.gate_exit_time}</span>
                     )}
                   </td>
-                  <td className="py-3 px-2">
+                  <td className="py-3 px-3 whitespace-nowrap">
                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
                       rec.gate_status === 'On Campus'
                         ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
@@ -316,10 +317,10 @@ export const AttendanceReconciliationView: React.FC = () => {
                       {rec.gate_status}
                     </span>
                   </td>
-                  <td className="py-3 px-2 text-slate-600 font-mono text-[11px]">
+                  <td className="py-3 px-3 text-slate-600 font-mono text-[11px] whitespace-nowrap">
                     {rec.first_class_time}
                   </td>
-                  <td className="py-3 px-2">
+                  <td className="py-3 px-3 whitespace-nowrap">
                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
                       rec.class_attendance_status === 'Present'
                         ? 'bg-emerald-100 text-emerald-800'
@@ -330,7 +331,7 @@ export const AttendanceReconciliationView: React.FC = () => {
                       {rec.class_attendance_status}
                     </span>
                   </td>
-                  <td className="py-3 px-2 max-w-xs">
+                  <td className="py-3 px-3 max-w-xs">
                     {rec.discrepancy_flag === 'None' ? (
                       <span className="inline-flex items-center gap-1 text-[11px] text-emerald-700 font-semibold">
                         <CheckCircle2 className="w-3.5 h-3.5" />
@@ -342,7 +343,7 @@ export const AttendanceReconciliationView: React.FC = () => {
                           <AlertTriangle className="w-3 h-3" />
                           {rec.discrepancy_flag ? rec.discrepancy_flag.replace(/_/g, ' ') : 'None'}
                         </span>
-                        <p className="text-[10px] text-slate-500 mt-0.5">{rec.discrepancy_details}</p>
+                        <p className="text-[10px] text-slate-500 mt-0.5 break-words">{rec.discrepancy_details}</p>
                       </div>
                     )}
                   </td>
@@ -350,6 +351,87 @@ export const AttendanceReconciliationView: React.FC = () => {
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile View: Structured Reconciliation Cards (md:hidden) */}
+        <div className="md:hidden space-y-3">
+          {filteredRecords.map((rec) => (
+            <div
+              key={rec.student_id}
+              className="p-4 rounded-2xl border border-slate-200 bg-white shadow-2xs space-y-3 text-xs"
+            >
+              {/* Header: Student Name + Roll Number + Discrepancy Status */}
+              <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-2.5">
+                <div className="min-w-0 flex-1">
+                  <div className="font-bold text-sm text-slate-900 break-words">{rec.student_name}</div>
+                  <div className="text-[11px] text-slate-500 font-mono mt-0.5">
+                    Roll: <span className="font-bold text-slate-700">{rec.student_roll}</span> • {rec.branch} (Sem {rec.semester})
+                  </div>
+                </div>
+                <div className="shrink-0 pt-0.5">
+                  {rec.discrepancy_flag === 'None' ? (
+                    <span className="inline-flex items-center gap-1 text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                      <CheckCircle2 className="w-3 h-3" /> Reconciled
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-[10px] text-amber-700 font-bold bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                      <AlertTriangle className="w-3 h-3" /> Flagged
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Transit & Presence Details Grid */}
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Gate Transit</span>
+                  <div className="font-mono text-slate-700 text-[11px] mt-0.5">
+                    {rec.gate_entry_time ? (
+                      <span>In: <strong className="text-slate-900">{rec.gate_entry_time}</strong></span>
+                    ) : (
+                      <span className="text-slate-400">No entry scan</span>
+                    )}
+                    {rec.gate_exit_time && (
+                      <span className="block text-slate-500 text-[10px]">Out: {rec.gate_exit_time}</span>
+                    )}
+                  </div>
+                  <span className={`inline-block mt-1 px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                    rec.gate_status === 'On Campus'
+                      ? 'bg-emerald-50 text-emerald-700'
+                      : rec.gate_status === 'Exited'
+                      ? 'bg-blue-50 text-blue-700'
+                      : 'bg-slate-100 text-slate-600'
+                  }`}>
+                    {rec.gate_status}
+                  </span>
+                </div>
+
+                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Lecture Attendance</span>
+                  <div className="font-mono text-slate-700 text-[11px] mt-0.5">
+                    Time: <strong className="text-slate-900">{rec.first_class_time}</strong>
+                  </div>
+                  <span className={`inline-block mt-1 px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                    rec.class_attendance_status === 'Present'
+                      ? 'bg-emerald-100 text-emerald-800'
+                      : rec.class_attendance_status === 'Absent'
+                      ? 'bg-rose-100 text-rose-800'
+                      : 'bg-amber-100 text-amber-800'
+                  }`}>
+                    {rec.class_attendance_status}
+                  </span>
+                </div>
+              </div>
+
+              {/* Discrepancy Note if present */}
+              {rec.discrepancy_flag && rec.discrepancy_flag !== 'None' && (
+                <div className="p-2.5 rounded-xl bg-amber-50/70 border border-amber-200/80 text-[11px] text-amber-900">
+                  <strong className="font-bold">{rec.discrepancy_flag.replace(/_/g, ' ')}: </strong>
+                  <span>{rec.discrepancy_details}</span>
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       </div>
     </div>

@@ -683,7 +683,7 @@ export const HodDashboard: React.FC<Props> = ({ currentTab = 'dashboard', onNavi
   // View: Department Students Directory
   if (currentTab === 'students_mgmt') {
     return (
-      <div className="space-y-5 animate-fade-in">
+      <div className="space-y-5 animate-fade-in w-full max-w-full overflow-hidden">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-800 border border-blue-200">
@@ -737,20 +737,20 @@ export const HodDashboard: React.FC<Props> = ({ currentTab = 'dashboard', onNavi
           </div>
         </div>
 
-        {/* Students Table */}
-        <div className="bg-white border border-slate-200/90 rounded-2xl overflow-hidden shadow-xs">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
+        {/* Desktop Students Table */}
+        <div className="hidden md:block bg-white border border-slate-200/90 rounded-2xl overflow-hidden shadow-xs w-full">
+          <div className="overflow-x-auto w-full">
+            <table className="w-full text-left text-xs min-w-[760px]">
               <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-bold border-b border-slate-200">
                 <tr>
-                  <th className="px-4 py-3">Roll No</th>
-                  <th className="px-4 py-3">Student Name</th>
-                  <th className="px-4 py-3">Semester</th>
-                  <th className="px-4 py-3">Section</th>
-                  <th className="px-4 py-3">College Email</th>
-                  <th className="px-4 py-3">Phone</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3 text-right">Achievements</th>
+                  <th className="px-4 py-3 min-w-[100px] whitespace-nowrap">Roll No</th>
+                  <th className="px-4 py-3 min-w-[150px] whitespace-nowrap">Student Name</th>
+                  <th className="px-4 py-3 min-w-[80px] whitespace-nowrap">Semester</th>
+                  <th className="px-4 py-3 min-w-[70px] whitespace-nowrap">Section</th>
+                  <th className="px-4 py-3 min-w-[180px] whitespace-nowrap">College Email</th>
+                  <th className="px-4 py-3 min-w-[110px] whitespace-nowrap">Phone</th>
+                  <th className="px-4 py-3 min-w-[80px] whitespace-nowrap">Status</th>
+                  <th className="px-4 py-3 text-right min-w-[120px] whitespace-nowrap">Achievements</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -760,7 +760,7 @@ export const HodDashboard: React.FC<Props> = ({ currentTab = 'dashboard', onNavi
                     <td className="px-4 py-3 font-bold text-slate-800">{s.name}</td>
                     <td className="px-4 py-3 font-medium text-slate-600">Sem {s.semester}</td>
                     <td className="px-4 py-3 font-medium text-slate-600">Sec {s.section}</td>
-                    <td className="px-4 py-3 font-mono text-slate-500">{s.college_email}</td>
+                    <td className="px-4 py-3 font-mono text-slate-500 break-all">{s.college_email}</td>
                     <td className="px-4 py-3 text-slate-600">{s.phone}</td>
                     <td className="px-4 py-3">
                       <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-emerald-100 text-emerald-800 border border-emerald-200">
@@ -782,6 +782,51 @@ export const HodDashboard: React.FC<Props> = ({ currentTab = 'dashboard', onNavi
               </tbody>
             </table>
           </div>
+        </div>
+
+        {/* Mobile Students Cards (320px - 768px) */}
+        <div className="md:hidden space-y-3">
+          {filteredStudents.map(s => (
+            <div
+              key={s.id}
+              className="p-4 bg-white border border-slate-200/90 rounded-2xl shadow-xs space-y-3"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <h4 className="font-bold text-sm text-slate-900">{s.name}</h4>
+                  <p className="font-mono text-xs font-bold text-blue-700 mt-0.5">{s.roll_no}</p>
+                </div>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-emerald-100 text-emerald-800 border border-emerald-200 shrink-0">
+                  {s.status}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-100">
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Class Cohort</span>
+                  <span className="font-semibold text-slate-700">Sem {s.semester} (Sec {s.section})</span>
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Phone</span>
+                  <span className="font-mono text-slate-600 text-[11px]">{s.phone}</span>
+                </div>
+                <div className="col-span-2">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Email</span>
+                  <span className="font-mono text-slate-600 text-[11px] break-all">{s.college_email}</span>
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-slate-100 flex justify-end">
+                <button
+                  onClick={() => handleOpenStudentAchievements(s)}
+                  className="w-full py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-xs font-bold flex items-center justify-center gap-1.5 transition shadow-2xs cursor-pointer"
+                >
+                  <Trophy className="w-3.5 h-3.5 text-amber-600" />
+                  <span>Manage Achievements</span>
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
 
         {/* Modal when a student is selected */}
@@ -994,23 +1039,25 @@ export const HodDashboard: React.FC<Props> = ({ currentTab = 'dashboard', onNavi
           </div>
         </div>
 
-        <div className="bg-white border border-slate-200/90 rounded-2xl overflow-hidden shadow-xs">
+        <div className="bg-white border border-slate-200/90 rounded-2xl overflow-hidden shadow-xs w-full">
           <div className="p-4 border-b border-slate-200 flex items-center justify-between">
             <span className="text-xs font-bold text-slate-800">Defaulter Students Roster & Continuous Target</span>
             <span className="text-xs font-semibold text-rose-600">Immediate Action Required</span>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
+
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto w-full">
+            <table className="w-full text-left text-xs min-w-[850px]">
               <thead className="bg-slate-50 text-slate-500 uppercase tracking-wider font-bold border-b border-slate-200">
                 <tr>
-                  <th className="px-4 py-3">Roll No</th>
-                  <th className="px-4 py-3">Student Name</th>
-                  <th className="px-4 py-3">Semester</th>
-                  <th className="px-4 py-3">Attended / Total</th>
-                  <th className="px-4 py-3">Attendance %</th>
-                  <th className="px-4 py-3">Risk Level</th>
-                  <th className="px-4 py-3">Classes Needed</th>
-                  <th className="px-4 py-3 text-right">Action</th>
+                  <th className="px-4 py-3 min-w-[100px] whitespace-nowrap">Roll No</th>
+                  <th className="px-4 py-3 min-w-[150px] whitespace-nowrap">Student Name</th>
+                  <th className="px-4 py-3 min-w-[110px] whitespace-nowrap">Semester</th>
+                  <th className="px-4 py-3 min-w-[130px] whitespace-nowrap">Attended / Total</th>
+                  <th className="px-4 py-3 min-w-[100px] whitespace-nowrap">Attendance %</th>
+                  <th className="px-4 py-3 min-w-[90px] whitespace-nowrap">Risk Level</th>
+                  <th className="px-4 py-3 min-w-[120px] whitespace-nowrap">Classes Needed</th>
+                  <th className="px-4 py-3 text-right min-w-[150px] whitespace-nowrap">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -1057,6 +1104,71 @@ export const HodDashboard: React.FC<Props> = ({ currentTab = 'dashboard', onNavi
               </tbody>
             </table>
           </div>
+
+          {/* Mobile Defaulter Cards (320px - 768px) */}
+          <div className="md:hidden space-y-3 p-3">
+            {lowAttendanceStudents.map(({ student, percentage, attended, total }) => {
+              const isIssued = issuedWarningIds.includes(student.id);
+              const risk = calculateAttendanceRisk(attended, total, 75);
+              return (
+                <div
+                  key={student.id}
+                  className="p-4 bg-slate-50/60 border border-slate-200 rounded-2xl shadow-xs space-y-3"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <h4 className="font-bold text-sm text-slate-900">{student.name}</h4>
+                      <p className="font-mono text-xs font-bold text-blue-700 mt-0.5">{student.roll_no}</p>
+                    </div>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase shrink-0 ${
+                      risk.riskLevel === 'critical' ? 'bg-rose-200 text-rose-900 border border-rose-300' :
+                      risk.riskLevel === 'high' ? 'bg-rose-100 text-rose-800 border border-rose-200' :
+                      'bg-amber-100 text-amber-800 border border-amber-200'
+                    }`}>
+                      {risk.riskLevel}
+                    </span>
+                  </div>
+
+                  <div className="flex items-baseline justify-between pt-1 border-t border-slate-200/60">
+                    <div>
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">Attendance Rate</span>
+                      <span className="text-xs text-slate-600 font-medium">{attended} / {total} Lectures</span>
+                    </div>
+                    <span className="text-lg font-black text-rose-600 font-mono">
+                      {percentage}%
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-200/60">
+                    <div>
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">Cohort</span>
+                      <span className="font-semibold text-slate-700">Sem {student.semester} ({student.section})</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">Needed for 75%</span>
+                      <span className="font-bold text-rose-600">
+                        {risk.classesNeededForTarget > 0 ? `${risk.classesNeededForTarget} classes` : 'Target Met'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-200/60">
+                    <button
+                      onClick={() => handleIssueWarning(student.id, student.name)}
+                      disabled={isIssued}
+                      className={`w-full py-2 rounded-xl text-xs font-bold transition shadow-2xs text-center ${
+                        isIssued
+                          ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                          : 'bg-rose-600 hover:bg-rose-700 text-white'
+                      }`}
+                    >
+                      {isIssued ? 'Parent Notice Dispatched ✓' : 'Send Parent Warning'}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
           </div>
         )}
@@ -1068,7 +1180,7 @@ export const HodDashboard: React.FC<Props> = ({ currentTab = 'dashboard', onNavi
   // Default Overview / Section 7 HOD Leadership Suite
   // ==============================================================
   return (
-    <div className="space-y-6 animate-fade-in font-sans">
+    <div className="space-y-6 animate-fade-in font-sans w-full max-w-full overflow-hidden">
       {/* 1. Page Header with Institutional Breadcrumbs */}
       <PageHeader
         breadcrumbs={[

@@ -90,7 +90,7 @@ export const FeeReceiptsView: React.FC<Props> = () => {
   };
 
   return (
-    <div className="space-y-6 font-sans animate-fade-in pb-12">
+    <div className="space-y-6 font-sans animate-fade-in pb-12 w-full max-w-full overflow-hidden">
       {/* 1. Institutional Header Banner */}
       <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs relative overflow-hidden">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -162,18 +162,19 @@ export const FeeReceiptsView: React.FC<Props> = () => {
           <span className="text-xs text-slate-500">{feeRecords.length} Authenticated Receipts</span>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
+        {/* Desktop Fee Receipts Table */}
+        <div className="hidden md:block overflow-x-auto w-full">
+          <table className="w-full text-left border-collapse text-xs min-w-[760px]">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-bold text-slate-600 uppercase">
-                <th className="py-3 px-3.5">Receipt No</th>
-                <th className="py-3 px-3.5">Semester</th>
-                <th className="py-3 px-3.5">Academic Year</th>
-                <th className="py-3 px-3.5">Date</th>
-                <th className="py-3 px-3.5">Amount</th>
-                <th className="py-3 px-3.5">Mode & Ref</th>
-                <th className="py-3 px-3.5 text-center">Status</th>
-                <th className="py-3 px-3.5 text-right">Official Receipt</th>
+                <th className="py-3 px-3.5 min-w-[130px] whitespace-nowrap">Receipt No</th>
+                <th className="py-3 px-3.5 min-w-[90px] whitespace-nowrap">Semester</th>
+                <th className="py-3 px-3.5 min-w-[110px] whitespace-nowrap">Academic Year</th>
+                <th className="py-3 px-3.5 min-w-[100px] whitespace-nowrap">Date</th>
+                <th className="py-3 px-3.5 min-w-[110px] whitespace-nowrap">Amount</th>
+                <th className="py-3 px-3.5 min-w-[140px] whitespace-nowrap">Mode & Ref</th>
+                <th className="py-3 px-3.5 text-center min-w-[90px] whitespace-nowrap">Status</th>
+                <th className="py-3 px-3.5 text-right min-w-[130px] whitespace-nowrap">Official Receipt</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -216,6 +217,59 @@ export const FeeReceiptsView: React.FC<Props> = () => {
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Fee Receipts Cards (320px - 768px) */}
+        <div className="md:hidden space-y-3">
+          {feeRecords.map(record => (
+            <div
+              key={record.id}
+              className="p-4 bg-slate-50/60 border border-slate-200 rounded-2xl shadow-xs space-y-3"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <span className="font-mono text-xs font-bold text-slate-900">
+                    {record.receipt_no}
+                  </span>
+                  <div className="text-xs font-semibold text-slate-700 mt-0.5">
+                    Semester {record.semester} • {record.academic_year}
+                  </div>
+                </div>
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
+                  <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                  Paid
+                </span>
+              </div>
+
+              <div className="flex items-baseline justify-between pt-1 border-t border-slate-200/60">
+                <span className="text-[10px] uppercase font-bold text-slate-400">Amount Paid</span>
+                <span className="text-base font-extrabold text-slate-900 font-mono">
+                  ₹{record.paid_amount.toLocaleString('en-IN')}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-200/60">
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Payment Date</span>
+                  <span className="text-slate-700 text-[11px] font-medium">{record.payment_date || record.created_at.split('T')[0]}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Mode & Ref</span>
+                  <span className="font-mono text-[10px] text-slate-500 block truncate">{record.payment_mode || 'Online'} • {record.transaction_ref || 'N/A'}</span>
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-slate-200/60 flex justify-end">
+                <button
+                  onClick={() => setSelectedReceipt(record)}
+                  className="w-full py-2 rounded-xl bg-[#0f2942] text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>View Official Receipt</span>
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -293,34 +347,36 @@ export const FeeReceiptsView: React.FC<Props> = () => {
               </div>
 
               {/* Itemized Heads Table */}
-              <table className="w-full text-xs border border-slate-300">
-                <thead>
-                  <tr className="bg-slate-100 text-slate-700 font-bold border-b border-slate-300">
-                    <th className="py-2 px-3 text-left">S.No.</th>
-                    <th className="py-2 px-3 text-left">Particulars / Fee Head</th>
-                    <th className="py-2 px-3 text-right">Amount (₹)</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200">
-                  {selectedReceipt.breakdown.map((item, idx) => (
-                    <tr key={idx}>
-                      <td className="py-2 px-3 font-mono text-slate-500">{idx + 1}</td>
-                      <td className="py-2 px-3 font-medium text-slate-800">{item.head}</td>
-                      <td className="py-2 px-3 text-right font-mono font-bold text-slate-900">
-                        {item.amount.toLocaleString('en-IN')}.00
+              <div className="overflow-x-auto w-full">
+                <table className="w-full text-xs border border-slate-300 min-w-[320px]">
+                  <thead>
+                    <tr className="bg-slate-100 text-slate-700 font-bold border-b border-slate-300">
+                      <th className="py-2 px-3 text-left whitespace-nowrap">S.No.</th>
+                      <th className="py-2 px-3 text-left min-w-[160px]">Particulars / Fee Head</th>
+                      <th className="py-2 px-3 text-right whitespace-nowrap">Amount (₹)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200">
+                    {selectedReceipt.breakdown.map((item, idx) => (
+                      <tr key={idx}>
+                        <td className="py-2 px-3 font-mono text-slate-500">{idx + 1}</td>
+                        <td className="py-2 px-3 font-medium text-slate-800">{item.head}</td>
+                        <td className="py-2 px-3 text-right font-mono font-bold text-slate-900">
+                          {item.amount.toLocaleString('en-IN')}.00
+                        </td>
+                      </tr>
+                    ))}
+                    <tr className="bg-slate-50 font-bold border-t-2 border-slate-900">
+                      <td colSpan={2} className="py-2.5 px-3 text-right uppercase">
+                        Total Amount Received:
+                      </td>
+                      <td className="py-2.5 px-3 text-right font-mono text-sm text-[#0f2942]">
+                        ₹{selectedReceipt.paid_amount.toLocaleString('en-IN')}.00
                       </td>
                     </tr>
-                  ))}
-                  <tr className="bg-slate-50 font-bold border-t-2 border-slate-900">
-                    <td colSpan={2} className="py-2.5 px-3 text-right uppercase">
-                      Total Amount Received:
-                    </td>
-                    <td className="py-2.5 px-3 text-right font-mono text-sm text-[#0f2942]">
-                      ₹{selectedReceipt.paid_amount.toLocaleString('en-IN')}.00
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+                  </tbody>
+                </table>
+              </div>
 
               {/* Signatures & Seal */}
               <div className="pt-6 flex items-end justify-between text-xs">

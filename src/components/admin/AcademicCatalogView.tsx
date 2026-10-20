@@ -59,7 +59,7 @@ export const AcademicCatalogView: React.FC = () => {
   });
 
   return (
-    <div className="space-y-6 font-sans">
+    <div className="space-y-6 font-sans w-full max-w-full overflow-hidden">
       <PageHeader
         breadcrumbs={[
           { label: 'Academic Governance' },
@@ -225,50 +225,91 @@ export const AcademicCatalogView: React.FC = () => {
               description="Try adjusting your branch, semester or search query."
             />
           ) : (
-            <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-2xs">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs border-collapse">
-                  <thead>
-                    <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider">
-                      <th className="py-3 px-4">Code</th>
-                      <th className="py-3 px-4">Subject Name</th>
-                      <th className="py-3 px-4">Branch</th>
-                      <th className="py-3 px-4">Sem</th>
-                      <th className="py-3 px-4">Credits</th>
-                      <th className="py-3 px-4">Faculty In-Charge</th>
-                      <th className="py-3 px-4">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 text-slate-700">
-                    {filteredSubjects.map(sub => (
-                      <tr key={sub.id} className="hover:bg-slate-50/60 transition-colors">
-                        <td className="py-3 px-4 font-mono font-bold text-[#0f2942]">
-                          {sub.subject_code}
-                        </td>
-                        <td className="py-3 px-4 font-medium text-slate-900">
-                          {sub.subject_name}
-                        </td>
-                        <td className="py-3 px-4 font-semibold text-slate-600">
-                          {sub.branch}
-                        </td>
-                        <td className="py-3 px-4">
-                          Sem {sub.semester}
-                        </td>
-                        <td className="py-3 px-4 font-mono">
-                          {sub.credits || 4}
-                        </td>
-                        <td className="py-3 px-4 text-slate-600">
-                          {sub.teacher_name || 'Department Faculty'}
-                        </td>
-                        <td className="py-3 px-4">
-                          <StatusBadge status={sub.status || 'Active'} variant="active" />
-                        </td>
+            <>
+              {/* Desktop / Tablet Table */}
+              <div className="hidden md:block bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-2xs">
+                <div className="overflow-x-auto w-full">
+                  <table className="w-full text-left text-xs border-collapse min-w-[720px]">
+                    <thead>
+                      <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider whitespace-nowrap">
+                        <th className="py-3 px-4 min-w-[100px]">Code</th>
+                        <th className="py-3 px-4 min-w-[200px]">Subject Name</th>
+                        <th className="py-3 px-4 min-w-[110px]">Branch</th>
+                        <th className="py-3 px-4 min-w-[70px]">Sem</th>
+                        <th className="py-3 px-4 min-w-[70px]">Credits</th>
+                        <th className="py-3 px-4 min-w-[180px]">Faculty In-Charge</th>
+                        <th className="py-3 px-4 min-w-[90px]">Status</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 text-slate-700">
+                      {filteredSubjects.map(sub => (
+                        <tr key={sub.id} className="hover:bg-slate-50/60 transition-colors">
+                          <td className="py-3 px-4 font-mono font-bold text-[#0f2942]">
+                            {sub.subject_code}
+                          </td>
+                          <td className="py-3 px-4 font-medium text-slate-900">
+                            {sub.subject_name}
+                          </td>
+                          <td className="py-3 px-4 font-semibold text-slate-600">
+                            {sub.branch}
+                          </td>
+                          <td className="py-3 px-4">
+                            Sem {sub.semester}
+                          </td>
+                          <td className="py-3 px-4 font-mono">
+                            {sub.credits || 4}
+                          </td>
+                          <td className="py-3 px-4 text-slate-600">
+                            {sub.teacher_name || 'Department Faculty'}
+                          </td>
+                          <td className="py-3 px-4">
+                            <StatusBadge status={sub.status || 'Active'} variant="active" />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
+
+              {/* Mobile Subject Cards */}
+              <div className="md:hidden space-y-3">
+                {filteredSubjects.map(sub => (
+                  <div key={sub.id} className="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs space-y-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <span className="font-mono text-xs font-bold text-[#0f2942] bg-slate-100 px-2 py-0.5 rounded">
+                          {sub.subject_code}
+                        </span>
+                        <h4 className="font-semibold text-slate-900 text-sm mt-1 break-words">
+                          {sub.subject_name}
+                        </h4>
+                      </div>
+                      <StatusBadge status={sub.status || 'Active'} variant="active" />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-100">
+                      <div>
+                        <span className="text-slate-400 block text-[10px] uppercase font-semibold">Branch</span>
+                        <span className="font-semibold text-slate-700">{sub.branch}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block text-[10px] uppercase font-semibold">Semester</span>
+                        <span className="font-medium text-slate-700">Sem {sub.semester}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block text-[10px] uppercase font-semibold">Credits</span>
+                        <span className="font-mono text-slate-700">{sub.credits || 4}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block text-[10px] uppercase font-semibold">Faculty In-Charge</span>
+                        <span className="text-slate-700 truncate block">{sub.teacher_name || 'Department Faculty'}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </div>
       )}
