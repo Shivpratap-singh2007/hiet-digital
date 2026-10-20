@@ -8,6 +8,11 @@ import {
   TeacherMaster, 
   Profile, 
   AttendanceRecord, 
+  AttendanceBatch,
+  AttendanceBatchRecord,
+  AttendanceBatchHistoryItem,
+  AttendanceBatchStatus,
+  AttendanceBatchStage,
   LeaveRequest, 
   LeaveStatus,
   LeaveStage,
@@ -23,6 +28,7 @@ import {
   CalendarEvent,
   Subject,
   SessionalResult,
+  SessionalWorkflowStatus,
   ClassTestRecord,
   GatePass,
   GateEntry,
@@ -477,6 +483,468 @@ export const apiService = {
     }
     dataStore.setAttendance(updated);
     return true;
+  },
+
+  // 3B. Attendance Approval Workflow Batches (Faculty -> HOD -> Principal -> MD)
+  async getAttendanceBatches(filter?: {
+    department?: string;
+    branch?: string;
+    faculty_id?: string;
+    status?: string;
+    stage?: string;
+  }): Promise<AttendanceBatch[]> {
+    if (isSupabaseConfigured && supabase) {
+      try {
+        let query = supabase.from('attendance_batches').select('*').order('created_at', { ascending: false });
+        if (filter?.department) query = query.eq('department', filter.department);
+        if (filter?.branch) query = query.eq('branch', filter.branch);
+        if (filter?.faculty_id) query = query.eq('faculty_id', filter.faculty_id);
+        if (filter?.status) query = query.eq('status', filter.status);
+        if (filter?.stage) query = query.eq('current_stage', filter.stage);
+        const { data, error } = await query;
+        if (!error && data && data.length > 0) {
+          return data as AttendanceBatch[];
+        }
+      } catch (e) {
+        console.warn('Supabase getAttendanceBatches fallback:', e);
+      }
+    }
+    const all = dataStore.getAttendanceBatches();
+    return all.filter(b => {
+      if (filter?.department && b.department !== filter.department) return false;
+      if (filter?.branch && b.branch !== filter.branch) return false;
+      if (filter?.faculty_id && b.faculty_id !== filter.faculty_id) return false;
+      if (filter?.status && b.status !== filter.status) return false;
+      if (filter?.stage && b.current_stage !== filter.stage) return false;
+      return true;
+    });
+  },
+
+  async getAttendanceBatchById(id: string): Promise<AttendanceBatch | null> {
+    const list = await this.getAttendanceBatches();
+    return list.find(b => b.id === id) || null;
+  },
+
+  async saveAttendanceDraft(batchData: {
+    id?: string;
+    department: string;
+    branch: string;
+    semester: number;
+    section: string;
+    subject_id: string;
+    subject_name: string;
+    subject_code?: string;
+    lecture_date: string;
+    faculty_id: string;
+    faculty_name: string;
+    records: AttendanceBatchRecord[];
+    comments?: string;
+  }): Promise<{ success: boolean; batch?: AttendanceBatch; error?: string }> {
+    const batchId = batchData.id || `batch-draft-${Date.now()}`;
+    const presentCount = batchData.records.filter(r => r.status === 'Present').length;
+    const absentCount = batchData.records.filter(r => r.status === 'Absent').length;
+    const leaveCount = batchData.records.filter(r => r.status === 'Leave').length;
+
+    const draftBatch: AttendanceBatch = {
+      id: batchId,
+      department: batchData.department,
+      branch: batchData.branch,
+      semester: batchData.semester,
+      section: batchData.section,
+      subject_id: batchData.subject_id,
+      subject_name: batchData.subject_name,
+      subject_code: batchData.subject_code,
+      lecture_date: batchData.lecture_date,
+      faculty_id: batchData.faculty_id,
+      faculty_name: batchData.faculty_name,
+      status: 'Draft',
+      current_stage: 'faculty',
+      total_students: batchData.records.length,
+      present_count: presentCount,
+      absent_count: absentCount,
+      leave_count: leaveCount,
+      resubmission_count: 0,
+      submitted_at: new Date().toISOString(),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      records: batchData.records,
+      history: [
+        {
+          id: `hist-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+          batch_id: batchId,
+          action: 'draft_saved',
+          stage: 'faculty',
+          actor_id: batchData.faculty_id,
+          actor_name: batchData.faculty_name,
+          actor_role: 'faculty',
+          created_at: new Date().toISOString(),
+          comments: batchData.comments || 'Attendance draft saved locally by faculty'
+        }
+      ]
+    };
+
+    dataStore.addOrUpdateAttendanceBatch(draftBatch);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('hiet-attendance-batch-updated'));
+    }
+    return { success: true, batch: draftBatch };
+  },
+
+  async submitAttendanceBatch(batchData: {
+    id?: string;
+    department: string;
+    branch: string;
+    semester: number;
+    section: string;
+    subject_id: string;
+    subject_name: string;
+    subject_code?: string;
+    lecture_date: string;
+    faculty_id: string;
+    faculty_name: string;
+    total_students?: number;
+    present_count?: number;
+    absent_count?: number;
+    leave_count?: number;
+    records: AttendanceBatchRecord[];
+    comments?: string;
+  }): Promise<{ success: boolean; batch?: AttendanceBatch; error?: string }> {
+    // 1. Validation checks
+    if (!batchData.department?.trim()) return { success: false, error: 'Department is required for attendance submission.' };
+    if (!batchData.branch?.trim()) return { success: false, error: 'Branch is required for attendance submission.' };
+    if (!batchData.semester) return { success: false, error: 'Semester is required for attendance submission.' };
+    if (!batchData.section?.trim()) return { success: false, error: 'Section is required for attendance submission.' };
+    if (!batchData.subject_name?.trim()) return { success: false, error: 'Subject is required for attendance submission.' };
+    if (!batchData.lecture_date?.trim()) return { success: false, error: 'Lecture date is required for attendance submission.' };
+    if (!batchData.faculty_id?.trim() || !batchData.faculty_name?.trim()) return { success: false, error: 'Faculty identity is required.' };
+    if (!batchData.records || batchData.records.length === 0) return { success: false, error: 'No student records provided for attendance.' };
+
+    if (batchData.total_students && batchData.records.length < batchData.total_students) {
+      const missingCount = batchData.total_students - batchData.records.length;
+      return {
+        success: false,
+        error: `All ${batchData.total_students} students must have an assigned attendance status. ${missingCount} student(s) remain unmarked.`
+      };
+    }
+
+    const unmarked = batchData.records.filter(r => !r.status || !['Present', 'Absent', 'Leave'].includes(r.status));
+    if (unmarked.length > 0) {
+      return { 
+        success: false, 
+        error: `All students must be marked before submission. ${unmarked.length} student(s) remain unmarked.` 
+      };
+    }
+
+    // 2. Duplicate submission prevention
+    const existingBatches = dataStore.getAttendanceBatches();
+    const duplicate = existingBatches.find(b => 
+      b.subject_name === batchData.subject_name &&
+      b.branch === batchData.branch &&
+      b.semester === batchData.semester &&
+      b.section === batchData.section &&
+      b.lecture_date === batchData.lecture_date &&
+      b.status !== 'Returned for Correction' &&
+      b.status !== 'Rejected'
+    );
+
+    if (duplicate) {
+      return {
+        success: false,
+        error: `An attendance batch for ${batchData.subject_name} (${batchData.branch} Sem ${batchData.semester} Sec ${batchData.section}) on ${batchData.lecture_date} has already been submitted (Batch ID: ${duplicate.id}, Status: ${duplicate.status}). Duplicate submissions are blocked.`
+      };
+    }
+
+    const presentCount = batchData.records.filter(r => r.status === 'Present').length;
+    const absentCount = batchData.records.filter(r => r.status === 'Absent').length;
+    const leaveCount = batchData.records.filter(r => r.status === 'Leave').length;
+
+    // Check if this is a resubmission of an earlier rejected batch
+    const existingRejected = existingBatches.find(b => 
+      b.subject_name === batchData.subject_name &&
+      b.branch === batchData.branch &&
+      b.semester === batchData.semester &&
+      b.section === batchData.section &&
+      b.lecture_date === batchData.lecture_date &&
+      b.status === 'Returned for Correction'
+    );
+
+    const now = new Date().toISOString();
+    const batchId = existingRejected 
+      ? existingRejected.id 
+      : `ATT-BATCH-${batchData.lecture_date.replace(/-/g, '')}-${batchData.branch.replace(/\s+/g, '')}${batchData.semester}${batchData.section}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+
+    const newHistoryItem: AttendanceBatchHistoryItem = {
+      id: `hist-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      batch_id: batchId,
+      stage: 'faculty',
+      action: existingRejected ? 'resubmitted' : 'submitted',
+      actor_id: batchData.faculty_id,
+      actor_name: batchData.faculty_name,
+      actor_role: 'faculty',
+      comments: batchData.comments || (existingRejected ? 'Corrected and resubmitted by faculty.' : 'Marked lecture attendance submitted for HOD review.'),
+      created_at: now
+    };
+
+    const newBatch: AttendanceBatch = {
+      id: batchId,
+      department: batchData.department,
+      branch: batchData.branch,
+      semester: batchData.semester,
+      section: batchData.section,
+      subject_id: batchData.subject_id,
+      subject_name: batchData.subject_name,
+      subject_code: batchData.subject_code,
+      lecture_date: batchData.lecture_date,
+      faculty_id: batchData.faculty_id,
+      faculty_name: batchData.faculty_name,
+      status: 'Pending HOD Approval',
+      current_stage: 'hod',
+      total_students: batchData.records.length,
+      present_count: presentCount,
+      absent_count: absentCount,
+      leave_count: leaveCount,
+      records: batchData.records,
+      history: existingRejected ? [...existingRejected.history, newHistoryItem] : [newHistoryItem],
+      resubmission_count: existingRejected ? (existingRejected.resubmission_count || 0) + 1 : 0,
+      rejection_reason: undefined,
+      rejected_by_role: undefined,
+      rejected_by_name: undefined,
+      rejected_at: undefined,
+      submitted_at: now,
+      created_at: existingRejected ? existingRejected.created_at : now,
+      updated_at: now
+    };
+
+    // 3. Persist batch
+    if (isSupabaseConfigured && supabase) {
+      try {
+        await supabase.from('attendance_batches').upsert({
+          id: newBatch.id,
+          department: newBatch.department,
+          branch: newBatch.branch,
+          semester: newBatch.semester,
+          section: newBatch.section,
+          subject_id: newBatch.subject_id,
+          subject_name: newBatch.subject_name,
+          subject_code: newBatch.subject_code,
+          lecture_date: newBatch.lecture_date,
+          faculty_id: newBatch.faculty_id,
+          faculty_name: newBatch.faculty_name,
+          status: newBatch.status,
+          current_stage: newBatch.current_stage,
+          total_students: newBatch.total_students,
+          present_count: newBatch.present_count,
+          absent_count: newBatch.absent_count,
+          leave_count: newBatch.leave_count,
+          resubmission_count: newBatch.resubmission_count,
+          submitted_at: newBatch.submitted_at,
+          updated_at: newBatch.updated_at
+        });
+      } catch (err) {
+        console.warn('Supabase batch save warning:', err);
+      }
+    }
+
+    dataStore.addOrUpdateAttendanceBatch(newBatch);
+
+    // 4. Create notification for HOD
+    try {
+      await this.createNotification({
+        recipient_user_id: 'hod',
+        title: 'Attendance Batch Submitted',
+        message: `Faculty ${newBatch.faculty_name} submitted attendance for ${newBatch.subject_name} (${newBatch.branch} Sem ${newBatch.semester} Sec ${newBatch.section}). Pending HOD Approval.`,
+        type: 'attendance',
+        is_read: false
+      });
+    } catch (e) {
+      console.warn('Notification creation notice:', e);
+    }
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('hiet-attendance-batch-updated'));
+    }
+
+    return { success: true, batch: newBatch };
+  },
+
+  async processAttendanceWorkflowAction(params: {
+    batchId: string;
+    action: 'approve' | 'reject';
+    actorId?: string;
+    actorName: string;
+    actorRole: string;
+    actorDepartment?: string;
+    rejectionReason?: string;
+    comments?: string;
+  }): Promise<{ success: boolean; batch?: AttendanceBatch; error?: string }> {
+    const batch = dataStore.getAttendanceBatches().find(b => b.id === params.batchId);
+    if (!batch) {
+      return { success: false, error: `Attendance batch ${params.batchId} not found.` };
+    }
+
+    const normRole = (params.actorRole || '').toLowerCase();
+
+    // 1. Authorization & Role-Stage Integrity
+    if (['faculty', 'teacher'].includes(normRole) && params.action === 'approve') {
+      return { success: false, error: 'Faculty cannot approve their own attendance submission on behalf of HOD, Principal, or MD.' };
+    }
+
+    if (params.action === 'reject') {
+      if (!params.rejectionReason || !params.rejectionReason.trim()) {
+        return { success: false, error: 'Rejection requires a mandatory reason explaining the correction required.' };
+      }
+      if (!['hod', 'principal', 'admin', 'managing_director', 'md'].includes(normRole)) {
+        return { success: false, error: 'Unauthorized role for rejecting attendance submission.' };
+      }
+      if (normRole === 'hod' && params.actorDepartment) {
+        const isDeptMatch = params.actorDepartment === batch.department ||
+          params.actorDepartment === batch.branch ||
+          (params.actorDepartment === 'CSE' && (batch.branch === 'CSE' || batch.branch === 'CSE AI & ML'));
+        if (!isDeptMatch) {
+          return { success: false, error: 'Department HOD can only review batches within their department.' };
+        }
+      }
+    }
+
+    let newStatus: AttendanceBatchStatus = batch.status;
+    let newStage: AttendanceBatchStage = batch.current_stage;
+    const now = new Date().toISOString();
+
+    if (params.action === 'approve') {
+      if (batch.status === 'Pending HOD Approval') {
+        // Stage 2: HOD Review
+        if (!['hod', 'admin'].includes(normRole)) {
+          return { success: false, error: 'Only authorized Head of Department (HOD) can approve at this stage.' };
+        }
+        if (normRole === 'hod' && params.actorDepartment) {
+          const isDeptMatch = params.actorDepartment === batch.department ||
+            params.actorDepartment === batch.branch ||
+            (params.actorDepartment === 'CSE' && (batch.branch === 'CSE' || batch.branch === 'CSE AI & ML'));
+          if (!isDeptMatch) {
+            return { success: false, error: 'Department HOD can only review batches within their department.' };
+          }
+        }
+        newStatus = 'Pending Principal Approval';
+        newStage = 'principal';
+      } else if (batch.status === 'Pending Principal Approval') {
+        // Stage 3: Principal Review
+        if (!['principal', 'admin'].includes(normRole)) {
+          return { success: false, error: 'Only the Principal can approve attendance at Stage 3.' };
+        }
+        newStatus = 'Pending MD Approval';
+        newStage = 'md';
+      } else if (batch.status === 'Pending MD Approval') {
+        // Stage 4: MD Final Approval
+        if (!['managing_director', 'md', 'admin'].includes(normRole)) {
+          return { success: false, error: 'Only the Managing Director (MD) can grant final institutional approval.' };
+        }
+        newStatus = 'Final Approved';
+        newStage = 'completed';
+      } else {
+        return { success: false, error: `Batch cannot be approved in its current state: ${batch.status}` };
+      }
+    } else {
+      // Reject -> Return for Correction to Faculty
+      newStatus = 'Returned for Correction';
+      newStage = 'faculty_correction';
+    }
+
+    const historyItem: AttendanceBatchHistoryItem = {
+      id: `hist-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      batch_id: batch.id,
+      stage: batch.current_stage,
+      action: params.action === 'approve' ? 'approved' : 'rejected',
+      actor_id: params.actorId,
+      actor_name: params.actorName,
+      actor_role: normRole as any,
+      comments: params.comments || (params.action === 'approve' ? `Approved by ${params.actorRole.toUpperCase()}` : undefined),
+      rejection_reason: params.action === 'reject' ? params.rejectionReason?.trim() : undefined,
+      created_at: now
+    };
+
+    const updatedBatch: AttendanceBatch = {
+      ...batch,
+      status: newStatus,
+      current_stage: newStage,
+      history: [...batch.history, historyItem],
+      rejection_reason: params.action === 'reject' ? params.rejectionReason?.trim() : batch.rejection_reason,
+      rejected_by_role: params.action === 'reject' ? normRole : batch.rejected_by_role,
+      rejected_by_name: params.action === 'reject' ? params.actorName : batch.rejected_by_name,
+      rejected_at: params.action === 'reject' ? now : batch.rejected_at,
+      hod_id: newStatus === 'Pending Principal Approval' ? (params.actorId || batch.hod_id) : batch.hod_id,
+      hod_name: newStatus === 'Pending Principal Approval' ? params.actorName : batch.hod_name,
+      hod_approved_at: newStatus === 'Pending Principal Approval' ? now : batch.hod_approved_at,
+      principal_id: newStatus === 'Pending MD Approval' ? (params.actorId || batch.principal_id) : batch.principal_id,
+      principal_name: newStatus === 'Pending MD Approval' ? params.actorName : batch.principal_name,
+      principal_approved_at: newStatus === 'Pending MD Approval' ? now : batch.principal_approved_at,
+      md_id: newStatus === 'Final Approved' ? (params.actorId || batch.md_id) : batch.md_id,
+      md_name: newStatus === 'Final Approved' ? params.actorName : batch.md_name,
+      md_approved_at: newStatus === 'Final Approved' ? now : batch.md_approved_at,
+      updated_at: now
+    };
+
+    // If MD final approved, write verified records to official Attendance records
+    if (newStatus === 'Final Approved') {
+      const recordsToSave: Partial<AttendanceRecord>[] = batch.records.map(r => ({
+        student_id: r.student_id,
+        student_roll: r.student_roll,
+        subject_id: batch.subject_id,
+        subject_name: batch.subject_name,
+        subject_code: batch.subject_code,
+        date: batch.lecture_date,
+        status: r.status,
+        marked_by: batch.faculty_id
+      }));
+      await this.saveAttendance(recordsToSave);
+    }
+
+    // Persist
+    dataStore.addOrUpdateAttendanceBatch(updatedBatch);
+
+    // Notifications routing
+    try {
+      if (newStatus === 'Pending Principal Approval') {
+        await this.createNotification({
+          recipient_user_id: 'principal',
+          title: 'Attendance Batch Forwarded to Principal',
+          message: `HOD ${params.actorName} approved attendance for ${batch.subject_name} (${batch.branch}). Pending Principal Review.`,
+          type: 'attendance',
+          is_read: false
+        });
+      } else if (newStatus === 'Pending MD Approval') {
+        await this.createNotification({
+          recipient_user_id: 'md',
+          title: 'Attendance Batch Forwarded to MD',
+          message: `Principal approved attendance for ${batch.subject_name} (${batch.branch}). Pending MD Final Approval.`,
+          type: 'attendance',
+          is_read: false
+        });
+      } else if (newStatus === 'Final Approved') {
+        await this.createNotification({
+          recipient_user_id: batch.faculty_id,
+          title: 'Attendance Batch Officially Approved',
+          message: `MD granted final institutional approval for ${batch.subject_name} (${batch.lecture_date}). Recorded in statutory register.`,
+          type: 'attendance',
+          is_read: false
+        });
+      } else if (newStatus === 'Returned for Correction') {
+        await this.createNotification({
+          recipient_user_id: batch.faculty_id,
+          title: 'Attendance Batch Returned for Correction',
+          message: `Your attendance batch for ${batch.subject_name} (${batch.lecture_date}) was returned by ${params.actorRole.toUpperCase()} ${params.actorName}. Reason: ${params.rejectionReason}`,
+          type: 'attendance',
+          is_read: false
+        });
+      }
+    } catch (e) {
+      console.warn('Workflow notification notice:', e);
+    }
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('hiet-attendance-batch-updated'));
+    }
+
+    return { success: true, batch: updatedBatch };
   },
 
   calculateLeaveDays,
@@ -1753,15 +2221,277 @@ export const apiService = {
   async saveSessionalResult(result: Omit<SessionalResult, 'id' | 'created_at'>): Promise<SessionalResult> {
     const newResult: SessionalResult = {
       ...result,
-      id: `ses-${Date.now()}`,
+      id: (result as any).id || `ses-${Date.now()}`,
+      status: result.status || (result.is_published ? 'Published' : 'Draft'),
       created_at: new Date().toISOString()
     };
     if (isSupabaseConfigured && supabase) {
       await supabase.from('sessional_results').insert([newResult]);
     }
     const current = dataStore.getSessionalResults();
-    dataStore.setSessionalResults([newResult, ...current]);
+    const existingIdx = current.findIndex(r => r.id === newResult.id);
+    if (existingIdx >= 0) {
+      current[existingIdx] = newResult;
+      dataStore.setSessionalResults([...current]);
+    } else {
+      dataStore.setSessionalResults([newResult, ...current]);
+    }
     return newResult;
+  },
+
+  async submitSessionalForApproval(payload: {
+    id?: string;
+    student_id: string;
+    student_roll: string;
+    student_name: string;
+    subject_name: string;
+    subject_code?: string;
+    exam_type: 'Sessional 1' | 'Sessional 2';
+    marks_obtained: number;
+    max_marks: number;
+    percentage?: number;
+    semester: number;
+    branch: string;
+    remarks?: string;
+    faculty_id: string;
+    faculty_name: string;
+  }): Promise<{ success: boolean; result?: SessionalResult; error?: string } & Partial<SessionalResult>> {
+    // 1. Validation checks
+    if (!payload.student_roll || !payload.student_name) {
+      return { success: false, error: 'Student selection is required.' };
+    }
+    if (!payload.subject_name) {
+      return { success: false, error: 'Subject is required.' };
+    }
+    if (isNaN(payload.marks_obtained) || payload.marks_obtained < 0) {
+      return { success: false, error: 'Marks obtained must be a non-negative number.' };
+    }
+    if (isNaN(payload.max_marks) || payload.max_marks <= 0) {
+      return { success: false, error: 'Maximum marks must be greater than zero.' };
+    }
+    if (payload.marks_obtained > payload.max_marks) {
+      return { success: false, error: `Marks obtained (${payload.marks_obtained}) cannot exceed maximum marks (${payload.max_marks}).` };
+    }
+
+    const percentage = Math.round((payload.marks_obtained / payload.max_marks) * 100);
+    const resultId = payload.id || `ses-${Date.now()}`;
+    const now = new Date().toISOString();
+
+    const newResult: SessionalResult = {
+      id: resultId,
+      student_id: payload.student_id,
+      student_roll: payload.student_roll,
+      student_name: payload.student_name,
+      subject_name: payload.subject_name,
+      subject_code: payload.subject_code,
+      exam_type: payload.exam_type,
+      marks_obtained: Number(payload.marks_obtained),
+      max_marks: Number(payload.max_marks),
+      percentage,
+      semester: payload.semester,
+      branch: payload.branch,
+      is_published: false, // Protected against premature student publishing!
+      status: 'Submitted to HOD',
+      remarks: payload.remarks,
+      faculty_id: payload.faculty_id,
+      faculty_name: payload.faculty_name,
+      submitted_at: now,
+      created_at: now,
+      history: [
+        {
+          action: 'submitted_to_hod',
+          stage: 'hod',
+          actor_id: payload.faculty_id,
+          actor_name: payload.faculty_name,
+          actor_role: 'faculty',
+          timestamp: now,
+          comments: payload.remarks || 'Sessional marks submitted to HOD for evaluation review'
+        }
+      ]
+    };
+
+    const current = dataStore.getSessionalResults();
+    const existingIndex = current.findIndex(r => r.id === resultId);
+    if (existingIndex >= 0) {
+      current[existingIndex] = newResult;
+      dataStore.setSessionalResults([...current]);
+    } else {
+      dataStore.setSessionalResults([newResult, ...current]);
+    }
+
+    // Dispatch institutional event
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('hiet-sessional-updated'));
+    }
+
+    return { success: true, result: newResult, ...newResult };
+  },
+
+  async saveSessionalDraft(payload: {
+    id?: string;
+    student_id: string;
+    student_roll: string;
+    student_name: string;
+    subject_name: string;
+    subject_code?: string;
+    exam_type: 'Sessional 1' | 'Sessional 2';
+    marks_obtained: number;
+    max_marks: number;
+    percentage?: number;
+    semester: number;
+    branch: string;
+    remarks?: string;
+    faculty_id: string;
+    faculty_name: string;
+  }): Promise<{ success: boolean; result?: SessionalResult; error?: string } & Partial<SessionalResult>> {
+    if (isNaN(payload.marks_obtained) || payload.marks_obtained < 0) {
+      return { success: false, error: 'Marks obtained must be a non-negative number.' };
+    }
+    if (isNaN(payload.max_marks) || payload.max_marks <= 0) {
+      return { success: false, error: 'Maximum marks must be greater than zero.' };
+    }
+    if (payload.marks_obtained > payload.max_marks) {
+      return { success: false, error: 'Marks obtained cannot exceed maximum marks.' };
+    }
+
+    const percentage = Math.round((payload.marks_obtained / payload.max_marks) * 100);
+    const resultId = payload.id || `ses-draft-${Date.now()}`;
+    const now = new Date().toISOString();
+
+    const draftResult: SessionalResult = {
+      id: resultId,
+      student_id: payload.student_id,
+      student_roll: payload.student_roll,
+      student_name: payload.student_name,
+      subject_name: payload.subject_name,
+      subject_code: payload.subject_code,
+      exam_type: payload.exam_type,
+      marks_obtained: Number(payload.marks_obtained),
+      max_marks: Number(payload.max_marks),
+      percentage,
+      semester: payload.semester,
+      branch: payload.branch,
+      is_published: false,
+      status: 'Draft',
+      remarks: payload.remarks,
+      faculty_id: payload.faculty_id,
+      faculty_name: payload.faculty_name,
+      created_at: now,
+      history: [
+        {
+          action: 'draft_saved',
+          stage: 'faculty',
+          actor_id: payload.faculty_id,
+          actor_name: payload.faculty_name,
+          actor_role: 'faculty',
+          timestamp: now,
+          comments: 'Sessional score draft saved locally'
+        }
+      ]
+    };
+
+    const current = dataStore.getSessionalResults();
+    const existingIndex = current.findIndex(r => r.id === resultId);
+    if (existingIndex >= 0) {
+      current[existingIndex] = draftResult;
+      dataStore.setSessionalResults([...current]);
+    } else {
+      dataStore.setSessionalResults([draftResult, ...current]);
+    }
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('hiet-sessional-updated'));
+    }
+
+    return { success: true, result: draftResult, ...draftResult };
+  },
+
+  async processSessionalWorkflowAction(params: {
+    resultId: string;
+    action: 'approve' | 'reject' | 'return';
+    actorId?: string;
+    actorName: string;
+    actorRole: string;
+    actorDepartment?: string;
+    rejectionReason?: string;
+    remarks?: string;
+    comments?: string;
+  }): Promise<{ success: boolean; result?: SessionalResult; error?: string } & Partial<SessionalResult>> {
+    const all = dataStore.getSessionalResults();
+    const result = all.find(r => r.id === params.resultId);
+    if (!result) {
+      return { success: false, error: `Sessional result ${params.resultId} not found.` };
+    }
+
+    const normRole = (params.actorRole || '').toLowerCase();
+
+    // Faculty cannot self-approve
+    if (['faculty', 'teacher'].includes(normRole) && params.action === 'approve') {
+      return { success: false, error: 'Faculty cannot approve their own submissions or sessional marks.' };
+    }
+
+    if (params.action === 'reject' || params.action === 'return') {
+      const reason = (params.rejectionReason || params.remarks || params.comments || '').trim();
+      if (!reason) {
+        return { success: false, error: 'Rejection requires a mandatory reason for correction.' };
+      }
+      if (!['hod', 'principal', 'admin', 'managing_director', 'md'].includes(normRole)) {
+        return { success: false, error: 'Unauthorized role for rejecting or returning sessional results.' };
+      }
+      result.status = 'Returned by HOD';
+      result.rejection_reason = reason;
+      result.reviewer_remarks = reason;
+      result.is_published = false;
+      result.history = result.history || [];
+      result.history.push({
+        action: params.action === 'return' ? 'RETURNED' : 'REJECTED',
+        stage: normRole,
+        actor_id: params.actorId || 'reviewer',
+        actor_name: params.actorName,
+        actor_role: normRole,
+        timestamp: new Date().toISOString(),
+        comments: reason,
+        rejection_reason: reason
+      });
+      dataStore.setSessionalResults([...all]);
+      if (typeof window !== 'undefined') window.dispatchEvent(new Event('hiet-sessional-updated'));
+      return { success: true, result, ...result };
+    }
+
+    // Approval flow
+    const now = new Date().toISOString();
+    if (['hod', 'admin'].includes(normRole)) {
+      result.status = 'Approved by HOD';
+      result.hod_id = params.actorId || 'hod';
+      result.hod_name = params.actorName;
+      result.hod_approved_at = now;
+      result.is_published = false; // Protected against premature student publishing until final review!
+    } else if (['principal'].includes(normRole)) {
+      result.status = 'Approved by Principal';
+      result.principal_id = params.actorId || 'principal';
+      result.principal_name = params.actorName;
+      result.principal_approved_at = now;
+      result.is_published = false;
+    } else if (['md', 'managing_director'].includes(normRole)) {
+      result.status = 'Approved';
+      result.is_published = true; // Final MD signoff publishes to student portal
+    }
+
+    result.reviewer_remarks = params.comments || params.remarks || 'Approved by academic review';
+    result.history = result.history || [];
+    result.history.push({
+      action: 'APPROVED',
+      stage: normRole,
+      actor_id: params.actorId || 'approver',
+      actor_name: params.actorName,
+      actor_role: normRole,
+      timestamp: now,
+      comments: params.comments || params.remarks
+    });
+
+    dataStore.setSessionalResults([...all]);
+    if (typeof window !== 'undefined') window.dispatchEvent(new Event('hiet-sessional-updated'));
+    return { success: true, result, ...result };
   },
 
   // 16. Update Syllabus Unit Progress (Teacher / HOD / Admin)
@@ -1967,13 +2697,14 @@ export const apiService = {
   },
 
   // 18f. Sessional Results Queries
-  async getSessionalResults(filter?: { studentId?: string; branch?: string; semester?: number }): Promise<SessionalResult[]> {
+  async getSessionalResults(filter?: { studentId?: string; branch?: string; semester?: number; onlyPublished?: boolean }): Promise<SessionalResult[]> {
     if (isSupabaseConfigured && supabase) {
       try {
         let query = supabase.from('sessional_results').select('*').order('created_at', { ascending: false });
         if (filter?.studentId) query = query.eq('student_id', filter.studentId);
         if (filter?.branch) query = query.eq('branch', filter.branch);
         if (filter?.semester) query = query.eq('semester', filter.semester);
+        if (filter?.onlyPublished) query = query.eq('is_published', true);
         const { data, error } = await query;
         if (!error && data) return data as SessionalResult[];
       } catch (e) {
@@ -1985,6 +2716,7 @@ export const apiService = {
       if (filter?.studentId && s.student_id !== filter.studentId) return false;
       if (filter?.branch && s.branch !== filter.branch) return false;
       if (filter?.semester && s.semester !== filter.semester) return false;
+      if (filter?.onlyPublished && (s.is_published === false || s.status === 'Draft' || s.status === 'Submitted to HOD')) return false;
       return true;
     });
   },

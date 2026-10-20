@@ -71,6 +71,8 @@
     padding: 0;
     -webkit-tap-highlight-color: transparent;
     scroll-behavior: smooth;
+    overscroll-behavior: none;
+    overscroll-behavior-y: none;
   }
 
   body {
@@ -84,6 +86,8 @@
     margin: 0;
     padding: 0;
     overflow-x: hidden;
+    overscroll-behavior: none;
+    overscroll-behavior-y: none;
   }
 
   #root {
@@ -91,6 +95,8 @@
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    overscroll-behavior: none;
+    overscroll-behavior-y: none;
   }
 
   h1, h2, h3, h4, h5, h6, .font-display {

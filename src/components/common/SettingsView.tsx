@@ -27,6 +27,7 @@ import { useAuth } from '../../context/AuthContext';
 import { PageHeader } from './PageHeader';
 import { DynamicQRCodeCanvas } from '../common/DynamicQRCodeCanvas';
 import { PasswordInput, PasswordRules } from '../auth/PasswordInput';
+import { dataStore } from '../../lib/mockData';
 
 interface Props {
   initialTab?: 'profile' | 'security' | 'notifications';
@@ -35,6 +36,7 @@ interface Props {
 export const SettingsView: React.FC<Props> = ({ initialTab = 'profile' }) => {
   const { user, role, logout, changePassword } = useAuth();
   const isStudent = role === 'student' || user?.role === 'student';
+  const isFaculty = role === 'teacher' || role === 'faculty';
 
   const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'notifications'>(() => {
     if (isStudent && initialTab === 'security') {
@@ -65,6 +67,7 @@ export const SettingsView: React.FC<Props> = ({ initialTab = 'profile' }) => {
   const student = user?.studentMaster;
   const teacher = user?.teacherMaster;
 
+  // Student specific data
   const studentName = student?.name || user?.name || 'Aarav Sharma';
   const rawId = student?.roll_no || teacher?.faculty_id || user?.id?.slice(0, 8) || '2026-002';
   
@@ -79,6 +82,30 @@ export const SettingsView: React.FC<Props> = ({ initialTab = 'profile' }) => {
   const displayId = rawId.startsWith('HIET')
     ? rawId
     : `HIET-${branch}-2026-${rawId.replace(/[^0-9]/g, '').slice(-3) || '002'}`;
+
+  // Faculty specific data (Separate Programme, Department, and Authorized Allocations)
+  const facultyName = teacher?.full_name || teacher?.name || user?.name || 'Dr. Rajesh Kumar';
+  const facultyId = teacher?.faculty_id || user?.id || 'FAC001';
+  const facultyDisplayId = facultyId.startsWith('HIET')
+    ? facultyId
+    : `HIET-FAC-2026-${facultyId.replace(/[^0-9]/g, '').slice(-3) || '001'}`;
+  const academicProgramme = 'B.Tech';
+  const facultyDept = teacher?.department === 'CSE'
+    ? 'Computer Science & Engineering'
+    : (teacher?.department || user?.department || 'Computer Science & Engineering');
+  const facultySpecialization = 'Software Systems & Computing';
+
+  // Real teaching allocations derived from curriculum mapping
+  const allSubjects = dataStore.getSubjects();
+  const assignedSubjects = allSubjects.filter(s => 
+    s.teacher_id === teacher?.id || 
+    s.teacher_id === teacher?.faculty_id || 
+    s.teacher_id === user?.id ||
+    (!s.teacher_id && (s.department === (teacher?.department || 'CSE') || s.branch === (teacher?.department || 'CSE')))
+  );
+  const assignedSemesters = [...new Set(assignedSubjects.map(s => s.semester))].sort((a, b) => a - b);
+  const assignedBranches = [...new Set(assignedSubjects.map(s => s.branch))];
+  const assignedSections = teacher?.class_incharge_details?.section ? [teacher.class_incharge_details.section, 'B'] : ['A', 'B'];
 
   const getRoleDisplay = () => {
     switch (role) {
@@ -106,6 +133,14 @@ export const SettingsView: React.FC<Props> = ({ initialTab = 'profile' }) => {
   const handleCopyId = () => {
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
       navigator.clipboard.writeText(displayId);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const handleCopyCustomId = (idToCopy: string) => {
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(idToCopy);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
@@ -241,294 +276,578 @@ export const SettingsView: React.FC<Props> = ({ initialTab = 'profile' }) => {
       {/* 3. My Institutional Profile Tab (Reference UI Redesign) */}
       {activeTab === 'profile' && (
         <div className="space-y-6">
-          {/* DIGITAL STUDENT ID CARD (Main Focus) */}
-          <div className="relative bg-gradient-to-br from-[#0c233c] via-[#0f2942] to-[#081726] text-white rounded-2xl p-5 sm:p-6 shadow-xl border border-slate-700/60 overflow-hidden">
-            {/* Campus Silhouette Background Overlay */}
-            <div 
-              className="absolute right-0 top-0 bottom-0 w-3/5 bg-[url('/images/hiet_campus.jpg')] bg-cover bg-center opacity-10 pointer-events-none mix-blend-overlay"
-              aria-hidden="true" 
-            />
+          {isStudent ? (
+            /* ============================================================== */
+            /* STUDENT DIGITAL ID CARD (Preserved Blue & Navy Theme)           */
+            /* ============================================================== */
+            <>
+              <div className="relative bg-gradient-to-br from-[#0c233c] via-[#0f2942] to-[#081726] text-white rounded-2xl p-5 sm:p-6 shadow-xl border border-slate-700/60 overflow-hidden">
+                {/* Campus Silhouette Background Overlay */}
+                <div 
+                  className="absolute right-0 top-0 bottom-0 w-3/5 bg-[url('/images/hiet_campus.jpg')] bg-cover bg-center opacity-10 pointer-events-none mix-blend-overlay"
+                  aria-hidden="true" 
+                />
 
-            {/* Card Header: Institution, Location & Digital Pass Badge */}
-            <div className="flex items-start justify-between gap-3 relative z-10">
-              <div className="space-y-0.5">
-                <p className="text-xs sm:text-sm font-extrabold tracking-wider text-white uppercase">
-                  HIET GROUP OF <span className="text-sky-400 font-extrabold">INSTITUTIONS</span>
-                </p>
-                <div className="flex items-center gap-1.5 text-[11px] text-slate-300 font-medium">
-                  <MapPin className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-                  <span>Vidyanagar, Shahpur, Kangra (H.P.)</span>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setShowQRModal(true)}
-                className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-[10px] sm:text-[11px] flex items-center gap-1.5 shadow-sm transition active:scale-95 cursor-pointer shrink-0"
-              >
-                <QrCode className="w-3.5 h-3.5" />
-                <span>DIGITAL PASS</span>
-              </button>
-            </div>
-
-            {/* Student Identity: Avatar, White Name, Role, ID & Verified Badge */}
-            <div className="mt-5 flex items-center gap-4 relative z-10">
-              {/* Initials-based Avatar */}
-              <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-700 text-white font-extrabold text-2xl sm:text-3xl flex items-center justify-center shrink-0 shadow-md border border-white/20 select-none">
-                {studentName.charAt(0).toUpperCase()}
-              </div>
-
-              {/* Identity Details */}
-              <div className="min-w-0 flex-1">
-                {/* Critical Text Requirement: Student Full Name is purely WHITE */}
-                <h2 className="text-lg sm:text-xl font-extrabold tracking-tight text-white truncate drop-shadow-xs">
-                  {studentName}
-                </h2>
-
-                <div className="mt-1 flex items-center gap-2 flex-wrap">
-                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-200 bg-blue-900/70 border border-blue-400/30 px-2 py-0.5 rounded-md">
-                    <GraduationCap className="w-3.5 h-3.5" />
-                    <span>{getRoleDisplay()}</span>
-                  </span>
-                </div>
-
-                <div className="mt-1.5 flex items-center justify-between gap-2 flex-wrap">
-                  <div className="flex items-center gap-1.5 font-mono text-xs text-sky-200 font-medium">
-                    <span>ID: {displayId}</span>
-                    <button
-                      type="button"
-                      onClick={handleCopyId}
-                      className="hover:text-white transition cursor-pointer p-0.5 text-sky-300"
-                      title="Copy Institutional ID"
-                    >
-                      {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                    </button>
+                {/* Card Header: Institution, Location & Digital Pass Badge */}
+                <div className="flex items-start justify-between gap-3 relative z-10">
+                  <div className="space-y-0.5">
+                    <p className="text-xs sm:text-sm font-extrabold tracking-wider text-white uppercase">
+                      HIET GROUP OF <span className="text-sky-400 font-extrabold">INSTITUTIONS</span>
+                    </p>
+                    <div className="flex items-center gap-1.5 text-[11px] text-slate-300 font-medium">
+                      <MapPin className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+                      <span>Vidyanagar, Shahpur, Kangra (H.P.)</span>
+                    </div>
                   </div>
 
-                  <div className="inline-flex items-center gap-1 bg-emerald-950/80 border border-emerald-500/50 text-emerald-300 px-2.5 py-0.5 rounded-full text-[11px] font-bold shadow-2xs">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  <button
+                    type="button"
+                    onClick={() => setShowQRModal(true)}
+                    className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-[10px] sm:text-[11px] flex items-center gap-1.5 shadow-sm transition active:scale-95 cursor-pointer shrink-0"
+                  >
+                    <QrCode className="w-3.5 h-3.5" />
+                    <span>DIGITAL PASS</span>
+                  </button>
+                </div>
+
+                {/* Student Identity: Avatar, White Name, Role, ID & Verified Badge */}
+                <div className="mt-5 flex items-center gap-4 relative z-10">
+                  <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-700 text-white font-extrabold text-2xl sm:text-3xl flex items-center justify-center shrink-0 shadow-md border border-white/20 select-none">
+                    {studentName.charAt(0).toUpperCase()}
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <h2 className="text-lg sm:text-xl font-extrabold tracking-tight text-white truncate drop-shadow-xs">
+                      {studentName}
+                    </h2>
+
+                    <div className="mt-1 flex items-center gap-2 flex-wrap">
+                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-200 bg-blue-900/70 border border-blue-400/30 px-2 py-0.5 rounded-md">
+                        <GraduationCap className="w-3.5 h-3.5" />
+                        <span>{getRoleDisplay()}</span>
+                      </span>
+                    </div>
+
+                    <div className="mt-1.5 flex items-center justify-between gap-2 flex-wrap">
+                      <div className="flex items-center gap-1.5 font-mono text-xs text-sky-200 font-medium">
+                        <span>ID: {displayId}</span>
+                        <button
+                          type="button"
+                          onClick={handleCopyId}
+                          className="hover:text-white transition cursor-pointer p-0.5 text-sky-300"
+                          title="Copy Institutional ID"
+                        >
+                          {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                        </button>
+                      </div>
+
+                      <div className="inline-flex items-center gap-1 bg-emerald-950/80 border border-emerald-500/50 text-emerald-300 px-2.5 py-0.5 rounded-full text-[11px] font-bold shadow-2xs">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                        <span>Verified</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Academic Information: Structured 2-Column Grid */}
+                <div className="mt-5 bg-slate-900/60 backdrop-blur-xs rounded-xl p-3.5 sm:p-4 border border-slate-700/60 grid grid-cols-2 gap-3.5 sm:gap-4 relative z-10">
+                  {/* Department */}
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-9 h-9 rounded-lg bg-blue-950/80 border border-blue-800/50 text-sky-400 flex items-center justify-center shrink-0">
+                      <Building2 className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400 block leading-tight">
+                        DEPARTMENT
+                      </span>
+                      <span className="text-xs sm:text-sm font-bold text-white block truncate mt-0.5">
+                        {department}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Branch */}
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-9 h-9 rounded-lg bg-blue-950/80 border border-blue-800/50 text-sky-400 flex items-center justify-center shrink-0">
+                      <BookOpen className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400 block leading-tight">
+                        BRANCH
+                      </span>
+                      <span className="text-xs sm:text-sm font-bold text-white block truncate mt-0.5">
+                        {branch}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Semester */}
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-9 h-9 rounded-lg bg-blue-950/80 border border-blue-800/50 text-sky-400 flex items-center justify-center shrink-0">
+                      <Calendar className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400 block leading-tight">
+                        SEMESTER
+                      </span>
+                      <span className="text-xs sm:text-sm font-bold text-white block truncate mt-0.5">
+                        {semester}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Status */}
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-9 h-9 rounded-lg bg-blue-950/80 border border-blue-800/50 text-sky-400 flex items-center justify-center shrink-0">
+                      <BarChart3 className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400 block leading-tight">
+                        STATUS
+                      </span>
+                      <span className="text-xs sm:text-sm font-bold text-emerald-400 block truncate mt-0.5">
+                        Active / Verified
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Card Footer: Cryptographic Record & View QR */}
+                <div className="mt-5 pt-3.5 border-t border-slate-700/60 flex items-center justify-between text-xs relative z-10">
+                  <button
+                    type="button"
+                    onClick={() => setShowCryptoModal(true)}
+                    className="flex items-center gap-1.5 text-slate-300 hover:text-white transition font-medium cursor-pointer"
+                  >
+                    <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>Institutional Cryptographic Record</span>
+                    <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowQRModal(true)}
+                    className="flex items-center gap-1.5 text-sky-300 hover:text-sky-200 transition font-bold cursor-pointer"
+                  >
+                    <QrCode className="w-4 h-4 text-sky-400 shrink-0" />
+                    <span>View QR</span>
+                    <ChevronRight className="w-3.5 h-3.5 text-sky-400" />
+                  </button>
+                </div>
+              </div>
+
+              {/* STUDENT IDENTITY DETAILS SECTION */}
+              <div className="bg-white dark:bg-[#141414] rounded-2xl border border-slate-200 dark:border-slate-800 p-5 sm:p-6 shadow-xs space-y-3.5">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800/80">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-sky-400 flex items-center justify-center shrink-0 border border-blue-100 dark:border-blue-900/40">
+                      <CreditCard className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-extrabold text-slate-900 dark:text-white leading-tight">
+                        Identity Details
+                      </h3>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        Verified enrollment & institutional records (Immutable)
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="inline-flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 text-xs font-bold px-2.5 py-1 rounded-full shrink-0">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                     <span>Verified</span>
                   </div>
                 </div>
-              </div>
-            </div>
 
-            {/* Academic Information: Structured 2-Column Grid */}
-            <div className="mt-5 bg-slate-900/60 backdrop-blur-xs rounded-xl p-3.5 sm:p-4 border border-slate-700/60 grid grid-cols-2 gap-3.5 sm:gap-4 relative z-10">
-              {/* Department */}
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-9 h-9 rounded-lg bg-blue-950/80 border border-blue-800/50 text-sky-400 flex items-center justify-center shrink-0">
-                  <Building2 className="w-4 h-4" />
+                <div className="space-y-2.5 pt-1 text-xs">
+                  <div className="bg-slate-50/80 dark:bg-slate-900/60 rounded-xl p-3 sm:p-3.5 flex items-center justify-between gap-3 border border-slate-100 dark:border-slate-800/80">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-9 h-9 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center shrink-0 shadow-2xs">
+                        <User className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold block leading-tight">Full Legal Name</span>
+                        <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white block truncate mt-0.5">{studentName}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-slate-50/80 dark:bg-slate-900/60 rounded-xl p-3 sm:p-3.5 flex items-center justify-between gap-3 border border-slate-100 dark:border-slate-800/80">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-9 h-9 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center shrink-0 shadow-2xs">
+                        <GraduationCap className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold block leading-tight">Institutional Role</span>
+                        <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white block truncate mt-0.5">{getRoleDisplay()}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-slate-50/80 dark:bg-slate-900/60 rounded-xl p-3 sm:p-3.5 flex items-center justify-between gap-3 border border-slate-100 dark:border-slate-800/80">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-9 h-9 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center shrink-0 shadow-2xs">
+                        <FileText className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold block leading-tight">Institutional ID</span>
+                        <span className="text-xs sm:text-sm font-bold font-mono text-slate-900 dark:text-white block truncate mt-0.5">{displayId}</span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleCopyId}
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800 transition cursor-pointer shrink-0"
+                      title="Copy Institutional ID"
+                    >
+                      {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+                    </button>
+                  </div>
+
+                  <div className="bg-slate-50/80 dark:bg-slate-900/60 rounded-xl p-3 sm:p-3.5 flex items-center justify-between gap-3 border border-slate-100 dark:border-slate-800/80">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-9 h-9 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center shrink-0 shadow-2xs">
+                        <Building2 className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold block leading-tight">Department</span>
+                        <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white block truncate mt-0.5">{department}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-slate-50/80 dark:bg-slate-900/60 rounded-xl p-3 sm:p-3.5 flex items-center justify-between gap-3 border border-slate-100 dark:border-slate-800/80">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-9 h-9 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center shrink-0 shadow-2xs">
+                        <GitBranch className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold block leading-tight">Branch</span>
+                        <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white block truncate mt-0.5">{branch}</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400 block leading-tight">
-                    DEPARTMENT
+
+                <div className="p-3 bg-slate-50 dark:bg-[#181818] rounded-xl border border-slate-200 dark:border-[#303030] text-[11px] text-slate-500 dark:text-[#a3a3a3] flex items-start gap-2 mt-3">
+                  <AlertCircle className="w-4 h-4 text-slate-400 dark:text-[#858585] shrink-0 mt-0.5" />
+                  <span>
+                    To request modifications to verified name, department, or enrollment credentials, contact the Office of the Registrar or Dean Academics with valid documentary proof.
                   </span>
-                  <span className="text-xs sm:text-sm font-bold text-white block truncate mt-0.5">
-                    {department}
+                </div>
+              </div>
+            </>
+          ) : (
+            /* ============================================================== */
+            /* FACULTY DIGITAL ID CARD (Strict Monochrome Black & White)      */
+            /* ============================================================== */
+            <>
+              <div className="relative bg-black text-white rounded-2xl p-5 sm:p-6 shadow-xl border border-neutral-800 overflow-hidden">
+                {/* Header: Institution & Monochrome Digital Pass */}
+                <div className="flex items-start justify-between gap-3 relative z-10">
+                  <div className="space-y-0.5">
+                    <p className="text-xs sm:text-sm font-extrabold tracking-wider text-white uppercase">
+                      HIET GROUP OF <span className="text-neutral-400 font-extrabold">INSTITUTIONS</span>
+                    </p>
+                    <div className="flex items-center gap-1.5 text-[11px] text-neutral-400 font-medium">
+                      <MapPin className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+                      <span>Vidyanagar, Shahpur, Kangra (H.P.)</span>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowQRModal(true)}
+                    className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-neutral-200 text-black font-extrabold text-[10px] sm:text-[11px] flex items-center gap-1.5 shadow-sm transition active:scale-95 cursor-pointer shrink-0 border border-neutral-300"
+                  >
+                    <QrCode className="w-3.5 h-3.5 text-black" />
+                    <span>DIGITAL PASS</span>
+                  </button>
+                </div>
+
+                {/* Faculty Identity: Avatar, Name, Role, ID & Verified Badge */}
+                <div className="mt-5 flex items-center gap-4 relative z-10">
+                  <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-2xl bg-neutral-900 text-white font-extrabold text-2xl sm:text-3xl flex items-center justify-center shrink-0 shadow-md border border-neutral-700 select-none">
+                    {facultyName.charAt(0).toUpperCase()}
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <h2 className="text-lg sm:text-xl font-extrabold tracking-tight text-white truncate">
+                      {facultyName}
+                    </h2>
+
+                    <div className="mt-1 flex items-center gap-2 flex-wrap">
+                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-neutral-300 bg-neutral-900 border border-neutral-700 px-2 py-0.5 rounded-md">
+                        <GraduationCap className="w-3.5 h-3.5 text-neutral-300" />
+                        <span>Faculty Member</span>
+                      </span>
+                    </div>
+
+                    <div className="mt-1.5 flex items-center justify-between gap-2 flex-wrap">
+                      <div className="flex items-center gap-1.5 font-mono text-xs text-neutral-300 font-medium">
+                        <span>ID: {facultyDisplayId}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleCopyCustomId(facultyDisplayId)}
+                          className="hover:text-white transition cursor-pointer p-0.5 text-neutral-400"
+                          title="Copy Institutional ID"
+                        >
+                          {copied ? <Check className="w-3.5 h-3.5 text-white" /> : <Copy className="w-3.5 h-3.5" />}
+                        </button>
+                      </div>
+
+                      <div className="inline-flex items-center gap-1 bg-neutral-900 border border-neutral-700 text-neutral-200 px-2.5 py-0.5 rounded-full text-[11px] font-bold shadow-2xs">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-white shrink-0" />
+                        <span>Active / Verified</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Academic & Teaching Information (Strictly NO "Semester 1") */}
+                <div className="mt-5 bg-neutral-950/90 rounded-xl p-3.5 sm:p-4 border border-neutral-800 grid grid-cols-2 gap-3.5 sm:gap-4 relative z-10">
+                  {/* Academic Programme */}
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-9 h-9 rounded-lg bg-neutral-900 border border-neutral-700 text-white flex items-center justify-center shrink-0">
+                      <Building2 className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-neutral-400 block leading-tight">
+                        ACADEMIC PROGRAMME
+                      </span>
+                      <span className="text-xs sm:text-sm font-bold text-white block truncate mt-0.5">
+                        {academicProgramme}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Institutional Department */}
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-9 h-9 rounded-lg bg-neutral-900 border border-neutral-700 text-white flex items-center justify-center shrink-0">
+                      <BookOpen className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-neutral-400 block leading-tight">
+                        DEPARTMENT
+                      </span>
+                      <span className="text-xs sm:text-sm font-bold text-white block truncate mt-0.5" title={facultyDept}>
+                        {facultyDept}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Teaching Specialization */}
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-9 h-9 rounded-lg bg-neutral-900 border border-neutral-700 text-white flex items-center justify-center shrink-0">
+                      <GraduationCap className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-neutral-400 block leading-tight">
+                        SPECIALIZATION
+                      </span>
+                      <span className="text-xs sm:text-sm font-bold text-white block truncate mt-0.5">
+                        {facultySpecialization}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Employment Status */}
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-9 h-9 rounded-lg bg-neutral-900 border border-neutral-700 text-white flex items-center justify-center shrink-0">
+                      <ShieldCheck className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-neutral-400 block leading-tight">
+                        STATUS
+                      </span>
+                      <span className="text-xs sm:text-sm font-bold text-neutral-200 block truncate mt-0.5">
+                        Active / Verified
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Card Footer: Cryptographic Record & View QR */}
+                <div className="mt-5 pt-3.5 border-t border-neutral-800 flex items-center justify-between text-xs relative z-10">
+                  <button
+                    type="button"
+                    onClick={() => setShowCryptoModal(true)}
+                    className="flex items-center gap-1.5 text-neutral-400 hover:text-white transition font-medium cursor-pointer"
+                  >
+                    <ShieldCheck className="w-4 h-4 text-white shrink-0" />
+                    <span>Institutional Cryptographic Record</span>
+                    <ChevronRight className="w-3.5 h-3.5 text-neutral-500" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowQRModal(true)}
+                    className="flex items-center gap-1.5 text-white hover:text-neutral-300 transition font-bold cursor-pointer"
+                  >
+                    <QrCode className="w-4 h-4 text-white shrink-0" />
+                    <span>View QR</span>
+                    <ChevronRight className="w-3.5 h-3.5 text-neutral-400" />
+                  </button>
+                </div>
+              </div>
+
+              {/* FACULTY IDENTITY DETAILS (Monochrome Black & White) */}
+              <div className="bg-white rounded-2xl border border-neutral-200 p-5 sm:p-6 shadow-xs space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-neutral-200">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-neutral-100 text-black flex items-center justify-center shrink-0 border border-neutral-300">
+                      <CreditCard className="w-5 h-5 text-black" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-extrabold text-black leading-tight">
+                        Faculty Identity Details
+                      </h3>
+                      <p className="text-xs text-neutral-500 mt-0.5">
+                        Verified employment & academic appointments (Immutable)
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="inline-flex items-center gap-1 bg-neutral-100 border border-neutral-300 text-black text-xs font-bold px-2.5 py-1 rounded-full shrink-0">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-black" />
+                    <span>Verified</span>
+                  </div>
+                </div>
+
+                {/* Information Rows */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 text-xs">
+                  {/* Full Legal Name */}
+                  <div className="bg-neutral-50 rounded-xl p-3 flex items-center gap-3 border border-neutral-200">
+                    <div className="w-9 h-9 rounded-xl bg-white border border-neutral-300 text-neutral-700 flex items-center justify-center shrink-0 shadow-2xs">
+                      <User className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-[11px] text-neutral-500 font-semibold block leading-tight">Full Legal Name</span>
+                      <span className="text-xs sm:text-sm font-bold text-black block truncate mt-0.5">{facultyName}</span>
+                    </div>
+                  </div>
+
+                  {/* Institutional Role */}
+                  <div className="bg-neutral-50 rounded-xl p-3 flex items-center gap-3 border border-neutral-200">
+                    <div className="w-9 h-9 rounded-xl bg-white border border-neutral-300 text-neutral-700 flex items-center justify-center shrink-0 shadow-2xs">
+                      <GraduationCap className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-[11px] text-neutral-500 font-semibold block leading-tight">Institutional Role</span>
+                      <span className="text-xs sm:text-sm font-bold text-black block truncate mt-0.5">Faculty Member</span>
+                    </div>
+                  </div>
+
+                  {/* Institutional ID */}
+                  <div className="bg-neutral-50 rounded-xl p-3 flex items-center justify-between gap-3 border border-neutral-200">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-9 h-9 rounded-xl bg-white border border-neutral-300 text-neutral-700 flex items-center justify-center shrink-0 shadow-2xs">
+                        <FileText className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <span className="text-[11px] text-neutral-500 font-semibold block leading-tight">Institutional ID</span>
+                        <span className="text-xs sm:text-sm font-bold font-mono text-black block truncate mt-0.5">{facultyDisplayId}</span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleCopyCustomId(facultyDisplayId)}
+                      className="p-1.5 rounded-lg text-neutral-500 hover:text-black hover:bg-neutral-200 transition cursor-pointer shrink-0"
+                      title="Copy Institutional ID"
+                    >
+                      {copied ? <Check className="w-4 h-4 text-black" /> : <Copy className="w-4 h-4" />}
+                    </button>
+                  </div>
+
+                  {/* Academic Programme */}
+                  <div className="bg-neutral-50 rounded-xl p-3 flex items-center gap-3 border border-neutral-200">
+                    <div className="w-9 h-9 rounded-xl bg-white border border-neutral-300 text-neutral-700 flex items-center justify-center shrink-0 shadow-2xs">
+                      <Building2 className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-[11px] text-neutral-500 font-semibold block leading-tight">Academic Programme</span>
+                      <span className="text-xs sm:text-sm font-bold text-black block truncate mt-0.5">{academicProgramme}</span>
+                    </div>
+                  </div>
+
+                  {/* Institutional Department */}
+                  <div className="bg-neutral-50 rounded-xl p-3 flex items-center gap-3 border border-neutral-200">
+                    <div className="w-9 h-9 rounded-xl bg-white border border-neutral-300 text-neutral-700 flex items-center justify-center shrink-0 shadow-2xs">
+                      <BookOpen className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-[11px] text-neutral-500 font-semibold block leading-tight">Institutional Department</span>
+                      <span className="text-xs sm:text-sm font-bold text-black block truncate mt-0.5" title={facultyDept}>{facultyDept}</span>
+                    </div>
+                  </div>
+
+                  {/* Teaching Specialization */}
+                  <div className="bg-neutral-50 rounded-xl p-3 flex items-center gap-3 border border-neutral-200">
+                    <div className="w-9 h-9 rounded-xl bg-white border border-neutral-300 text-neutral-700 flex items-center justify-center shrink-0 shadow-2xs">
+                      <GraduationCap className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-[11px] text-neutral-500 font-semibold block leading-tight">Teaching Specialization</span>
+                      <span className="text-xs sm:text-sm font-bold text-black block truncate mt-0.5">{facultySpecialization}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* AUTHORIZED TEACHING ALLOCATIONS SECTION */}
+                <div className="mt-4 pt-4 border-t border-neutral-200 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-neutral-800">
+                      Authorized Teaching Allocations
+                    </h4>
+                    <span className="text-[11px] text-neutral-500 font-medium">Official Curriculum Assignments</span>
+                  </div>
+
+                  {assignedSubjects.length === 0 ? (
+                    <div className="p-4 bg-neutral-50 border border-neutral-200 rounded-xl text-center text-xs text-neutral-500 font-medium">
+                      No teaching assignments allocated
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                      <div className="p-3 bg-neutral-50 border border-neutral-200 rounded-xl space-y-1">
+                        <span className="text-[11px] font-bold text-neutral-500 block uppercase">Assigned Teaching Semesters</span>
+                        <span className="text-xs font-bold text-black block">
+                          {assignedSemesters.length > 0 ? assignedSemesters.map(s => `Semester ${s}`).join(', ') : 'No teaching assignments allocated'}
+                        </span>
+                      </div>
+
+                      <div className="p-3 bg-neutral-50 border border-neutral-200 rounded-xl space-y-1">
+                        <span className="text-[11px] font-bold text-neutral-500 block uppercase">Assigned Teaching Branches</span>
+                        <span className="text-xs font-bold text-black block">
+                          {assignedBranches.length > 0 ? assignedBranches.join(', ') : 'None'}
+                        </span>
+                      </div>
+
+                      <div className="p-3 bg-neutral-50 border border-neutral-200 rounded-xl space-y-1">
+                        <span className="text-[11px] font-bold text-neutral-500 block uppercase">Assigned Sections</span>
+                        <span className="text-xs font-bold text-black block">
+                          {assignedSections.map(sec => `Section ${sec}`).join(', ')}
+                        </span>
+                      </div>
+
+                      <div className="p-3 bg-neutral-50 border border-neutral-200 rounded-xl space-y-1">
+                        <span className="text-[11px] font-bold text-neutral-500 block uppercase">Assigned Subjects</span>
+                        <span className="text-xs font-bold text-black block truncate" title={assignedSubjects.map(s => s.subject_name).join(', ')}>
+                          {assignedSubjects.map(s => `${s.subject_code ? s.subject_code + ' ' : ''}${s.subject_name}`).join(', ')}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-200 text-[11px] text-neutral-500 flex items-start gap-2 mt-3">
+                  <AlertCircle className="w-4 h-4 text-neutral-400 shrink-0 mt-0.5" />
+                  <span>
+                    To request modifications to verified name, department, or teaching allocations, contact the Office of the Registrar or Dean Academics with valid institutional authorization.
                   </span>
                 </div>
               </div>
-
-              {/* Branch */}
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-9 h-9 rounded-lg bg-blue-950/80 border border-blue-800/50 text-sky-400 flex items-center justify-center shrink-0">
-                  <BookOpen className="w-4 h-4" />
-                </div>
-                <div className="min-w-0">
-                  <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400 block leading-tight">
-                    BRANCH
-                  </span>
-                  <span className="text-xs sm:text-sm font-bold text-white block truncate mt-0.5">
-                    {branch}
-                  </span>
-                </div>
-              </div>
-
-              {/* Semester */}
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-9 h-9 rounded-lg bg-blue-950/80 border border-blue-800/50 text-sky-400 flex items-center justify-center shrink-0">
-                  <Calendar className="w-4 h-4" />
-                </div>
-                <div className="min-w-0">
-                  <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400 block leading-tight">
-                    SEMESTER
-                  </span>
-                  <span className="text-xs sm:text-sm font-bold text-white block truncate mt-0.5">
-                    {semester}
-                  </span>
-                </div>
-              </div>
-
-              {/* Status */}
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-9 h-9 rounded-lg bg-blue-950/80 border border-blue-800/50 text-sky-400 flex items-center justify-center shrink-0">
-                  <BarChart3 className="w-4 h-4" />
-                </div>
-                <div className="min-w-0">
-                  <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-slate-400 block leading-tight">
-                    STATUS
-                  </span>
-                  <span className="text-xs sm:text-sm font-bold text-emerald-400 block truncate mt-0.5">
-                    Active / Verified
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Card Footer: Cryptographic Record & View QR */}
-            <div className="mt-5 pt-3.5 border-t border-slate-700/60 flex items-center justify-between text-xs relative z-10">
-              <button
-                type="button"
-                onClick={() => setShowCryptoModal(true)}
-                className="flex items-center gap-1.5 text-slate-300 hover:text-white transition font-medium cursor-pointer"
-              >
-                <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>Institutional Cryptographic Record</span>
-                <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setShowQRModal(true)}
-                className="flex items-center gap-1.5 text-sky-300 hover:text-sky-200 transition font-bold cursor-pointer"
-              >
-                <QrCode className="w-4 h-4 text-sky-400 shrink-0" />
-                <span>View QR</span>
-                <ChevronRight className="w-3.5 h-3.5 text-sky-400" />
-              </button>
-            </div>
-          </div>
-
-          {/* IDENTITY DETAILS SECTION (Clean White Card) */}
-          <div className="bg-white dark:bg-[#141414] rounded-2xl border border-slate-200 dark:border-slate-800 p-5 sm:p-6 shadow-xs space-y-3.5">
-            {/* Section Header */}
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800/80">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-sky-400 flex items-center justify-center shrink-0 border border-blue-100 dark:border-blue-900/40">
-                  <CreditCard className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-extrabold text-slate-900 dark:text-white leading-tight">
-                    Identity Details
-                  </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    Verified enrollment & institutional records (Immutable)
-                  </p>
-                </div>
-              </div>
-
-              <div className="inline-flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 text-xs font-bold px-2.5 py-1 rounded-full shrink-0">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                <span>Verified</span>
-              </div>
-            </div>
-
-            {/* Information Rows */}
-            <div className="space-y-2.5 pt-1 text-xs">
-              {/* 1. Full Legal Name */}
-              <div className="bg-slate-50/80 dark:bg-slate-900/60 rounded-xl p-3 sm:p-3.5 flex items-center justify-between gap-3 border border-slate-100 dark:border-slate-800/80">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-9 h-9 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center shrink-0 shadow-2xs">
-                    <User className="w-4 h-4" />
-                  </div>
-                  <div className="min-w-0">
-                    <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold block leading-tight">
-                      Full Legal Name
-                    </span>
-                    <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white block truncate mt-0.5">
-                      {studentName}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* 2. Institutional Role */}
-              <div className="bg-slate-50/80 dark:bg-slate-900/60 rounded-xl p-3 sm:p-3.5 flex items-center justify-between gap-3 border border-slate-100 dark:border-slate-800/80">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-9 h-9 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center shrink-0 shadow-2xs">
-                    <GraduationCap className="w-4 h-4" />
-                  </div>
-                  <div className="min-w-0">
-                    <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold block leading-tight">
-                      Institutional Role
-                    </span>
-                    <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white block truncate mt-0.5">
-                      {getRoleDisplay()}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* 3. Institutional ID with Copy Button */}
-              <div className="bg-slate-50/80 dark:bg-slate-900/60 rounded-xl p-3 sm:p-3.5 flex items-center justify-between gap-3 border border-slate-100 dark:border-slate-800/80">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-9 h-9 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center shrink-0 shadow-2xs">
-                    <FileText className="w-4 h-4" />
-                  </div>
-                  <div className="min-w-0">
-                    <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold block leading-tight">
-                      Institutional ID
-                    </span>
-                    <span className="text-xs sm:text-sm font-bold font-mono text-slate-900 dark:text-white block truncate mt-0.5">
-                      {displayId}
-                    </span>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleCopyId}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800 transition cursor-pointer shrink-0"
-                  title="Copy Institutional ID"
-                >
-                  {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
-                </button>
-              </div>
-
-              {/* 4. Department */}
-              <div className="bg-slate-50/80 dark:bg-slate-900/60 rounded-xl p-3 sm:p-3.5 flex items-center justify-between gap-3 border border-slate-100 dark:border-slate-800/80">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-9 h-9 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center shrink-0 shadow-2xs">
-                    <Building2 className="w-4 h-4" />
-                  </div>
-                  <div className="min-w-0">
-                    <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold block leading-tight">
-                      Department
-                    </span>
-                    <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white block truncate mt-0.5">
-                      {department}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* 5. Branch */}
-              <div className="bg-slate-50/80 dark:bg-slate-900/60 rounded-xl p-3 sm:p-3.5 flex items-center justify-between gap-3 border border-slate-100 dark:border-slate-800/80">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-9 h-9 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center shrink-0 shadow-2xs">
-                    <GitBranch className="w-4 h-4" />
-                  </div>
-                  <div className="min-w-0">
-                    <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold block leading-tight">
-                      Branch
-                    </span>
-                    <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white block truncate mt-0.5">
-                      {branch}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Regulatory Immutable Notice */}
-            <div className="p-3 bg-slate-50 dark:bg-[#181818] rounded-xl border border-slate-200 dark:border-[#303030] text-[11px] text-slate-500 dark:text-[#a3a3a3] flex items-start gap-2 mt-3">
-              <AlertCircle className="w-4 h-4 text-slate-400 dark:text-[#858585] shrink-0 mt-0.5" />
-              <span>
-                To request modifications to verified name, department, or enrollment credentials, contact the Office of the Registrar or Dean Academics with valid documentary proof.
-              </span>
-            </div>
-          </div>
+            </>
+          )}
         </div>
       )}
 

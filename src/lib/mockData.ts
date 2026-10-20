@@ -8,6 +8,11 @@ import {
   Profile, 
   Subject, 
   AttendanceRecord, 
+  AttendanceBatch,
+  AttendanceBatchRecord,
+  AttendanceBatchHistoryItem,
+  AttendanceBatchStatus,
+  AttendanceBatchStage,
   AcademicRecord, 
   Grade,
   Achievement, 
@@ -842,6 +847,241 @@ export const INITIAL_ATTENDANCE: AttendanceRecord[] = [
   { id: 'att-38', student_id: 'std-cse-001', subject_id: 'sub-cs605', subject_name: 'EVS', subject_code: 'CS-605', date: '2026-09-21', status: 'Present' },
   { id: 'att-39', student_id: 'std-cse-001', subject_id: 'sub-cs605', subject_name: 'EVS', subject_code: 'CS-605', date: '2026-09-22', status: 'Present' },
   { id: 'att-40', student_id: 'std-cse-001', subject_id: 'sub-cs605', subject_name: 'EVS', subject_code: 'CS-605', date: '2026-09-23', status: 'Present' }
+];
+
+// =============================================================================
+// 4B. ATTENDANCE APPROVAL BATCHES (Workflow: Faculty -> HOD -> Principal -> MD)
+// =============================================================================
+export const INITIAL_ATTENDANCE_BATCHES: AttendanceBatch[] = [
+  {
+    id: 'ATT-BATCH-20261019-CSE6A-01',
+    department: 'CSE',
+    branch: 'CSE',
+    semester: 6,
+    section: 'A',
+    subject_id: 'sub-cs601',
+    subject_name: 'Mathematics',
+    subject_code: 'CS-601',
+    lecture_date: '2026-10-19',
+    faculty_id: 'tch-01',
+    faculty_name: 'Dr. Rajesh Kumar',
+    status: 'Final Approved',
+    current_stage: 'completed',
+    total_students: 4,
+    present_count: 3,
+    absent_count: 0,
+    leave_count: 1,
+    records: [
+      { student_id: 'std-cse-sem6-001', student_roll: 'CSE001', student_name: 'Aarav Sharma', status: 'Present' },
+      { student_id: 'std-cse-sem6-002', student_roll: 'CSE002', student_name: 'Aditya Verma', status: 'Present' },
+      { student_id: 'std-cse-sem6-003', student_roll: 'CSE003', student_name: 'Ananya Thakur', status: 'Leave', remarks: 'Medical leave approved by HOD' },
+      { student_id: 'std-cse-sem6-004', student_roll: 'CSE004', student_name: 'Ayush Katoch', status: 'Present' }
+    ],
+    history: [
+      {
+        id: 'hist-att-01-1',
+        batch_id: 'ATT-BATCH-20261019-CSE6A-01',
+        stage: 'faculty',
+        action: 'submitted',
+        actor_id: 'tch-01',
+        actor_name: 'Dr. Rajesh Kumar',
+        actor_role: 'faculty',
+        comments: 'Marked regular morning lecture attendance for Mathematics CS-601.',
+        created_at: '2026-10-19T10:00:00Z'
+      },
+      {
+        id: 'hist-att-01-2',
+        batch_id: 'ATT-BATCH-20261019-CSE6A-01',
+        stage: 'hod',
+        action: 'approved',
+        actor_id: 'tch-fac-cse-001',
+        actor_name: 'Dr. Anuj Sharma',
+        actor_role: 'hod',
+        comments: 'Verified against departmental timetable. Student Ananya medical certificate on file.',
+        created_at: '2026-10-19T11:15:00Z'
+      },
+      {
+        id: 'hist-att-01-3',
+        batch_id: 'ATT-BATCH-20261019-CSE6A-01',
+        stage: 'principal',
+        action: 'approved',
+        actor_id: 'usr-principal-01',
+        actor_name: 'Dr. S.K. Sharma',
+        actor_role: 'principal',
+        comments: 'Academic roster verified. Forwarded to MD for official archival.',
+        created_at: '2026-10-19T13:45:00Z'
+      },
+      {
+        id: 'hist-att-01-4',
+        batch_id: 'ATT-BATCH-20261019-CSE6A-01',
+        stage: 'md',
+        action: 'approved',
+        actor_id: 'usr-md-01',
+        actor_name: 'Er. Rajeshwar Singh',
+        actor_role: 'md',
+        comments: 'Final institutional approval granted. Logged into official statutory register.',
+        created_at: '2026-10-19T15:30:00Z'
+      }
+    ],
+    submitted_at: '2026-10-19T10:00:00Z',
+    created_at: '2026-10-19T10:00:00Z',
+    updated_at: '2026-10-19T15:30:00Z'
+  },
+  {
+    id: 'ATT-BATCH-20261020-CSE6A-01',
+    department: 'CSE',
+    branch: 'CSE',
+    semester: 6,
+    section: 'A',
+    subject_id: 'sub-cs601',
+    subject_name: 'Mathematics',
+    subject_code: 'CS-601',
+    lecture_date: '2026-10-20',
+    faculty_id: 'tch-01',
+    faculty_name: 'Dr. Rajesh Kumar',
+    status: 'Pending HOD Approval',
+    current_stage: 'hod',
+    total_students: 4,
+    present_count: 3,
+    absent_count: 1,
+    leave_count: 0,
+    records: [
+      { student_id: 'std-cse-sem6-001', student_roll: 'CSE001', student_name: 'Aarav Sharma', status: 'Present' },
+      { student_id: 'std-cse-sem6-002', student_roll: 'CSE002', student_name: 'Aditya Verma', status: 'Present' },
+      { student_id: 'std-cse-sem6-003', student_roll: 'CSE003', student_name: 'Ananya Thakur', status: 'Absent' },
+      { student_id: 'std-cse-sem6-004', student_roll: 'CSE004', student_name: 'Ayush Katoch', status: 'Present' }
+    ],
+    history: [
+      {
+        id: 'hist-att-02-1',
+        batch_id: 'ATT-BATCH-20261020-CSE6A-01',
+        stage: 'faculty',
+        action: 'submitted',
+        actor_id: 'tch-01',
+        actor_name: 'Dr. Rajesh Kumar',
+        actor_role: 'faculty',
+        comments: 'Morning lecture 09:30-10:30 AM completed. Submitted for HOD approval.',
+        created_at: '2026-10-20T09:35:00Z'
+      }
+    ],
+    submitted_at: '2026-10-20T09:35:00Z',
+    created_at: '2026-10-20T09:35:00Z',
+    updated_at: '2026-10-20T09:35:00Z'
+  },
+  {
+    id: 'ATT-BATCH-20261020-AIML4-01',
+    department: 'CSE',
+    branch: 'CSE AI & ML',
+    semester: 4,
+    section: 'A',
+    subject_id: 'sub-aiml-401',
+    subject_name: 'Machine Learning Foundations',
+    subject_code: 'AI-401',
+    lecture_date: '2026-10-20',
+    faculty_id: 'tch-02',
+    faculty_name: 'Er. Neha Sharma',
+    status: 'Pending Principal Approval',
+    current_stage: 'principal',
+    total_students: 3,
+    present_count: 2,
+    absent_count: 0,
+    leave_count: 1,
+    records: [
+      { student_id: 'std-aiml-sem4-001', student_roll: 'AIML001', student_name: 'Rohan Chaudhary', status: 'Present' },
+      { student_id: 'std-aiml-sem4-002', student_roll: 'AIML002', student_name: 'Sneha Kapur', status: 'Present' },
+      { student_id: 'std-aiml-sem4-003', student_roll: 'AIML003', student_name: 'Vikas Dhiman', status: 'Leave', remarks: 'Approved sports meet duty leave' }
+    ],
+    history: [
+      {
+        id: 'hist-att-03-1',
+        batch_id: 'ATT-BATCH-20261020-AIML4-01',
+        stage: 'faculty',
+        action: 'submitted',
+        actor_id: 'tch-02',
+        actor_name: 'Er. Neha Sharma',
+        actor_role: 'faculty',
+        comments: 'Lab session attendance submitted.',
+        created_at: '2026-10-20T09:45:00Z'
+      },
+      {
+        id: 'hist-att-03-2',
+        batch_id: 'ATT-BATCH-20261020-AIML4-01',
+        stage: 'hod',
+        action: 'approved',
+        actor_id: 'tch-fac-cse-001',
+        actor_name: 'Dr. Anuj Sharma',
+        actor_role: 'hod',
+        comments: 'Verified laboratory attendance and student duty leave letter.',
+        created_at: '2026-10-20T10:15:00Z'
+      }
+    ],
+    submitted_at: '2026-10-20T09:45:00Z',
+    created_at: '2026-10-20T09:45:00Z',
+    updated_at: '2026-10-20T10:15:00Z'
+  },
+  {
+    id: 'ATT-BATCH-20261020-CSE6A-02',
+    department: 'CSE',
+    branch: 'CSE',
+    semester: 6,
+    section: 'A',
+    subject_id: 'sub-cs602',
+    subject_name: 'Physics',
+    subject_code: 'CS-602',
+    lecture_date: '2026-10-20',
+    faculty_id: 'tch-02',
+    faculty_name: 'Er. Neha Sharma',
+    status: 'Pending MD Approval',
+    current_stage: 'md',
+    total_students: 4,
+    present_count: 2,
+    absent_count: 1,
+    leave_count: 1,
+    records: [
+      { student_id: 'std-cse-sem6-001', student_roll: 'CSE001', student_name: 'Aarav Sharma', status: 'Present' },
+      { student_id: 'std-cse-sem6-002', student_roll: 'CSE002', student_name: 'Aditya Verma', status: 'Present' },
+      { student_id: 'std-cse-sem6-003', student_roll: 'CSE003', student_name: 'Ananya Thakur', status: 'Leave', remarks: 'Medical OPD prescription' },
+      { student_id: 'std-cse-sem6-004', student_roll: 'CSE004', student_name: 'Ayush Katoch', status: 'Absent' }
+    ],
+    history: [
+      {
+        id: 'hist-att-04-1',
+        batch_id: 'ATT-BATCH-20261020-CSE6A-02',
+        stage: 'faculty',
+        action: 'submitted',
+        actor_id: 'tch-02',
+        actor_name: 'Er. Neha Sharma',
+        actor_role: 'faculty',
+        comments: 'Classroom physics lecture conducted.',
+        created_at: '2026-10-20T08:30:00Z'
+      },
+      {
+        id: 'hist-att-04-2',
+        batch_id: 'ATT-BATCH-20261020-CSE6A-02',
+        stage: 'hod',
+        action: 'approved',
+        actor_id: 'tch-fac-cse-001',
+        actor_name: 'Dr. Anuj Sharma',
+        actor_role: 'hod',
+        comments: 'Department review complete. Ready for Principal sign-off.',
+        created_at: '2026-10-20T09:00:00Z'
+      },
+      {
+        id: 'hist-att-04-3',
+        batch_id: 'ATT-BATCH-20261020-CSE6A-02',
+        stage: 'principal',
+        action: 'approved',
+        actor_id: 'usr-principal-01',
+        actor_name: 'Dr. S.K. Sharma',
+        actor_role: 'principal',
+        comments: 'Academic verification complete. Forwarded for MD final sign-off.',
+        created_at: '2026-10-20T09:45:00Z'
+      }
+    ],
+    submitted_at: '2026-10-20T08:30:00Z',
+    created_at: '2026-10-20T08:30:00Z',
+    updated_at: '2026-10-20T09:45:00Z'
+  }
 ];
 
 // =============================================================================
@@ -4311,6 +4551,23 @@ class DataStore {
   }
   setAttendance(data: AttendanceRecord[]): void {
     setLocalItem('attendance', data);
+  }
+
+  getAttendanceBatches(): AttendanceBatch[] {
+    return getLocalItem('attendance_batches', INITIAL_ATTENDANCE_BATCHES);
+  }
+  setAttendanceBatches(data: AttendanceBatch[]): void {
+    setLocalItem('attendance_batches', data);
+  }
+  addOrUpdateAttendanceBatch(batch: AttendanceBatch): void {
+    const list = this.getAttendanceBatches();
+    const idx = list.findIndex(b => b.id === batch.id);
+    if (idx >= 0) {
+      list[idx] = batch;
+    } else {
+      list.unshift(batch);
+    }
+    this.setAttendanceBatches(list);
   }
 
   getSessionalResults(): SessionalResult[] {

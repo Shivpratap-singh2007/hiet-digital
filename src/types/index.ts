@@ -148,10 +148,89 @@ export interface AttendanceRecord {
   student_roll?: string;
   subject_id: string;
   date: string; // YYYY-MM-DD
-  status: 'Present' | 'Absent' | 'Late' | 'Excused';
+  status: 'Present' | 'Absent' | 'Leave' | 'Late' | 'Excused';
   marked_by?: string;
   subject_code?: string;
   subject_name?: string;
+}
+
+export type AttendanceBatchStatus =
+  | 'Draft'
+  | 'Pending HOD Approval'
+  | 'Pending Principal Approval'
+  | 'Pending MD Approval'
+  | 'Approved'
+  | 'Final Approved'
+  | 'Returned for Correction'
+  | 'Rejected';
+
+export type AttendanceBatchStage =
+  | 'faculty'
+  | 'hod'
+  | 'principal'
+  | 'md'
+  | 'completed'
+  | 'faculty_correction';
+
+export interface AttendanceBatchRecord {
+  id?: string;
+  student_id: string;
+  student_roll?: string;
+  student_name: string;
+  status: 'Present' | 'Absent' | 'Leave';
+  remarks?: string;
+}
+
+export interface AttendanceBatchHistoryItem {
+  id: string;
+  batch_id: string;
+  stage: AttendanceBatchStage | string;
+  action: 'submitted' | 'approved' | 'rejected' | 'resubmitted' | 'commented' | 'draft_saved';
+  actor_id?: string;
+  actor_name: string;
+  actor_role: 'faculty' | 'hod' | 'principal' | 'md' | 'admin' | string;
+  comments?: string;
+  rejection_reason?: string;
+  created_at: string;
+}
+
+export interface AttendanceBatch {
+  id: string; // Unique Attendance Batch ID (e.g. ATT-20261020-CSE6A-01)
+  department: string;
+  branch: string;
+  semester: number;
+  section: string;
+  subject_id: string;
+  subject_name: string;
+  subject_code?: string;
+  lecture_date: string; // YYYY-MM-DD
+  faculty_id: string;
+  faculty_name: string;
+  status: AttendanceBatchStatus;
+  current_stage: AttendanceBatchStage;
+  total_students: number;
+  present_count: number;
+  absent_count: number;
+  leave_count: number;
+  records: AttendanceBatchRecord[];
+  history: AttendanceBatchHistoryItem[];
+  rejection_reason?: string;
+  rejected_by_role?: string;
+  rejected_by_name?: string;
+  rejected_at?: string;
+  resubmission_count?: number;
+  hod_id?: string;
+  hod_name?: string;
+  hod_approved_at?: string;
+  principal_id?: string;
+  principal_name?: string;
+  principal_approved_at?: string;
+  md_id?: string;
+  md_name?: string;
+  md_approved_at?: string;
+  submitted_at: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface AcademicRecord {
@@ -190,6 +269,32 @@ export interface Grade {
   created_at?: string;
 }
 
+export type SessionalWorkflowStatus =
+  | 'Draft'
+  | 'Submitted to HOD'
+  | 'Returned by HOD'
+  | 'Approved by HOD'
+  | 'Submitted to Principal'
+  | 'Returned by Principal'
+  | 'Approved by Principal'
+  | 'Submitted to MD'
+  | 'Approved'
+  | 'Published'
+  | 'Rejected';
+
+export interface SessionalResultAuditLog {
+  id?: string;
+  action: string;
+  stage: string;
+  actor_id: string;
+  actor_name: string;
+  actor_role: string;
+  timestamp: string;
+  created_at?: string;
+  comments?: string;
+  rejection_reason?: string;
+}
+
 export interface SessionalResult {
   id: string;
   student_id: string;
@@ -206,6 +311,22 @@ export interface SessionalResult {
   is_published: boolean;
   remarks?: string;
   created_at?: string;
+  status?: SessionalWorkflowStatus;
+  faculty_id?: string;
+  faculty_name?: string;
+  submitted_at?: string;
+  hod_id?: string;
+  hod_name?: string;
+  hod_approved_at?: string;
+  principal_id?: string;
+  principal_name?: string;
+  principal_approved_at?: string;
+  md_id?: string;
+  md_name?: string;
+  md_approved_at?: string;
+  rejection_reason?: string;
+  reviewer_remarks?: string;
+  history?: SessionalResultAuditLog[];
 }
 
 export interface ClassTestRecord {

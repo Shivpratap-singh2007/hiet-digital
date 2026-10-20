@@ -38,6 +38,7 @@ import { SmartBoardTeachingView } from '../components/smartboard/SmartBoardTeach
 import { CampusPresenceView } from '../components/presence/CampusPresenceView';
 import { SettingsView } from '../components/common/SettingsView';
 import { SmartCampusOperationsView } from '../components/operations/SmartCampusOperationsView';
+import { AttendanceApprovalsView } from '../components/attendance/AttendanceApprovalsView';
 
 interface Props {
   currentTab: NavTab;
@@ -83,6 +84,7 @@ export const ManagingDirectorDashboard: React.FC<Props> = ({ currentTab, onNavig
   const pendingLeaves = leaves.filter(l => (l.status || '').toLowerCase().startsWith('pending')).length;
 
   // Subview Router for MD
+  if (currentTab === 'attendance') return <AttendanceApprovalsView roleMode="md" onNavigateTab={onNavigateTab} />;
   if (currentTab === 'principal_analytics') return <AdvancedAnalyticsView />;
   if (currentTab === 'department') return <DepartmentStructureView />;
   if (currentTab === 'academic_catalog') return <AcademicCatalogView />;

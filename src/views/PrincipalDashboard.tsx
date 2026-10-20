@@ -46,6 +46,7 @@ import { MasterDataImportView } from '../components/admin/MasterDataImportView';
 import { AdvancedAnalyticsView } from '../components/analytics/AdvancedAnalyticsView';
 import { DepartmentStructureView } from '../components/hod/DepartmentStructureView';
 import { AttendanceReconciliationView } from '../components/attendance/AttendanceReconciliationView';
+import { AttendanceApprovalsView } from '../components/attendance/AttendanceApprovalsView';
 import { DigitalGatePassView } from '../components/student/DigitalGatePassView';
 import { SecurityScannerView } from '../components/security/SecurityScannerView';
 import { AdminFinesManagementView } from '../components/fines/AdminFinesManagementView';
@@ -163,7 +164,8 @@ export const PrincipalDashboard: React.FC<Props> = ({ currentTab, onNavigateTab 
   if (currentTab === 'principal_analytics') return <AdvancedAnalyticsView />;
   if (currentTab === 'audit_log') return <AuditLogView />;
   if (currentTab === 'import_data') return <MasterDataImportView />;
-  if (currentTab === 'reconciliation' || currentTab === 'attendance') return <AttendanceReconciliationView />;
+  if (currentTab === 'attendance') return <AttendanceApprovalsView roleMode="principal" onNavigateTab={onNavigateTab} />;
+  if (currentTab === 'reconciliation') return <AttendanceReconciliationView />;
   if (currentTab === 'timetable') return <TimetableActiveView />;
   if (currentTab === 'sessional_results' || currentTab === 'cgpa' as any) return <TeacherSessionalView />;
   if (currentTab === 'syllabus_progress' as any) return <SyllabusProgressTrackerView />;

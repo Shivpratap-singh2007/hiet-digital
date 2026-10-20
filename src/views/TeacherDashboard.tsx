@@ -192,7 +192,7 @@ export const TeacherDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
 
   return (
     <div className="space-y-6 font-sans">
-      {/* 1. Page Header with Hierarchy Breadcrumbs */}
+      {/* 1. Page Header with Hierarchy Breadcrumbs (Monochrome) */}
       <PageHeader
         breadcrumbs={[
           { label: 'Faculty Directorate' },
@@ -204,14 +204,14 @@ export const TeacherDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
         actions={
           <div className="flex items-center gap-2">
             {isClassInCharge && (
-              <div className="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200">
+              <div className="flex items-center bg-neutral-100 p-0.5 rounded-xl border border-neutral-300">
                 <button
                   type="button"
                   onClick={() => setActiveConsoleMode('faculty')}
                   className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
                     activeConsoleMode === 'faculty'
-                      ? 'bg-white text-[#0f2942] shadow-2xs'
-                      : 'text-slate-600 hover:text-slate-900'
+                      ? 'bg-black text-white shadow-2xs'
+                      : 'text-neutral-600 hover:text-black'
                   }`}
                 >
                   Teaching Duties
@@ -221,8 +221,8 @@ export const TeacherDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
                   onClick={() => setActiveConsoleMode('class_incharge')}
                   className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
                     activeConsoleMode === 'class_incharge'
-                      ? 'bg-[#0f2942] text-white shadow-2xs'
-                      : 'text-slate-600 hover:text-slate-900'
+                      ? 'bg-black text-white shadow-2xs'
+                      : 'text-neutral-600 hover:text-black'
                   }`}
                 >
                   <GraduationCap className="w-3.5 h-3.5" />
@@ -233,9 +233,9 @@ export const TeacherDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
             <button
               type="button"
               onClick={() => onNavigateTab('attendance')}
-              className="px-3.5 py-2 rounded-xl bg-white border border-slate-300 hover:border-[#0f2942] text-xs font-bold text-[#0f2942] transition flex items-center gap-1.5 shadow-2xs"
+              className="px-3.5 py-2 rounded-xl bg-black hover:bg-neutral-800 text-xs font-bold text-white transition flex items-center gap-1.5 shadow-2xs cursor-pointer"
             >
-              <CalendarCheck className="w-4 h-4" />
+              <CalendarCheck className="w-4 h-4 text-white" />
               <span>Mark Attendance</span>
             </button>
           </div>
@@ -243,7 +243,7 @@ export const TeacherDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
       />
 
       {/* ============================================================== */}
-      {/* SECTION 9: CLASS IN-CHARGE CONSOLE VIEW                         */}
+      {/* SECTION 9: CLASS IN-CHARGE CONSOLE VIEW (Monochrome)           */}
       {/* ============================================================== */}
       {activeConsoleMode === 'class_incharge' ? (
         <div className="space-y-6 animate-fade-in">
@@ -251,14 +251,14 @@ export const TeacherDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
           <div>
             <div className="flex items-center justify-between mb-3">
               <div>
-                <h2 className="text-xs font-extrabold uppercase tracking-wider text-slate-700">
+                <h2 className="text-xs font-extrabold uppercase tracking-wider text-black">
                   Class Overview • {inchargeBranch} Semester {inchargeSemester} (Section {inchargeSection})
                 </h2>
-                <p className="text-[11px] text-slate-500">
+                <p className="text-[11px] text-neutral-600">
                   Responsible class in-charge oversight, student attendance alerts, and academic monitoring
                 </p>
               </div>
-              <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-blue-50 text-[#0f2942] border border-blue-200">
+              <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-neutral-100 text-black border border-neutral-300">
                 Designated Class In-Charge
               </span>
             </div>
@@ -270,7 +270,7 @@ export const TeacherDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
                 subtext={`Enrolled in ${inchargeBranch} Sem ${inchargeSemester}-${inchargeSection}`}
                 icon={Users}
                 badge="Class"
-                badgeColor="blue"
+                badgeColor="slate"
               />
 
               <StatCard
@@ -279,7 +279,7 @@ export const TeacherDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
                 subtext="Class aggregate daily rate"
                 icon={CalendarCheck}
                 badge={classAvgAttendance >= 75 ? "Satisfactory" : "Low"}
-                badgeColor={classAvgAttendance >= 75 ? "emerald" : "rose"}
+                badgeColor="slate"
                 onClick={() => onNavigateTab('attendance')}
               />
 
@@ -289,7 +289,7 @@ export const TeacherDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
                 subtext="< 75% HPTU compliance warning"
                 icon={ShieldAlert}
                 badge={classDefaulters.length > 0 ? "Requires Warning" : "Clear"}
-                badgeColor={classDefaulters.length > 0 ? "rose" : "emerald"}
+                badgeColor="slate"
                 onClick={() => onNavigateTab('attendance')}
               />
 
@@ -299,85 +299,85 @@ export const TeacherDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
                 subtext="Sessional & test average"
                 icon={Award}
                 badge="Good"
-                badgeColor="emerald"
+                badgeColor="slate"
                 onClick={() => onNavigateTab('sessional_results')}
               />
             </div>
           </div>
 
           {/* Class Operations & Management */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div className="bg-white border border-neutral-300 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
+            <div className="flex items-center justify-between border-b border-neutral-200 pb-3">
               <div>
-                <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
+                <h2 className="text-sm font-bold text-black uppercase tracking-wider">
                   Class Operations & Student Communication
                 </h2>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <p className="text-xs text-neutral-600 mt-0.5">
                   Direct operations for {inchargeBranch} Sem {inchargeSemester}-{inchargeSection}
                 </p>
               </div>
-              <span className="text-xs text-slate-400 font-medium">In-Charge Actions</span>
+              <span className="text-xs text-neutral-500 font-medium">In-Charge Actions</span>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
               <button
                 type="button"
                 onClick={() => onNavigateTab('attendance')}
-                className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-[#0f2942] transition text-center space-y-1.5"
+                className="p-3.5 rounded-xl border border-neutral-200 bg-neutral-50 hover:bg-neutral-100 hover:border-black transition text-center space-y-1.5 cursor-pointer"
               >
-                <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-[#0f2942] flex items-center justify-center mx-auto">
+                <div className="w-8 h-8 rounded-lg bg-white border border-neutral-300 text-black flex items-center justify-center mx-auto">
                   <CalendarCheck className="w-4 h-4" />
                 </div>
-                <div className="font-bold text-xs text-slate-900">Attendance</div>
-                <div className="text-[10px] text-slate-500">Defaulter ledger</div>
+                <div className="font-bold text-xs text-black">Attendance</div>
+                <div className="text-[10px] text-neutral-500">Defaulter ledger</div>
               </button>
 
               <button
                 type="button"
                 onClick={() => onNavigateTab('doubts')}
-                className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-[#0f2942] transition text-center space-y-1.5"
+                className="p-3.5 rounded-xl border border-neutral-200 bg-neutral-50 hover:bg-neutral-100 hover:border-black transition text-center space-y-1.5 cursor-pointer"
               >
-                <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-[#0f2942] flex items-center justify-center mx-auto">
+                <div className="w-8 h-8 rounded-lg bg-white border border-neutral-300 text-black flex items-center justify-center mx-auto">
                   <HelpCircle className="w-4 h-4" />
                 </div>
-                <div className="font-bold text-xs text-slate-900">Student Issues</div>
-                <div className="text-[10px] text-slate-500">{myDoubts.length} Queries</div>
+                <div className="font-bold text-xs text-black">Student Issues</div>
+                <div className="text-[10px] text-neutral-500">{myDoubts.length} Queries</div>
               </button>
 
               <button
                 type="button"
                 onClick={() => onNavigateTab('leaves')}
-                className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-[#0f2942] transition text-center space-y-1.5"
+                className="p-3.5 rounded-xl border border-neutral-200 bg-neutral-50 hover:bg-neutral-100 hover:border-black transition text-center space-y-1.5 cursor-pointer"
               >
-                <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-[#0f2942] flex items-center justify-center mx-auto">
+                <div className="w-8 h-8 rounded-lg bg-white border border-neutral-300 text-black flex items-center justify-center mx-auto">
                   <Clock className="w-4 h-4" />
                 </div>
-                <div className="font-bold text-xs text-slate-900">Leave Requests</div>
-                <div className="text-[10px] text-slate-500">{classPendingLeaves} Pending</div>
+                <div className="font-bold text-xs text-black">Leave Requests</div>
+                <div className="text-[10px] text-neutral-500">{classPendingLeaves} Pending</div>
               </button>
 
               <button
                 type="button"
                 onClick={() => onNavigateTab('notices')}
-                className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-[#0f2942] transition text-center space-y-1.5"
+                className="p-3.5 rounded-xl border border-neutral-200 bg-neutral-50 hover:bg-neutral-100 hover:border-black transition text-center space-y-1.5 cursor-pointer"
               >
-                <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-[#0f2942] flex items-center justify-center mx-auto">
+                <div className="w-8 h-8 rounded-lg bg-white border border-neutral-300 text-black flex items-center justify-center mx-auto">
                   <Bell className="w-4 h-4" />
                 </div>
-                <div className="font-bold text-xs text-slate-900">Class Notices</div>
-                <div className="text-[10px] text-slate-500">Broadcast circular</div>
+                <div className="font-bold text-xs text-black">Class Notices</div>
+                <div className="text-[10px] text-neutral-500">Broadcast circular</div>
               </button>
 
               <button
                 type="button"
                 onClick={() => onNavigateTab('timetable')}
-                className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-[#0f2942] transition text-center space-y-1.5"
+                className="p-3.5 rounded-xl border border-neutral-200 bg-neutral-50 hover:bg-neutral-100 hover:border-black transition text-center space-y-1.5 cursor-pointer"
               >
-                <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-[#0f2942] flex items-center justify-center mx-auto">
+                <div className="w-8 h-8 rounded-lg bg-white border border-neutral-300 text-black flex items-center justify-center mx-auto">
                   <CalendarDays className="w-4 h-4" />
                 </div>
-                <div className="font-bold text-xs text-slate-900">Timetable</div>
-                <div className="text-[10px] text-slate-500">Weekly schedule</div>
+                <div className="font-bold text-xs text-black">Timetable</div>
+                <div className="text-[10px] text-neutral-500">Weekly schedule</div>
               </button>
 
               <button
@@ -388,58 +388,58 @@ export const TeacherDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
                     setSelectedDefaulterForWhatsApp(target);
                   }
                 }}
-                className="p-3.5 rounded-xl border border-slate-200 bg-emerald-50/40 hover:bg-emerald-50 hover:border-emerald-500 transition text-center space-y-1.5 cursor-pointer"
+                className="p-3.5 rounded-xl border border-neutral-300 bg-neutral-100 hover:bg-neutral-200 transition text-center space-y-1.5 cursor-pointer"
               >
-                <div className="w-8 h-8 rounded-lg bg-emerald-100 border border-emerald-300 text-emerald-800 flex items-center justify-center mx-auto">
+                <div className="w-8 h-8 rounded-lg bg-white border border-neutral-300 text-black flex items-center justify-center mx-auto">
                   <MessageSquare className="w-4 h-4" />
                 </div>
-                <div className="font-bold text-xs text-slate-900">WhatsApp Alert</div>
-                <div className="text-[10px] text-slate-500">Parent warning</div>
+                <div className="font-bold text-xs text-black">WhatsApp Alert</div>
+                <div className="text-[10px] text-neutral-500">Parent warning</div>
               </button>
             </div>
           </div>
 
           {/* Low Attendance Defaulter Parental Warning Action Panel */}
           {classDefaultersWithPct.length > 0 && (
-            <div className="bg-white border border-rose-200 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-rose-100 pb-3">
+            <div className="bg-white border border-neutral-300 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-neutral-200 pb-3">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 flex items-center justify-center shrink-0">
+                  <div className="w-8 h-8 rounded-lg bg-neutral-100 border border-neutral-300 text-black flex items-center justify-center shrink-0">
                     <ShieldAlert className="w-4 h-4" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-slate-900">
+                    <h3 className="text-sm font-bold text-black">
                       Attendance Shortage Parental Alerts (&lt; 75% HPTU Rule)
                     </h3>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-neutral-600">
                       Send official WhatsApp warnings to ensure attendance compliance before exam hall ticket generation
                     </p>
                   </div>
                 </div>
-                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 shrink-0">
+                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-neutral-100 text-black border border-neutral-300 shrink-0">
                   {classDefaultersWithPct.length} Defaulters
                 </span>
               </div>
 
-              <div className="divide-y divide-slate-100">
+              <div className="divide-y divide-neutral-200">
                 {classDefaultersWithPct.slice(0, 5).map(({ student, pct }) => (
                   <div key={student.id} className="py-2.5 flex items-center justify-between gap-2 flex-wrap sm:flex-nowrap">
                     <div>
-                      <div className="text-xs font-bold text-slate-900">
-                        {student.name} <span className="text-slate-400 font-normal">({student.roll_no})</span>
+                      <div className="text-xs font-bold text-black">
+                        {student.name} <span className="text-neutral-500 font-normal">({student.roll_no})</span>
                       </div>
-                      <div className="text-[11px] text-slate-500">
+                      <div className="text-[11px] text-neutral-600">
                         Parent: {student.parent_name || 'Guardian'} • {student.parent_phone || student.phone || 'Contact on file'}
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-rose-600 px-2 py-0.5 rounded-md bg-rose-50 border border-rose-200">
+                      <span className="text-xs font-bold text-black px-2 py-0.5 rounded-md bg-neutral-100 border border-neutral-300">
                         {pct}% Attendance
                       </span>
                       <button
                         type="button"
                         onClick={() => setSelectedDefaulterForWhatsApp({ student, pct })}
-                        className="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition flex items-center gap-1 shadow-2xs cursor-pointer"
+                        className="px-2.5 py-1.5 rounded-lg bg-black hover:bg-neutral-800 text-white text-xs font-bold transition flex items-center gap-1 shadow-2xs cursor-pointer"
                       >
                         <MessageSquare className="w-3.5 h-3.5" />
                         <span>Send WhatsApp</span>
@@ -453,23 +453,23 @@ export const TeacherDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
         </div>
       ) : (
         /* ============================================================== */
-        /* SECTION 8: FACULTY MEMBER DASHBOARD                            */
+        /* SECTION 8: FACULTY MEMBER DASHBOARD (Monochrome)               */
         /* ============================================================== */
         <div className="space-y-6 animate-fade-in">
           {/* SECTION: TODAY (Today's Classes, Current Class, Upcoming Class) */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div className="bg-white border border-neutral-300 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
+            <div className="flex items-center justify-between border-b border-neutral-200 pb-3">
               <div>
-                <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
+                <h2 className="text-sm font-bold text-black uppercase tracking-wider">
                   Today's Teaching Schedule ({currentDayName})
                 </h2>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <p className="text-xs text-neutral-600 mt-0.5">
                   Real-time schedule of your classes, lectures in session, and upcoming batches
                 </p>
               </div>
               <button
                 onClick={() => onNavigateTab('timetable')}
-                className="text-xs text-[#0f2942] font-semibold hover:underline"
+                className="text-xs text-black font-bold hover:underline"
               >
                 Full Timetable →
               </button>
@@ -477,29 +477,29 @@ export const TeacherDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Today's Classes Summary */}
-              <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/60 space-y-2">
-                <div className="flex items-center justify-between text-xs font-bold text-slate-700">
+              <div className="p-4 rounded-xl border border-neutral-300 bg-neutral-50 space-y-2">
+                <div className="flex items-center justify-between text-xs font-bold text-neutral-700">
                   <span>Today's Total Classes</span>
-                  <CalendarDays className="w-4 h-4 text-[#0f2942]" />
+                  <CalendarDays className="w-4 h-4 text-black" />
                 </div>
-                <div className="text-2xl font-extrabold text-slate-900">
+                <div className="text-2xl font-extrabold text-black">
                   {todayClasses.length} Lectures Scheduled
                 </div>
-                <p className="text-[11px] text-slate-500">
+                <p className="text-[11px] text-neutral-600">
                   {todayClasses.map(c => c.subject_code).join(', ') || 'No classes today'}
                 </p>
               </div>
 
               {/* Current Class */}
-              <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/60 space-y-2">
-                <div className="flex items-center justify-between text-xs font-bold text-slate-700">
+              <div className="p-4 rounded-xl border border-neutral-300 bg-neutral-50 space-y-2">
+                <div className="flex items-center justify-between text-xs font-bold text-neutral-700">
                   <span>Current Class</span>
-                  <span className={`w-2.5 h-2.5 rounded-full ${runningClass ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`} />
+                  <span className={`w-2.5 h-2.5 rounded-full ${runningClass ? 'bg-black animate-pulse' : 'bg-neutral-300'}`} />
                 </div>
-                <div className="text-base font-extrabold text-slate-900 truncate">
+                <div className="text-base font-extrabold text-black truncate">
                   {runningClass ? runningClass.subject_name : 'No Class in Session'}
                 </div>
-                <p className="text-[11px] text-slate-500">
+                <p className="text-[11px] text-neutral-600">
                   {runningClass 
                     ? `${runningClass.start_time} - ${runningClass.end_time} • Room ${runningClass.room_number || '304'}`
                     : 'Next lecture starts shortly'}
@@ -507,15 +507,15 @@ export const TeacherDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
               </div>
 
               {/* Upcoming Class */}
-              <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/60 space-y-2">
-                <div className="flex items-center justify-between text-xs font-bold text-slate-700">
+              <div className="p-4 rounded-xl border border-neutral-300 bg-neutral-50 space-y-2">
+                <div className="flex items-center justify-between text-xs font-bold text-neutral-700">
                   <span>Upcoming Class</span>
-                  <Clock className="w-4 h-4 text-blue-600" />
+                  <Clock className="w-4 h-4 text-black" />
                 </div>
-                <div className="text-base font-extrabold text-slate-900 truncate">
+                <div className="text-base font-extrabold text-black truncate">
                   {upcomingClass ? upcomingClass.subject_name : 'Day Complete'}
                 </div>
-                <p className="text-[11px] text-slate-500">
+                <p className="text-[11px] text-neutral-600">
                   {upcomingClass 
                     ? `${upcomingClass.start_time} • Sem ${upcomingClass.semester} (${upcomingClass.branch})`
                     : 'All lectures for today concluded'}
@@ -525,19 +525,19 @@ export const TeacherDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
           </div>
 
           {/* SECTION: MY SUBJECTS (Assigned Subjects, Student Count, Attendance) */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div className="bg-white border border-neutral-300 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
+            <div className="flex items-center justify-between border-b border-neutral-200 pb-3">
               <div>
-                <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
+                <h2 className="text-sm font-bold text-black uppercase tracking-wider">
                   My Subjects
                 </h2>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <p className="text-xs text-neutral-600 mt-0.5">
                   Curriculum courses under your direct academic instruction
                 </p>
               </div>
               <button
                 onClick={() => onNavigateTab('syllabus')}
-                className="text-xs text-[#0f2942] font-semibold hover:underline"
+                className="text-xs text-black font-bold hover:underline"
               >
                 Curriculum Syllabus →
               </button>
@@ -552,33 +552,35 @@ export const TeacherDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
                 return (
                   <div
                     key={sub.id}
-                    className="p-4 rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-slate-50 hover:border-[#0f2942] transition space-y-3"
+                    className="p-4 rounded-xl border border-neutral-300 bg-neutral-50 hover:bg-neutral-100 hover:border-black transition space-y-3"
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <span className="font-mono text-xs font-bold text-[#0f2942]">{sub.subject_code}</span>
-                        <h3 className="font-bold text-slate-900 text-sm mt-0.5 leading-snug">{sub.subject_name}</h3>
+                        <span className="font-mono text-xs font-bold text-black">{sub.subject_code}</span>
+                        <h3 className="font-bold text-black text-sm mt-0.5 leading-snug">{sub.subject_name}</h3>
                       </div>
-                      <StatusBadge status="Assigned" variant="active" />
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-black text-white">
+                        Assigned
+                      </span>
                     </div>
 
-                    <div className="text-xs text-slate-500 flex items-center justify-between pt-2 border-t border-slate-200/60">
+                    <div className="text-xs text-neutral-600 flex items-center justify-between pt-2 border-t border-neutral-200">
                       <span>Sem {sub.semester} ({sub.branch}) • 64 Students</span>
-                      <span className="font-bold text-slate-900">{subAttRate}% Attendance</span>
+                      <span className="font-bold text-black">{subAttRate}% Attendance</span>
                     </div>
 
                     <div className="grid grid-cols-2 gap-2 pt-1">
                       <button
                         type="button"
                         onClick={() => onNavigateTab('attendance')}
-                        className="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 hover:text-[#0f2942] hover:border-[#0f2942] text-[11px] font-bold text-center transition shadow-2xs"
+                        className="px-2.5 py-1.5 rounded-lg bg-white border border-neutral-300 text-black hover:border-black text-[11px] font-bold text-center transition shadow-2xs cursor-pointer"
                       >
                         Mark Attendance
                       </button>
                       <button
                         type="button"
                         onClick={() => onNavigateTab('assignments')}
-                        className="px-2.5 py-1.5 rounded-lg bg-[#0f2942] text-white hover:bg-[#0a1c2e] text-[11px] font-bold text-center transition shadow-2xs"
+                        className="px-2.5 py-1.5 rounded-lg bg-black text-white hover:bg-neutral-800 text-[11px] font-bold text-center transition shadow-2xs cursor-pointer"
                       >
                         Assignments
                       </button>
@@ -589,14 +591,14 @@ export const TeacherDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
             </div>
           </div>
 
-          {/* SECTION: ACADEMIC WORK (Assignments, Submissions, Syllabus, PYQs, Sessional Marks, Class Tests) */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
-            <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
+          {/* SECTION: ACADEMIC WORK */}
+          <div className="bg-white border border-neutral-300 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
+            <div className="border-b border-neutral-200 pb-3 flex items-center justify-between">
               <div>
-                <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
+                <h2 className="text-sm font-bold text-black uppercase tracking-wider">
                   Academic Work
                 </h2>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <p className="text-xs text-neutral-600 mt-0.5">
                   Class assignments, student submissions, syllabus modules, PYQs, and examination grading
                 </p>
               </div>
@@ -606,85 +608,85 @@ export const TeacherDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
               <button
                 type="button"
                 onClick={() => onNavigateTab('assignments')}
-                className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-[#0f2942] transition text-center space-y-1.5"
+                className="p-3.5 rounded-xl border border-neutral-200 bg-neutral-50 hover:bg-neutral-100 hover:border-black transition text-center space-y-1.5 cursor-pointer"
               >
-                <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-[#0f2942] flex items-center justify-center mx-auto">
+                <div className="w-8 h-8 rounded-lg bg-white border border-neutral-300 text-black flex items-center justify-center mx-auto">
                   <FileSpreadsheet className="w-4 h-4" />
                 </div>
-                <div className="font-bold text-xs text-slate-900">Assignments</div>
-                <div className="text-[10px] text-slate-500">Create & manage</div>
+                <div className="font-bold text-xs text-black">Assignments</div>
+                <div className="text-[10px] text-neutral-500">Create & manage</div>
               </button>
 
               <button
                 type="button"
                 onClick={() => onNavigateTab('assignments')}
-                className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-[#0f2942] transition text-center space-y-1.5"
+                className="p-3.5 rounded-xl border border-neutral-200 bg-neutral-50 hover:bg-neutral-100 hover:border-black transition text-center space-y-1.5 cursor-pointer"
               >
-                <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-[#0f2942] flex items-center justify-center mx-auto">
+                <div className="w-8 h-8 rounded-lg bg-white border border-neutral-300 text-black flex items-center justify-center mx-auto">
                   <CheckCircle2 className="w-4 h-4" />
                 </div>
-                <div className="font-bold text-xs text-slate-900">Submissions</div>
-                <div className="text-[10px] text-slate-500">Student homework</div>
+                <div className="font-bold text-xs text-black">Submissions</div>
+                <div className="text-[10px] text-neutral-500">Student homework</div>
               </button>
 
               <button
                 type="button"
                 onClick={() => onNavigateTab('syllabus')}
-                className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-[#0f2942] transition text-center space-y-1.5"
+                className="p-3.5 rounded-xl border border-neutral-200 bg-neutral-50 hover:bg-neutral-100 hover:border-black transition text-center space-y-1.5 cursor-pointer"
               >
-                <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-[#0f2942] flex items-center justify-center mx-auto">
+                <div className="w-8 h-8 rounded-lg bg-white border border-neutral-300 text-black flex items-center justify-center mx-auto">
                   <BookOpen className="w-4 h-4" />
                 </div>
-                <div className="font-bold text-xs text-slate-900">Syllabus</div>
-                <div className="text-[10px] text-slate-500">Course modules</div>
+                <div className="font-bold text-xs text-black">Syllabus</div>
+                <div className="text-[10px] text-neutral-500">Course modules</div>
               </button>
 
               <button
                 type="button"
                 onClick={() => onNavigateTab('pyqs')}
-                className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-[#0f2942] transition text-center space-y-1.5"
+                className="p-3.5 rounded-xl border border-neutral-200 bg-neutral-50 hover:bg-neutral-100 hover:border-black transition text-center space-y-1.5 cursor-pointer"
               >
-                <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-[#0f2942] flex items-center justify-center mx-auto">
+                <div className="w-8 h-8 rounded-lg bg-white border border-neutral-300 text-black flex items-center justify-center mx-auto">
                   <FileQuestion className="w-4 h-4" />
                 </div>
-                <div className="font-bold text-xs text-slate-900">PYQs</div>
-                <div className="text-[10px] text-slate-500">Previous papers</div>
+                <div className="font-bold text-xs text-black">PYQs</div>
+                <div className="text-[10px] text-neutral-500">Previous papers</div>
               </button>
 
               <button
                 type="button"
                 onClick={() => onNavigateTab('sessional_results')}
-                className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-[#0f2942] transition text-center space-y-1.5"
+                className="p-3.5 rounded-xl border border-neutral-200 bg-neutral-50 hover:bg-neutral-100 hover:border-black transition text-center space-y-1.5 cursor-pointer"
               >
-                <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-[#0f2942] flex items-center justify-center mx-auto">
+                <div className="w-8 h-8 rounded-lg bg-white border border-neutral-300 text-black flex items-center justify-center mx-auto">
                   <Award className="w-4 h-4" />
                 </div>
-                <div className="font-bold text-xs text-slate-900">Sessional Marks</div>
-                <div className="text-[10px] text-slate-500">Grading portal</div>
+                <div className="font-bold text-xs text-black">Sessional Marks</div>
+                <div className="text-[10px] text-neutral-500">Grading portal</div>
               </button>
 
               <button
                 type="button"
                 onClick={() => onNavigateTab('sessional_results')}
-                className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-[#0f2942] transition text-center space-y-1.5"
+                className="p-3.5 rounded-xl border border-neutral-200 bg-neutral-50 hover:bg-neutral-100 hover:border-black transition text-center space-y-1.5 cursor-pointer"
               >
-                <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-[#0f2942] flex items-center justify-center mx-auto">
+                <div className="w-8 h-8 rounded-lg bg-white border border-neutral-300 text-black flex items-center justify-center mx-auto">
                   <FileText className="w-4 h-4" />
                 </div>
-                <div className="font-bold text-xs text-slate-900">Class Tests</div>
-                <div className="text-[10px] text-slate-500">Unit assessments</div>
+                <div className="font-bold text-xs text-black">Class Tests</div>
+                <div className="text-[10px] text-neutral-500">Unit assessments</div>
               </button>
             </div>
           </div>
 
-          {/* SECTION: STUDENT SUPPORT (Doubts, Leave Requests, Achievements, Notifications) */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
-            <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
+          {/* SECTION: STUDENT SUPPORT */}
+          <div className="bg-white border border-neutral-300 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
+            <div className="border-b border-neutral-200 pb-3 flex items-center justify-between">
               <div>
-                <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
+                <h2 className="text-sm font-bold text-black uppercase tracking-wider">
                   Student Support & Redressal
                 </h2>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <p className="text-xs text-neutral-600 mt-0.5">
                   Academic query resolution, student leaves, certificate verification, and campus notifications
                 </p>
               </div>
@@ -693,130 +695,130 @@ export const TeacherDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div 
                 onClick={() => onNavigateTab('doubts')}
-                className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-[#0f2942] transition cursor-pointer space-y-1"
+                className="p-4 rounded-xl border border-neutral-300 bg-neutral-50 hover:bg-neutral-100 hover:border-black transition cursor-pointer space-y-1"
               >
-                <div className="flex items-center justify-between text-xs font-bold text-slate-700">
+                <div className="flex items-center justify-between text-xs font-bold text-neutral-700">
                   <span>Student Doubts</span>
-                  <HelpCircle className="w-4 h-4 text-amber-600" />
+                  <HelpCircle className="w-4 h-4 text-black" />
                 </div>
-                <div className="text-xl font-extrabold text-slate-900">
+                <div className="text-xl font-extrabold text-black">
                   {myDoubts.filter(d => d.status === 'Open').length} Unresolved
                 </div>
-                <p className="text-[11px] text-slate-500">Direct academic questions from students</p>
+                <p className="text-[11px] text-neutral-500">Direct academic questions from students</p>
               </div>
 
               <div 
                 onClick={() => onNavigateTab('leaves')}
-                className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-[#0f2942] transition cursor-pointer space-y-1"
+                className="p-4 rounded-xl border border-neutral-300 bg-neutral-50 hover:bg-neutral-100 hover:border-black transition cursor-pointer space-y-1"
               >
-                <div className="flex items-center justify-between text-xs font-bold text-slate-700">
+                <div className="flex items-center justify-between text-xs font-bold text-neutral-700">
                   <span>Leave Requests</span>
-                  <Clock className="w-4 h-4 text-amber-600" />
+                  <Clock className="w-4 h-4 text-black" />
                 </div>
-                <div className="text-xl font-extrabold text-slate-900">
+                <div className="text-xl font-extrabold text-black">
                   {pendingLeaves.length} Pending Review
                 </div>
-                <p className="text-[11px] text-slate-500">Medical & personal leave applications</p>
+                <p className="text-[11px] text-neutral-500">Medical & personal leave applications</p>
               </div>
 
               <div 
                 onClick={() => onNavigateTab('achievements')}
-                className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-[#0f2942] transition cursor-pointer space-y-1"
+                className="p-4 rounded-xl border border-neutral-300 bg-neutral-50 hover:bg-neutral-100 hover:border-black transition cursor-pointer space-y-1"
               >
-                <div className="flex items-center justify-between text-xs font-bold text-slate-700">
+                <div className="flex items-center justify-between text-xs font-bold text-neutral-700">
                   <span>Achievements</span>
-                  <Trophy className="w-4 h-4 text-amber-600" />
+                  <Trophy className="w-4 h-4 text-black" />
                 </div>
-                <div className="text-xl font-extrabold text-slate-900">
+                <div className="text-xl font-extrabold text-black">
                   {pendingAchievements.length} Pending
                 </div>
-                <p className="text-[11px] text-slate-500">Student awards & certificates to verify</p>
+                <p className="text-[11px] text-neutral-500">Student awards & certificates to verify</p>
               </div>
 
               <div 
                 onClick={() => onNavigateTab('notices')}
-                className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-[#0f2942] transition cursor-pointer space-y-1"
+                className="p-4 rounded-xl border border-neutral-300 bg-neutral-50 hover:bg-neutral-100 hover:border-black transition cursor-pointer space-y-1"
               >
-                <div className="flex items-center justify-between text-xs font-bold text-slate-700">
+                <div className="flex items-center justify-between text-xs font-bold text-neutral-700">
                   <span>Notifications</span>
-                  <Bell className="w-4 h-4 text-[#0f2942]" />
+                  <Bell className="w-4 h-4 text-black" />
                 </div>
-                <div className="text-xl font-extrabold text-slate-900">
+                <div className="text-xl font-extrabold text-black">
                   {notices.length} Circulars
                 </div>
-                <p className="text-[11px] text-slate-500">Institutional circulars & directives</p>
+                <p className="text-[11px] text-neutral-500">Institutional circulars & directives</p>
               </div>
             </div>
           </div>
 
-          {/* SECTION: QUICK ACTIONS (Mark Attendance, Create Assignment, Upload PYQ, Upload Syllabus, View Submissions) */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
-            <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
-              <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
+          {/* SECTION: QUICK ACTIONS */}
+          <div className="bg-white border border-neutral-300 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
+            <div className="border-b border-neutral-200 pb-3 flex items-center justify-between">
+              <h2 className="text-sm font-bold text-black uppercase tracking-wider">
                 Quick Actions
               </h2>
-              <span className="text-xs text-slate-400">Faculty Shortcuts</span>
+              <span className="text-xs text-neutral-500">Faculty Shortcuts</span>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
               <button
                 type="button"
                 onClick={() => onNavigateTab('attendance')}
-                className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-[#0f2942] transition text-center space-y-1.5"
+                className="p-3.5 rounded-xl border border-neutral-200 bg-neutral-50 hover:bg-neutral-100 hover:border-black transition text-center space-y-1.5 cursor-pointer"
               >
-                <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-[#0f2942] flex items-center justify-center mx-auto">
+                <div className="w-8 h-8 rounded-lg bg-white border border-neutral-300 text-black flex items-center justify-center mx-auto">
                   <CalendarCheck className="w-4 h-4" />
                 </div>
-                <div className="font-bold text-xs text-slate-900">Mark Attendance</div>
-                <div className="text-[10px] text-slate-500">Live lecture roll-call</div>
+                <div className="font-bold text-xs text-black">Mark Attendance</div>
+                <div className="text-[10px] text-neutral-500">Live lecture roll-call</div>
               </button>
 
               <button
                 type="button"
                 onClick={() => onNavigateTab('assignments')}
-                className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-[#0f2942] transition text-center space-y-1.5"
+                className="p-3.5 rounded-xl border border-neutral-200 bg-neutral-50 hover:bg-neutral-100 hover:border-black transition text-center space-y-1.5 cursor-pointer"
               >
-                <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-[#0f2942] flex items-center justify-center mx-auto">
+                <div className="w-8 h-8 rounded-lg bg-white border border-neutral-300 text-black flex items-center justify-center mx-auto">
                   <Plus className="w-4 h-4" />
                 </div>
-                <div className="font-bold text-xs text-slate-900">Create Assignment</div>
-                <div className="text-[10px] text-slate-500">Post new homework</div>
+                <div className="font-bold text-xs text-black">Create Assignment</div>
+                <div className="text-[10px] text-neutral-500">Post new homework</div>
               </button>
 
               <button
                 type="button"
                 onClick={() => onNavigateTab('pyqs')}
-                className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-[#0f2942] transition text-center space-y-1.5"
+                className="p-3.5 rounded-xl border border-neutral-200 bg-neutral-50 hover:bg-neutral-100 hover:border-black transition text-center space-y-1.5 cursor-pointer"
               >
-                <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-[#0f2942] flex items-center justify-center mx-auto">
+                <div className="w-8 h-8 rounded-lg bg-white border border-neutral-300 text-black flex items-center justify-center mx-auto">
                   <FileQuestion className="w-4 h-4" />
                 </div>
-                <div className="font-bold text-xs text-slate-900">Upload PYQ</div>
-                <div className="text-[10px] text-slate-500">Past question paper</div>
+                <div className="font-bold text-xs text-black">Upload PYQ</div>
+                <div className="text-[10px] text-neutral-500">Past question paper</div>
               </button>
 
               <button
                 type="button"
                 onClick={() => onNavigateTab('syllabus')}
-                className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-[#0f2942] transition text-center space-y-1.5"
+                className="p-3.5 rounded-xl border border-neutral-200 bg-neutral-50 hover:bg-neutral-100 hover:border-black transition text-center space-y-1.5 cursor-pointer"
               >
-                <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-[#0f2942] flex items-center justify-center mx-auto">
+                <div className="w-8 h-8 rounded-lg bg-white border border-neutral-300 text-black flex items-center justify-center mx-auto">
                   <BookOpen className="w-4 h-4" />
                 </div>
-                <div className="font-bold text-xs text-slate-900">Upload Syllabus</div>
-                <div className="text-[10px] text-slate-500">HPTU curriculum</div>
+                <div className="font-bold text-xs text-black">Upload Syllabus</div>
+                <div className="text-[10px] text-neutral-500">HPTU curriculum</div>
               </button>
 
               <button
                 type="button"
                 onClick={() => onNavigateTab('assignments')}
-                className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-[#0f2942] transition text-center space-y-1.5"
+                className="p-3.5 rounded-xl border border-neutral-200 bg-neutral-50 hover:bg-neutral-100 hover:border-black transition text-center space-y-1.5 cursor-pointer"
               >
-                <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-[#0f2942] flex items-center justify-center mx-auto">
+                <div className="w-8 h-8 rounded-lg bg-white border border-neutral-300 text-black flex items-center justify-center mx-auto">
                   <CheckCircle2 className="w-4 h-4" />
                 </div>
-                <div className="font-bold text-xs text-slate-900">View Submissions</div>
-                <div className="text-[10px] text-slate-500">Grade submissions</div>
+                <div className="font-bold text-xs text-black">View Submissions</div>
+                <div className="text-[10px] text-neutral-500">Grade submissions</div>
               </button>
             </div>
           </div>

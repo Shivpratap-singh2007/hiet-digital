@@ -59,6 +59,7 @@ import { SyllabusProgressTrackerView } from '../components/student/SyllabusProgr
 import { SmartCampusOperationsView } from '../components/operations/SmartCampusOperationsView';
 import { PageHeader } from '../components/common/PageHeader';
 import { StatCard } from '../components/common/StatCard';
+import { AttendanceApprovalsView } from '../components/attendance/AttendanceApprovalsView';
 
 interface Props {
   currentTab?: NavTab;
@@ -68,6 +69,9 @@ interface Props {
 export const HodDashboard: React.FC<Props> = ({ currentTab = 'dashboard', onNavigateTab }) => {
   const { user } = useAuth();
   const dept = user?.teacherMaster?.department || user?.department || '';
+
+  // Attendance Sub-tab (Approvals vs Statutory Defaulters)
+  const [hodAttendanceSubTab, setHodAttendanceSubTab] = useState<'approvals' | 'defaulters'>('approvals');
 
   // Local state for Department Notice Broadcast
   const [noticeTitle, setNoticeTitle] = useState('');
@@ -857,15 +861,70 @@ export const HodDashboard: React.FC<Props> = ({ currentTab = 'dashboard', onNavi
     );
   }
 
-  // View: Department Attendance Defaulters Ledger
+  // View: Department Attendance Defaulters Ledger & Faculty Attendance Approvals
   if (currentTab === 'attendance') {
     // Risk distributions for HOD
     const criticalCount = lowAttendanceStudents.filter(s => s.percentage < 60).length;
     const highCount = lowAttendanceStudents.filter(s => s.percentage >= 60 && s.percentage < 70).length;
     const mediumCount = lowAttendanceStudents.filter(s => s.percentage >= 70 && s.percentage < 75).length;
 
+    const pendingBatchesCount = dataStore.getAttendanceBatches().filter(b => 
+      b.status === 'Pending HOD Approval' && 
+      (b.department === dept || b.branch === dept || (dept === 'CSE' && (b.branch === 'CSE' || b.branch === 'CSE AI & ML')))
+    ).length;
+
     return (
       <div className="space-y-5 animate-fade-in">
+        {/* Navigation / Sub-tabs */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-200">
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={() => setHodAttendanceSubTab('approvals')}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                hodAttendanceSubTab === 'approvals'
+                  ? 'bg-[#0f2942] text-white shadow-xs'
+                  : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200'
+              }`}
+            >
+              <CalendarCheck className="w-4 h-4 text-emerald-400" />
+              <span>Faculty Attendance Approvals</span>
+              {pendingBatchesCount > 0 && (
+                <span className="px-1.5 py-0.2 rounded-full text-[10px] font-extrabold bg-amber-400 text-slate-900">
+                  {pendingBatchesCount}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => setHodAttendanceSubTab('defaulters')}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                hodAttendanceSubTab === 'defaulters'
+                  ? 'bg-[#0f2942] text-white shadow-xs'
+                  : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200'
+              }`}
+            >
+              <ShieldAlert className="w-4 h-4 text-rose-500" />
+              <span>HPTU 75% Defaulters Ledger</span>
+              {lowAttendanceStudents.length > 0 && (
+                <span className="px-1.5 py-0.2 rounded-full text-[10px] font-extrabold bg-rose-100 text-rose-700 border border-rose-200">
+                  {lowAttendanceStudents.length}
+                </span>
+              )}
+            </button>
+          </div>
+          {onNavigateTab && (
+            <button
+              onClick={() => onNavigateTab('dashboard')}
+              className="text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg border border-slate-200 transition shrink-0 cursor-pointer"
+            >
+              ← Back to Overview
+            </button>
+          )}
+        </div>
+
+        {hodAttendanceSubTab === 'approvals' ? (
+          <AttendanceApprovalsView roleMode="hod" department={dept} onNavigateTab={onNavigateTab} />
+        ) : (
+          <div className="space-y-5 animate-fade-in">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-800 border border-rose-200">
@@ -999,6 +1058,8 @@ export const HodDashboard: React.FC<Props> = ({ currentTab = 'dashboard', onNavi
             </table>
           </div>
         </div>
+          </div>
+        )}
       </div>
     );
   }

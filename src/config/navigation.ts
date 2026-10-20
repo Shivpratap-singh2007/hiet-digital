@@ -213,6 +213,7 @@ const IT_NAV: NavItemConfig[] = [
 
 const MD_NAV: NavItemConfig[] = [
   { id: 'dashboard', label: 'Overview', href: '/app/dashboard', icon: LayoutDashboard, roles: ['managing_director', 'md'], enabled: true },
+  { id: 'attendance', label: 'Attendance Approvals', href: '/app/attendance', icon: CalendarCheck, roles: ['managing_director', 'md'], enabled: true },
   { id: 'principal_analytics', label: 'Institutional Analytics', href: '/app/analytics', icon: LineChart, roles: ['managing_director', 'md'], enabled: true },
   { id: 'department', label: 'Departments', href: '/app/departments', icon: Building, roles: ['managing_director', 'md'], enabled: true },
   { id: 'reports', label: 'Executive Reports', href: '/app/reports', icon: FileSpreadsheet, roles: ['managing_director', 'md'], enabled: true },
