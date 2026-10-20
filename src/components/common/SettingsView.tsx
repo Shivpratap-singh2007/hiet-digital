@@ -21,6 +21,7 @@ import {
   FileText,
   GitBranch,
   CreditCard,
+  Award,
   X
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -36,7 +37,21 @@ interface Props {
 export const SettingsView: React.FC<Props> = ({ initialTab = 'profile' }) => {
   const { user, role, logout, changePassword } = useAuth();
   const isStudent = role === 'student' || user?.role === 'student';
-  const isFaculty = role === 'teacher' || role === 'faculty';
+  const isMD = role === 'managing_director' || role === 'md' || user?.role === 'managing_director' || user?.role === 'md';
+  const isFaculty = !isMD && !isStudent && (role === 'teacher' || role === 'faculty' || user?.role === 'teacher' || user?.role === 'faculty');
+
+  // Managing Director (MD) Specific Verified Data (Institution-Wide Leadership Scope)
+  const rawMdName = user?.name?.replace(/\s*\((Managing Director|MD)\)/gi, '').trim() || 'Er. D. S. Pathania';
+  const mdName = rawMdName;
+  const mdDisplayId = user?.identifier?.startsWith('HIET-MD')
+    ? (user.identifier === 'HIET-MD-001' ? 'HIET-MD-2026-001' : user.identifier)
+    : 'HIET-MD-2026-001';
+  const mdRole = 'Managing Director';
+  const mdInstitution = 'HIET Group of Institutions';
+  const mdCampusScope = 'Institution-wide';
+  const mdExecutiveOffice = 'Office of the Managing Director / Directorate General';
+  const mdJurisdiction = 'All Academic Departments & Constituent Units';
+  const mdGovernance = 'Board of Governance / Executive Directorate';
 
   const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'notifications'>(() => {
     if (isStudent && initialTab === 'security') {
@@ -537,6 +552,332 @@ export const SettingsView: React.FC<Props> = ({ initialTab = 'profile' }) => {
                 </div>
               </div>
             </>
+          ) : isMD ? (
+            /* ============================================================== */
+            /* MANAGING DIRECTOR (MD) DIGITAL ID CARD (Strict Monochrome)     */
+            /* ============================================================== */
+            <>
+              <div className="relative bg-black text-white rounded-2xl p-5 sm:p-6 shadow-xl border border-neutral-800 overflow-hidden">
+                {/* Header: Institution & Monochrome Digital Pass */}
+                <div className="flex items-start justify-between gap-3 relative z-10">
+                  <div className="space-y-0.5">
+                    <p className="text-xs sm:text-sm font-extrabold tracking-wider text-white uppercase">
+                      HIET GROUP OF <span className="text-neutral-400 font-extrabold">INSTITUTIONS</span>
+                    </p>
+                    <div className="flex items-center gap-1.5 text-[11px] text-neutral-400 font-medium">
+                      <MapPin className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+                      <span>Vidyanagar, Shahpur, Kangra (H.P.)</span>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowQRModal(true)}
+                    className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-neutral-200 text-black font-extrabold text-[10px] sm:text-[11px] flex items-center gap-1.5 shadow-sm transition active:scale-95 cursor-pointer shrink-0 border border-neutral-300"
+                  >
+                    <QrCode className="w-3.5 h-3.5 text-black" />
+                    <span>DIGITAL PASS</span>
+                  </button>
+                </div>
+
+                {/* MD Identity: Avatar, Name, Role, ID & Verified Badge */}
+                <div className="mt-5 flex items-center gap-4 relative z-10">
+                  <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-2xl bg-neutral-900 text-white font-extrabold text-2xl sm:text-3xl flex items-center justify-center shrink-0 shadow-md border border-neutral-700 select-none">
+                    {mdName.charAt(0).toUpperCase()}
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <h2 className="text-lg sm:text-xl font-extrabold tracking-tight text-white truncate">
+                      {mdName}
+                    </h2>
+
+                    <div className="mt-1 flex items-center gap-2 flex-wrap">
+                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-neutral-200 bg-neutral-900 border border-neutral-700 px-2 py-0.5 rounded-md">
+                        <Building2 className="w-3.5 h-3.5 text-neutral-300" />
+                        <span>Managing Director</span>
+                      </span>
+                    </div>
+
+                    <div className="mt-1.5 flex items-center justify-between gap-2 flex-wrap">
+                      <div className="flex items-center gap-1.5 font-mono text-xs text-neutral-300 font-medium">
+                        <span>ID: {mdDisplayId}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleCopyCustomId(mdDisplayId)}
+                          className="hover:text-white transition cursor-pointer p-0.5 text-neutral-400"
+                          title="Copy Institutional ID"
+                        >
+                          {copied ? <Check className="w-3.5 h-3.5 text-white" /> : <Copy className="w-3.5 h-3.5" />}
+                        </button>
+                      </div>
+
+                      <div className="inline-flex items-center gap-1 bg-neutral-900 border border-neutral-700 text-neutral-200 px-2.5 py-0.5 rounded-full text-[11px] font-bold shadow-2xs">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-white shrink-0" />
+                        <span>Active / Verified</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Institution-Wide Governance Scope (Strictly NO Semester, Department, or Teaching Fields) */}
+                <div className="mt-5 bg-neutral-950/90 rounded-xl p-3.5 sm:p-4 border border-neutral-800 grid grid-cols-2 gap-3.5 sm:gap-4 relative z-10">
+                  {/* Institution */}
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-9 h-9 rounded-lg bg-neutral-900 border border-neutral-700 text-white flex items-center justify-center shrink-0">
+                      <Building2 className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-neutral-400 block leading-tight">
+                        INSTITUTION
+                      </span>
+                      <span className="text-xs sm:text-sm font-bold text-white block truncate mt-0.5">
+                        {mdInstitution}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Campus Scope */}
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-9 h-9 rounded-lg bg-neutral-900 border border-neutral-700 text-white flex items-center justify-center shrink-0">
+                      <MapPin className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-neutral-400 block leading-tight">
+                        CAMPUS SCOPE
+                      </span>
+                      <span className="text-xs sm:text-sm font-bold text-white block truncate mt-0.5">
+                        {mdCampusScope}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Governance Level */}
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-9 h-9 rounded-lg bg-neutral-900 border border-neutral-700 text-white flex items-center justify-center shrink-0">
+                      <ShieldCheck className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-neutral-400 block leading-tight">
+                        GOVERNANCE
+                      </span>
+                      <span className="text-xs sm:text-sm font-bold text-white block truncate mt-0.5">
+                        Executive Directorate
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Account Status */}
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-9 h-9 rounded-lg bg-neutral-900 border border-neutral-700 text-white flex items-center justify-center shrink-0">
+                      <CheckCircle2 className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-neutral-400 block leading-tight">
+                        STATUS
+                      </span>
+                      <span className="text-xs sm:text-sm font-bold text-neutral-200 block truncate mt-0.5">
+                        Active / Verified
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Card Footer: Cryptographic Record & View QR */}
+                <div className="mt-5 pt-3.5 border-t border-neutral-800 flex items-center justify-between text-xs relative z-10">
+                  <button
+                    type="button"
+                    onClick={() => setShowCryptoModal(true)}
+                    className="flex items-center gap-1.5 text-neutral-400 hover:text-white transition font-medium cursor-pointer"
+                  >
+                    <ShieldCheck className="w-4 h-4 text-white shrink-0" />
+                    <span>Institutional Cryptographic Record</span>
+                    <ChevronRight className="w-3.5 h-3.5 text-neutral-500" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowQRModal(true)}
+                    className="flex items-center gap-1.5 text-white hover:text-neutral-300 transition font-bold cursor-pointer"
+                  >
+                    <QrCode className="w-4 h-4 text-white shrink-0" />
+                    <span>View QR</span>
+                    <ChevronRight className="w-3.5 h-3.5 text-neutral-400" />
+                  </button>
+                </div>
+              </div>
+
+              {/* MD IDENTITY DETAILS (Monochrome Black & White) */}
+              <div className="bg-white rounded-2xl border border-neutral-200 p-5 sm:p-6 shadow-xs space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-neutral-200">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-neutral-100 text-black flex items-center justify-center shrink-0 border border-neutral-300">
+                      <CreditCard className="w-5 h-5 text-black" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-extrabold text-black leading-tight">
+                        Executive Identity & Institutional Directorate
+                      </h3>
+                      <p className="text-xs text-neutral-500 mt-0.5">
+                        Verified statutory leadership & governance appointments (Immutable)
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="inline-flex items-center gap-1 bg-neutral-100 border border-neutral-300 text-black text-xs font-bold px-2.5 py-1 rounded-full shrink-0">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-black" />
+                    <span>Verified</span>
+                  </div>
+                </div>
+
+                {/* Information Rows */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 text-xs">
+                  {/* Full Legal Name */}
+                  <div className="bg-neutral-50 rounded-xl p-3 flex items-center gap-3 border border-neutral-200">
+                    <div className="w-9 h-9 rounded-xl bg-white border border-neutral-300 text-neutral-700 flex items-center justify-center shrink-0 shadow-2xs">
+                      <User className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-[11px] text-neutral-500 font-semibold block leading-tight">Full Legal Name</span>
+                      <span className="text-xs sm:text-sm font-bold text-black block truncate mt-0.5">{mdName}</span>
+                    </div>
+                  </div>
+
+                  {/* Institutional Role */}
+                  <div className="bg-neutral-50 rounded-xl p-3 flex items-center gap-3 border border-neutral-200">
+                    <div className="w-9 h-9 rounded-xl bg-white border border-neutral-300 text-neutral-700 flex items-center justify-center shrink-0 shadow-2xs">
+                      <Building2 className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-[11px] text-neutral-500 font-semibold block leading-tight">Institutional Role</span>
+                      <span className="text-xs sm:text-sm font-bold text-black block truncate mt-0.5">{mdRole}</span>
+                    </div>
+                  </div>
+
+                  {/* Institutional ID */}
+                  <div className="bg-neutral-50 rounded-xl p-3 flex items-center justify-between gap-3 border border-neutral-200">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-9 h-9 rounded-xl bg-white border border-neutral-300 text-neutral-700 flex items-center justify-center shrink-0 shadow-2xs">
+                        <FileText className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <span className="text-[11px] text-neutral-500 font-semibold block leading-tight">Institutional ID</span>
+                        <span className="text-xs sm:text-sm font-bold font-mono text-black block truncate mt-0.5">{mdDisplayId}</span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleCopyCustomId(mdDisplayId)}
+                      className="p-1.5 rounded-lg text-neutral-500 hover:text-black hover:bg-neutral-200 transition cursor-pointer shrink-0"
+                      title="Copy Institutional ID"
+                    >
+                      {copied ? <Check className="w-4 h-4 text-black" /> : <Copy className="w-4 h-4" />}
+                    </button>
+                  </div>
+
+                  {/* Administrative Scope */}
+                  <div className="bg-neutral-50 rounded-xl p-3 flex items-center gap-3 border border-neutral-200">
+                    <div className="w-9 h-9 rounded-xl bg-white border border-neutral-300 text-neutral-700 flex items-center justify-center shrink-0 shadow-2xs">
+                      <MapPin className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-[11px] text-neutral-500 font-semibold block leading-tight">Administrative Scope</span>
+                      <span className="text-xs sm:text-sm font-bold text-black block truncate mt-0.5">Institution-wide (All Departments)</span>
+                    </div>
+                  </div>
+
+                  {/* Executive Office */}
+                  <div className="bg-neutral-50 rounded-xl p-3 flex items-center gap-3 border border-neutral-200">
+                    <div className="w-9 h-9 rounded-xl bg-white border border-neutral-300 text-neutral-700 flex items-center justify-center shrink-0 shadow-2xs">
+                      <Building2 className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-[11px] text-neutral-500 font-semibold block leading-tight">Executive Office</span>
+                      <span className="text-xs sm:text-sm font-bold text-black block truncate mt-0.5" title={mdExecutiveOffice}>{mdExecutiveOffice}</span>
+                    </div>
+                  </div>
+
+                  {/* Administrative Jurisdiction */}
+                  <div className="bg-neutral-50 rounded-xl p-3 flex items-center gap-3 border border-neutral-200">
+                    <div className="w-9 h-9 rounded-xl bg-white border border-neutral-300 text-neutral-700 flex items-center justify-center shrink-0 shadow-2xs">
+                      <ShieldCheck className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-[11px] text-neutral-500 font-semibold block leading-tight">Jurisdiction</span>
+                      <span className="text-xs sm:text-sm font-bold text-black block truncate mt-0.5">{mdJurisdiction}</span>
+                    </div>
+                  </div>
+
+                  {/* Statutory Authority */}
+                  <div className="bg-neutral-50 rounded-xl p-3 flex items-center gap-3 border border-neutral-200">
+                    <div className="w-9 h-9 rounded-xl bg-white border border-neutral-300 text-neutral-700 flex items-center justify-center shrink-0 shadow-2xs">
+                      <Award className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-[11px] text-neutral-500 font-semibold block leading-tight">Statutory Authority</span>
+                      <span className="text-xs sm:text-sm font-bold text-black block truncate mt-0.5">{mdGovernance}</span>
+                    </div>
+                  </div>
+
+                  {/* Account Status */}
+                  <div className="bg-neutral-50 rounded-xl p-3 flex items-center gap-3 border border-neutral-200">
+                    <div className="w-9 h-9 rounded-xl bg-white border border-neutral-300 text-neutral-700 flex items-center justify-center shrink-0 shadow-2xs">
+                      <CheckCircle2 className="w-4 h-4 text-black" />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-[11px] text-neutral-500 font-semibold block leading-tight">Account Status</span>
+                      <span className="text-xs sm:text-sm font-bold text-black block truncate mt-0.5">Active / Verified</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* INSTITUTION-WIDE GOVERNANCE & OVERSIGHT SUMMARY */}
+                <div className="mt-4 pt-4 border-t border-neutral-200 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-neutral-800">
+                      Institutional Governance & Oversight Summary
+                    </h4>
+                    <span className="text-[11px] text-neutral-500 font-medium">Statutory Leadership Roster</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                    <div className="p-3 bg-neutral-50 border border-neutral-200 rounded-xl space-y-1">
+                      <span className="text-[11px] font-bold text-neutral-500 block uppercase">Academic Departments Overseen</span>
+                      <span className="text-xs font-bold text-black block">
+                        5 Engineering Streams (CSE, CSE AI & ML, CE, ME, EE)
+                      </span>
+                    </div>
+
+                    <div className="p-3 bg-neutral-50 border border-neutral-200 rounded-xl space-y-1">
+                      <span className="text-[11px] font-bold text-neutral-500 block uppercase">Active Student Enrolment</span>
+                      <span className="text-xs font-bold text-black block">
+                        {dataStore.getStudentsMaster().length} Enrolled Campus Students
+                      </span>
+                    </div>
+
+                    <div className="p-3 bg-neutral-50 border border-neutral-200 rounded-xl space-y-1">
+                      <span className="text-[11px] font-bold text-neutral-500 block uppercase">Faculty & Academic Staff</span>
+                      <span className="text-xs font-bold text-black block">
+                        {dataStore.getTeachersMaster().length} Teaching Professors & Department HODs
+                      </span>
+                    </div>
+
+                    <div className="p-3 bg-neutral-50 border border-neutral-200 rounded-xl space-y-1">
+                      <span className="text-[11px] font-bold text-neutral-500 block uppercase">Regulatory & University Affiliation</span>
+                      <span className="text-xs font-bold text-black block">
+                        AICTE Approved • HPTU Hamirpur & HPSBTE Affiliated
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-200 text-[11px] text-neutral-500 flex items-start gap-2 mt-3">
+                  <AlertCircle className="w-4 h-4 text-neutral-400 shrink-0 mt-0.5" />
+                  <span>
+                    Managing Director credentials, institutional executive authority, and governance appointments are officially recorded in the institutional charter of HIET Group of Institutions.
+                  </span>
+                </div>
+              </div>
+            </>
           ) : (
             /* ============================================================== */
             /* FACULTY DIGITAL ID CARD (Strict Monochrome Black & White)      */
@@ -986,33 +1327,45 @@ export const SettingsView: React.FC<Props> = ({ initialTab = 'profile' }) => {
       {/* MODAL 1: Digital QR Code Pass Modal */}
       {showQRModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 backdrop-blur-xs p-4 overflow-y-auto">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl max-w-sm w-full p-6 text-center space-y-4 my-auto animate-scale-in">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+          <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-2xl max-w-sm w-full p-6 text-center space-y-4 my-auto animate-scale-in">
+            <div className="flex items-center justify-between border-b border-neutral-200 dark:border-neutral-800 pb-3">
               <div className="text-left">
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white">Official Digital Student Pass</h3>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">HIET Institutional Cryptographic Identity</p>
+                <h3 className="text-sm font-bold text-black dark:text-white">
+                  {isMD ? 'Official Digital Managing Director Pass' : isFaculty ? 'Official Digital Faculty Pass' : 'Official Digital Student Pass'}
+                </h3>
+                <p className="text-[11px] text-neutral-500 dark:text-neutral-400">
+                  {isMD ? 'HIET Institutional Executive Directorate Cryptographic Identity' : isFaculty ? 'HIET Academic Faculty Cryptographic Identity' : 'HIET Institutional Student Cryptographic Identity'}
+                </p>
               </div>
               <button
                 type="button"
                 onClick={() => setShowQRModal(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white transition"
+                className="p-1 rounded-lg text-neutral-400 hover:text-black dark:hover:text-white transition cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="bg-white p-3 rounded-2xl border border-slate-200 inline-block mx-auto shadow-inner">
+            <div className="bg-white p-3 rounded-2xl border border-neutral-300 dark:border-neutral-700 inline-block mx-auto shadow-inner">
               <DynamicQRCodeCanvas 
-                value={`https://hiet.ac.in/verify/id/${encodeURIComponent(displayId)}`} 
+                value={`https://hiet.ac.in/verify/id/${encodeURIComponent(isMD ? mdDisplayId : isFaculty ? facultyDisplayId : displayId)}`} 
                 size={200} 
               />
             </div>
 
             <div className="space-y-1">
-              <p className="text-xs font-bold text-slate-900 dark:text-white">{studentName}</p>
-              <p className="font-mono text-xs font-semibold text-blue-600 dark:text-sky-400">{displayId}</p>
-              <p className="text-[10px] text-slate-500 dark:text-slate-400">
-                Department of {department} • Academic Session 2023 - 2027
+              <p className="text-xs font-bold text-black dark:text-white">
+                {isMD ? mdName : isFaculty ? facultyName : studentName}
+              </p>
+              <p className="font-mono text-xs font-semibold text-neutral-700 dark:text-neutral-300">
+                {isMD ? mdDisplayId : isFaculty ? facultyDisplayId : displayId}
+              </p>
+              <p className="text-[10px] text-neutral-500 dark:text-neutral-400">
+                {isMD
+                  ? 'Managing Director • HIET Group of Institutions • Institution-wide Scope'
+                  : isFaculty
+                  ? `Faculty Member • Department of ${facultyDept} • HIET Group of Institutions`
+                  : `Department of ${department} • Academic Session 2023 - 2027`}
               </p>
             </div>
 
@@ -1020,7 +1373,7 @@ export const SettingsView: React.FC<Props> = ({ initialTab = 'profile' }) => {
               <button
                 type="button"
                 onClick={() => setShowQRModal(false)}
-                className="w-full py-2.5 rounded-xl bg-[#0f2942] hover:bg-[#0a1c2e] text-white text-xs font-bold transition shadow-xs cursor-pointer"
+                className="w-full py-2.5 rounded-xl bg-black hover:bg-neutral-800 text-white text-xs font-bold transition shadow-xs cursor-pointer border border-neutral-800"
               >
                 Done
               </button>
@@ -1032,47 +1385,53 @@ export const SettingsView: React.FC<Props> = ({ initialTab = 'profile' }) => {
       {/* MODAL 2: Institutional Cryptographic Record Modal */}
       {showCryptoModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 backdrop-blur-xs p-4 overflow-y-auto">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl max-w-md w-full p-6 space-y-4 my-auto animate-scale-in text-xs">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+          <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-2xl max-w-md w-full p-6 space-y-4 my-auto animate-scale-in text-xs">
+            <div className="flex items-center justify-between border-b border-neutral-200 dark:border-neutral-800 pb-3">
               <div className="flex items-center gap-2">
-                <div className="p-2 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400">
+                <div className="p-2 rounded-xl bg-neutral-100 dark:bg-neutral-800 text-black dark:text-white border border-neutral-300 dark:border-neutral-700">
                   <ShieldCheck className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">Institutional Cryptographic Record</h3>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Tamper-Evident Institutional Enrollment Certificate</p>
+                  <h3 className="text-sm font-bold text-black dark:text-white">Institutional Cryptographic Record</h3>
+                  <p className="text-[11px] text-neutral-500 dark:text-neutral-400">Tamper-Evident Institutional Appointment Certificate</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setShowCryptoModal(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white transition"
+                className="p-1 rounded-lg text-neutral-400 hover:text-black dark:hover:text-white transition cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="space-y-3 text-slate-600 dark:text-slate-300">
-              <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl space-y-1.5 border border-slate-200/80 dark:border-slate-700/60 font-mono text-[11px]">
-                <p className="text-slate-400 text-[10px] uppercase font-bold tracking-wider">SHA-256 DIGITAL FINGERPRINT</p>
-                <p className="text-slate-900 dark:text-slate-100 break-all select-all font-semibold">
-                  sha256:7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069
+            <div className="space-y-3 text-neutral-600 dark:text-neutral-300">
+              <div className="p-3 bg-neutral-50 dark:bg-neutral-950 rounded-xl space-y-1.5 border border-neutral-200 dark:border-neutral-800 font-mono text-[11px]">
+                <p className="text-neutral-400 text-[10px] uppercase font-bold tracking-wider">SHA-256 DIGITAL FINGERPRINT</p>
+                <p className="text-black dark:text-white break-all select-all font-semibold">
+                  {isMD ? 'sha256:md90e8f223101c448bb901ca88410294e01927bbca710294e0192837bc901ef2' : 'sha256:7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069'}
                 </p>
               </div>
 
               <div className="grid grid-cols-2 gap-2">
-                <div className="p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-800">
-                  <span className="text-[10px] text-slate-400 uppercase font-bold block">Issuing Authority</span>
-                  <span className="font-bold text-slate-800 dark:text-slate-200 block truncate">Registrar, HIET</span>
+                <div className="p-2.5 bg-neutral-50 dark:bg-neutral-950 rounded-xl border border-neutral-200 dark:border-neutral-800">
+                  <span className="text-[10px] text-neutral-400 uppercase font-bold block">Issuing Authority</span>
+                  <span className="font-bold text-black dark:text-white block truncate">
+                    {isMD ? 'Board of Governors / Executive Directorate' : isFaculty ? 'Office of the Registrar, HIET' : 'Registrar, HIET'}
+                  </span>
                 </div>
-                <div className="p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-800">
-                  <span className="text-[10px] text-slate-400 uppercase font-bold block">Status</span>
-                  <span className="font-bold text-emerald-600 dark:text-emerald-400 block truncate">Valid & Bound</span>
+                <div className="p-2.5 bg-neutral-50 dark:bg-neutral-950 rounded-xl border border-neutral-200 dark:border-neutral-800">
+                  <span className="text-[10px] text-neutral-400 uppercase font-bold block">Status</span>
+                  <span className="font-bold text-black dark:text-white block truncate">Valid & Bound</span>
                 </div>
               </div>
 
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                This identity record is verified against the Himachal Pradesh Technical University (HPTU) academic master roster and cryptographically validated for campus gate access, exam hall entrance, and hostel residency.
+              <p className="text-[11px] text-neutral-500 dark:text-neutral-400 leading-relaxed">
+                {isMD
+                  ? 'This cryptographic identity certifies the institutional executive authority of the Managing Director across all academic departments, research centers, and constituent units of HIET Group of Institutions.'
+                  : isFaculty
+                  ? 'This identity record is verified against the institutional faculty roll and cryptographically validated for academic instruction, attendance submission, and sessional evaluation.'
+                  : 'This identity record is verified against the Himachal Pradesh Technical University (HPTU) academic master roster and cryptographically validated for campus gate access, exam hall entrance, and hostel residency.'}
               </p>
             </div>
 
@@ -1080,7 +1439,7 @@ export const SettingsView: React.FC<Props> = ({ initialTab = 'profile' }) => {
               <button
                 type="button"
                 onClick={() => setShowCryptoModal(false)}
-                className="w-full py-2.5 rounded-xl bg-[#0f2942] hover:bg-[#0a1c2e] text-white font-bold transition shadow-xs cursor-pointer"
+                className="w-full py-2.5 rounded-xl bg-black hover:bg-neutral-800 text-white font-bold transition shadow-xs cursor-pointer border border-neutral-800"
               >
                 Close Record
               </button>

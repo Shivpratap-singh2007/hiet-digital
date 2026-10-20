@@ -365,9 +365,9 @@ export const DEMO_MD_SHARMA: Profile & { identifier: string } = {
   id: 'prof-md-01',
   auth_user_id: 'auth-md-01',
   role: 'managing_director',
-  name: 'Mr. R. K. Sharma',
-  email: 'md@hiet.demo',
-  identifier: 'HIET-MD-001',
+  name: 'Er. D. S. Pathania',
+  email: 'md@hiet.ac.in',
+  identifier: 'HIET-MD-2026-001',
   activeRoles: ['managing_director'],
   activeWorkspaceRole: 'managing_director',
   must_change_password: false

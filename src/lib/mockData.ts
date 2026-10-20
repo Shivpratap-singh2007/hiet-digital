@@ -1218,6 +1218,30 @@ export const INITIAL_SESSIONAL_RESULTS: SessionalResult[] = [
     branch: 'CSE',
     is_published: true,
     remarks: 'Strong understanding of AC circuits and transformers.'
+  },
+  {
+    id: 'ses-demo-md-signoff-01',
+    student_id: 'std-cse-001',
+    student_roll: 'CSE001',
+    student_name: 'Aarav Sharma',
+    subject_name: 'Cloud Computing & Distributed Systems',
+    subject_code: 'CS-606',
+    exam_type: 'Sessional 1',
+    marks_obtained: 22,
+    max_marks: 25,
+    percentage: 88,
+    semester: 6,
+    branch: 'CSE',
+    status: 'Approved by Principal',
+    is_published: false,
+    hod_id: 'tch-fac-cse-001',
+    hod_name: 'Dr. Anuj Sharma',
+    hod_approved_at: '2026-10-18T10:00:00Z',
+    principal_id: 'usr-principal-01',
+    principal_name: 'Dr. S.K. Sharma',
+    principal_approved_at: '2026-10-19T14:30:00Z',
+    reviewer_remarks: 'Verified by Principal. Forwarded for MD executive sign-off.',
+    remarks: 'Excellent architectural analysis of distributed storage and consensus.'
   }
 ];
 

@@ -109,6 +109,7 @@ export interface Profile {
   student_id?: string;
   teacher_id?: string;
   faculty_id?: string; // alias for teacher_id as per college spec
+  identifier?: string; // Persistent institutional identifier (e.g. HIET-MD-2026-001)
   name: string;
   email: string;
   must_change_password: boolean;

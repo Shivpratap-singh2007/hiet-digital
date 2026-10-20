@@ -205,12 +205,15 @@ export const DEMO_HOD: Profile = {
   }
 };
 
-export const DEMO_MD: Profile = {
+export const DEMO_MD: Profile & { identifier: string } = {
   id: 'prof-md-01',
   auth_user_id: 'auth-md-01',
   role: 'managing_director',
-  name: 'Er. D. S. Pathania (Managing Director)',
+  name: 'Er. D. S. Pathania',
   email: 'md@hiet.ac.in',
+  identifier: 'HIET-MD-2026-001',
+  activeRoles: ['managing_director'],
+  activeWorkspaceRole: 'managing_director',
   must_change_password: false
 };
 
@@ -998,6 +1001,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       case 'security_guard':
         setUser(DEMO_SECURITY);
         break;
+      case 'managing_director':
+      case 'md':
+        setUser(DEMO_MD);
+        break;
     }
   };
 
@@ -1027,6 +1034,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     if (cleanUpper === 'PRINCIPAL') {
       setUser(DEMO_PRINCIPAL);
+      return;
+    }
+    if (cleanUpper === 'MD' || cleanUpper === 'MANAGING_DIRECTOR' || cleanUpper === 'HIET-MD-2026-001' || cleanUpper === 'HIET-MD-001') {
+      setUser(DEMO_MD);
+      if (typeof window !== 'undefined') {
+        window.history.replaceState(null, '', getRoleRedirect('managing_director'));
+      }
       return;
     }
     if (cleanUpper === 'SECURITY' || cleanUpper === 'GUARD') {
