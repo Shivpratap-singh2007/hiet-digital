@@ -277,10 +277,20 @@ describe('PWA (Progressive Web App) Manifest Configuration', () => {
     expect(fs.existsSync(swPath)).toBe(true);
 
     const swContent = fs.readFileSync(swPath, 'utf-8');
-    expect(swContent).toContain('hiet-campus-pwa-v2');
+    expect(swContent).toMatch(/hiet-campus-pwa-v\d+/);
     expect(swContent).toContain('install');
     expect(swContent).toContain('fetch');
     expect(swContent).toContain('push');
     expect(swContent).toContain('notificationclick');
+  });
+
+  it('index.html explicitly disables automatic Google Translate popups in PWA', () => {
+    const indexPath = path.resolve(__dirname, '../../index.html');
+    expect(fs.existsSync(indexPath)).toBe(true);
+
+    const indexHtml = fs.readFileSync(indexPath, 'utf-8');
+    expect(indexHtml).toContain('meta name="google" content="notranslate"');
+    expect(indexHtml).toContain('translate="no"');
+    expect(indexHtml).toContain('class="notranslate"');
   });
 });

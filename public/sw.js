@@ -3,7 +3,7 @@
 // Himachal Institute of Engineering & Technology, Shahpur (H.P.)
 // =============================================================================
 
-const CACHE_NAME = 'hiet-campus-pwa-v2';
+const CACHE_NAME = 'hiet-campus-pwa-v3';
 const PRECACHE_ASSETS = [
   '/',
   '/index.html',

@@ -1,7 +1,11 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" translate="no" class="notranslate">
   <head>
     <meta charset="UTF-8" />
+    <!-- Disable Google Translate & Browser Auto-Translation Prompt in Installed PWA -->
+    <meta name="google" content="notranslate" />
+    <meta name="googlebot" content="notranslate" />
+    <meta http-equiv="Content-Language" content="en" />
     <link rel="icon" type="image/png" href="/images/hiet_crest.png" />
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#0f2942" />
@@ -23,8 +27,8 @@
       })();
     </script>
   </head>
-  <body class="bg-[#f8fafc] min-h-screen text-slate-800 antialiased selection:bg-[#0f2942] selection:text-white">
-    <div id="root"></div>
+  <body class="notranslate bg-[#f8fafc] min-h-screen text-slate-800 antialiased selection:bg-[#0f2942] selection:text-white" translate="no">
+    <div id="root" class="notranslate" translate="no"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
