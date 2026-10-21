@@ -117,6 +117,13 @@ const MainLayout: React.FC = () => {
     };
   }, []);
 
+  // Purge any previewRole param from browser URL if user logs out (must be declared before early returns)
+  React.useEffect(() => {
+    if (!user && typeof window !== 'undefined' && window.location.search.includes('previewRole')) {
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+  }, [user]);
+
   // 0. Startup Splash Screen: Rendered while initial session restoration completes
   if (isInitializing) {
     return (
@@ -207,13 +214,6 @@ const MainLayout: React.FC = () => {
     }
   }
 
-  // Purge any previewRole param from browser URL if user logs out
-  React.useEffect(() => {
-    if (!user && typeof window !== 'undefined' && window.location.search.includes('previewRole')) {
-      window.history.replaceState(null, '', window.location.pathname);
-    }
-  }, [user]);
-
   const handleOpenLogin = () => {
     setShowLoginModal(true);
   };
@@ -267,7 +267,7 @@ const MainLayout: React.FC = () => {
   // 1. Unauthenticated Experience: Clean Institutional Portal & Login Screen
   if (!user && !devPreviewActive) {
     return (
-      <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex flex-col font-sans relative overflow-x-hidden selection:bg-[#0f2942] selection:text-white">
+      <div className="min-h-screen min-h-[100dvh] bg-[#f8fafc] text-slate-800 flex flex-col font-sans relative overflow-x-hidden selection:bg-[#0f2942] selection:text-white">
         <StudentRegisterModal
           isOpen={showStudentRegModal}
           onClose={() => setShowStudentRegModal(false)}
@@ -313,7 +313,7 @@ const MainLayout: React.FC = () => {
 
   // 2. Authenticated Experience: Responsive shell with Sticky Top Header, Left Sidebar & Main Content
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex flex-col font-sans relative selection:bg-[#0f2942] selection:text-white">
+    <div className="min-h-screen min-h-[100dvh] bg-[#f8fafc] text-slate-800 flex flex-col font-sans relative selection:bg-[#0f2942] selection:text-white">
       {/* Sticky Top Header */}
       <Navbar
         onToggleSidebar={() => setIsMobileSidebarOpen(prev => !prev)}

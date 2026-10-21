@@ -187,4 +187,42 @@ describe('HIET Digital Campus — Startup & Splash Screen Suite', () => {
       expect(localStorage.getItem('hiet_current_user')).toBeNull();
     });
   });
+
+  describe('5. React Hook Order & Startup Crash Prevention', () => {
+    it('ensures all React hooks in MainLayout are called before any early return statements', () => {
+      const appCode = fs.readFileSync(path.resolve(__dirname, '../App.tsx'), 'utf-8');
+      
+      // Locate MainLayout component declaration and its first early return
+      const mainLayoutStart = appCode.indexOf('const MainLayout: React.FC = () => {');
+      expect(mainLayoutStart).toBeGreaterThan(-1);
+
+      const mainLayoutBody = appCode.slice(mainLayoutStart);
+      const firstEarlyReturn = mainLayoutBody.indexOf('if (isInitializing)');
+      expect(firstEarlyReturn).toBeGreaterThan(-1);
+
+      const codeBeforeFirstEarlyReturn = mainLayoutBody.slice(0, firstEarlyReturn);
+      const codeAfterFirstEarlyReturn = mainLayoutBody.slice(firstEarlyReturn);
+
+      // Verify that no React.useEffect, useEffect, React.useState, or useState is called after early returns
+      const hookRegex = /\b(useEffect|useState|useMemo|useCallback|useContext)\s*\(/g;
+      const hooksAfterEarlyReturn = codeAfterFirstEarlyReturn.match(hookRegex);
+      expect(hooksAfterEarlyReturn).toBeNull();
+
+      // Verify previewRole URL cleanup hook is declared before the early return
+      expect(codeBeforeFirstEarlyReturn).toContain('previewRole');
+    });
+
+    it('verifies InstitutionalErrorBoundary safely captures diagnostics and cleans only auth state', () => {
+      const boundaryCode = fs.readFileSync(path.resolve(__dirname, '../components/common/InstitutionalErrorBoundary.tsx'), 'utf-8');
+      
+      // Diagnostic details disclosure exists
+      expect(boundaryCode).toContain('Diagnostic Details');
+      expect(boundaryCode).toContain('this.state.errorMessage');
+      
+      // Reset only targets session/auth keys rather than unrelated local data
+      expect(boundaryCode).toContain("localStorage.removeItem('hiet_current_user')");
+      expect(boundaryCode).toContain("localStorage.removeItem('hiet_active_workspace_role')");
+      expect(boundaryCode).not.toContain('localStorage.clear()');
+    });
+  });
 });
