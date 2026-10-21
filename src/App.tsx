@@ -33,9 +33,20 @@ import {
   subscribeToNavigation, 
   setupClientSideLinkInterceptor 
 } from './lib/appNavigation';
+import { SplashScreen } from './components/common/SplashScreen';
+import { InstitutionalErrorBoundary } from './components/common/InstitutionalErrorBoundary';
+import { AlertCircle, RefreshCw, LogIn } from 'lucide-react';
 
 const MainLayout: React.FC = () => {
-  const { user, role, mustChangePassword } = useAuth();
+  const { 
+    user, 
+    role, 
+    mustChangePassword, 
+    isInitializing, 
+    initializationError, 
+    retryInitialization 
+  } = useAuth();
+
   const [currentTab, setCurrentTab] = useState<NavTab>(() => {
     if (typeof window !== 'undefined') {
       return getTabFromPathname(window.location.pathname);
@@ -46,10 +57,15 @@ const MainLayout: React.FC = () => {
   const [showAiAssistantModal, setShowAiAssistantModal] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
-  // Auth Modals state (auto-open if URL is /login)
+  // Auth Modals state (auto-open if URL is /login, or launched from PWA/protected route while logged out)
   const [showLoginModal, setShowLoginModal] = useState(() => {
     if (typeof window !== 'undefined') {
-      return window.location.pathname === '/login';
+      return (
+        window.location.pathname === '/login' ||
+        window.location.search.includes('source=pwa') ||
+        window.location.search.includes('login=true') ||
+        window.location.pathname.startsWith('/app')
+      );
     }
     return false;
   });
@@ -100,6 +116,64 @@ const MainLayout: React.FC = () => {
       cleanupLinks();
     };
   }, []);
+
+  // 0. Startup Splash Screen: Rendered while initial session restoration completes
+  if (isInitializing) {
+    return (
+      <SplashScreen
+        message="Loading HIET Digital Campus..."
+        onRetry={retryInitialization}
+        onContinueToLogin={() => setShowLoginModal(true)}
+      />
+    );
+  }
+
+  // 0.1 Initialization Failure: Readable recovery screen with Retry and Sign In actions
+  if (initializationError) {
+    return (
+      <div className="min-h-screen bg-[#f8fafc] text-slate-800 flex flex-col items-center justify-center p-6 select-none font-sans">
+        <div className="max-w-md w-full bg-white border border-slate-200/90 rounded-2xl shadow-xl shadow-slate-900/5 p-6 sm:p-8 text-center">
+          <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-white border border-slate-200 shadow-md p-2.5 flex items-center justify-center">
+            <img src="/images/hiet_crest.png" alt="HIET Logo" className="w-full h-full object-contain" />
+          </div>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-700 text-xs font-semibold mb-3">
+            <AlertCircle className="w-3.5 h-3.5" />
+            Session Restoration Issue
+          </div>
+          <h2 className="text-lg font-bold text-[#0f2942] mb-1.5">
+            Unable to connect to campus session
+          </h2>
+          <p className="text-xs text-slate-500 mb-6 leading-relaxed">
+            {initializationError}
+          </p>
+          <div className="flex flex-col sm:flex-row gap-2.5">
+            <button
+              type="button"
+              onClick={() => retryInitialization()}
+              className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-[#0f2942] hover:bg-[#163a5d] text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              Retry Connection
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  localStorage.removeItem('hiet_current_user');
+                  sessionStorage.clear();
+                  window.location.href = '/login';
+                }
+              }}
+              className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors cursor-pointer"
+            >
+              <LogIn className="w-3.5 h-3.5" />
+              Go to Sign In
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Development Demo Accounts Switcher (/dev/demo-accounts)
   if (areDevRoutesEnabled() && pathname === '/dev/demo-accounts') {
@@ -318,13 +392,15 @@ const MainLayout: React.FC = () => {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <ToastProvider>
-        <PwaProvider>
-          <MainLayout />
-          <PwaInstallBanner />
-        </PwaProvider>
-      </ToastProvider>
-    </AuthProvider>
+    <InstitutionalErrorBoundary>
+      <AuthProvider>
+        <ToastProvider>
+          <PwaProvider>
+            <MainLayout />
+            <PwaInstallBanner />
+          </PwaProvider>
+        </ToastProvider>
+      </AuthProvider>
+    </InstitutionalErrorBoundary>
   );
 }

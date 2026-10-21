@@ -27,9 +27,9 @@ export const HietCollegeLogo: React.FC<Props> = ({
   // Official emblem of HIET Shahpur (Authentic gear crest + Dhauladhar peaks + Motto)
   const renderEmblem = () => (
     <div 
-      className={`relative group/emblem ${iconSizes[size]} rounded-2xl bg-white dark:bg-[#141414] flex items-center justify-center p-1 shrink-0 shadow-lg ${
-        glow ? 'shadow-blue-600/30 ring-2 ring-blue-500/30 dark:ring-[#404040]' : ''
-      } border border-slate-200/90 dark:border-[#303030] transform hover:scale-105 transition-all duration-300`}
+      className={`relative group/emblem ${iconSizes[size]} rounded-2xl bg-white flex items-center justify-center p-1 shrink-0 shadow-lg ${
+        glow ? 'shadow-blue-600/20 ring-2 ring-blue-500/20' : ''
+      } border border-slate-200/90 transform hover:scale-105 transition-all duration-300`}
     >
       {/* Background soft glow */}
       <div className="absolute inset-0 bg-radial-glow from-blue-500/10 dark:from-white/5 to-transparent rounded-2xl pointer-events-none" />

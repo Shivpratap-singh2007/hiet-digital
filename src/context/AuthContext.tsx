@@ -11,6 +11,9 @@ interface AuthContextType {
   activeWorkspaceRole: string | null;
   workspaceRoles: { roleKey: string; label: string; departmentName?: string }[];
   isLoading: boolean;
+  isInitializing: boolean;
+  initializationError: string | null;
+  retryInitialization: () => Promise<void>;
   mustChangePassword: boolean;
   login: (emailOrId: string, password?: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
@@ -300,6 +303,100 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return null;
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
+  const [initializationError, setInitializationError] = useState<string | null>(null);
+
+  // Reliable Startup Sequence: session restoration with graceful network handling
+  const initAppSession = async () => {
+    setIsInitializing(true);
+    setInitializationError(null);
+    try {
+      // 1. Development preview via ?previewRole=... (Section 62)
+      if (import.meta.env.DEV && typeof window !== 'undefined') {
+        if (sessionStorage.getItem('hiet_logged_out') === 'true') {
+          setUser(null);
+          setIsInitializing(false);
+          return;
+        }
+        const params = new URLSearchParams(window.location.search);
+        const previewRole = params.get('previewRole');
+        if (previewRole) {
+          switch (previewRole.toLowerCase()) {
+            case 'student': setUser(DEMO_STUDENT_CSE); setIsInitializing(false); return;
+            case 'faculty':
+            case 'teacher': setUser(DEMO_TEACHER); setIsInitializing(false); return;
+            case 'hod': setUser(DEMO_HOD); setIsInitializing(false); return;
+            case 'principal':
+            case 'admin': setUser(DEMO_PRINCIPAL); setIsInitializing(false); return;
+            case 'security':
+            case 'security_guard': setUser(DEMO_SECURITY); setIsInitializing(false); return;
+            case 'md':
+            case 'managing_director': setUser(DEMO_MD); setIsInitializing(false); return;
+          }
+        }
+      }
+
+      // 2. Check persistent user session
+      let candidate: Profile | null = null;
+      try {
+        const saved = localStorage.getItem('hiet_current_user');
+        if (saved && saved !== 'null' && saved !== 'undefined') {
+          candidate = JSON.parse(saved);
+          if (candidate?.role === 'student' && candidate.studentMaster && candidate.studentMaster.branch === 'ECE') {
+            candidate.studentMaster.department = 'B.Tech';
+            candidate.department = 'B.Tech';
+          }
+          const savedWorkspace = localStorage.getItem('hiet_active_workspace_role');
+          if (savedWorkspace && candidate?.activeRoles && (candidate.activeRoles.includes(savedWorkspace) || (savedWorkspace === 'hod' && candidate.activeRoles.includes('hod')))) {
+            candidate.role = savedWorkspace as UserRole;
+            candidate.activeWorkspaceRole = savedWorkspace;
+          }
+        }
+      } catch (err) {
+        console.warn('Could not parse local user profile:', err);
+        localStorage.removeItem('hiet_current_user');
+      }
+
+      // 3. Verify session with Supabase if configured and user was logged in via Supabase
+      if (isSupabaseConfigured && supabase) {
+        try {
+          const timeoutPromise = new Promise<{ data: { session: any }; error: any }>((_, reject) =>
+            setTimeout(() => reject(new Error('Session verification timeout')), 3500)
+          );
+          const sessionPromise = supabase.auth.getSession();
+          const { data, error } = await Promise.race([sessionPromise, timeoutPromise]);
+
+          if (error) {
+            console.warn('Supabase session verification issue:', error.message);
+            if (error.message?.toLowerCase().includes('expired') || error.message?.toLowerCase().includes('invalid')) {
+              candidate = null;
+              localStorage.removeItem('hiet_current_user');
+              try { await supabase.auth.signOut(); } catch {}
+            }
+          } else if (!data.session && candidate && candidate.auth_user_id?.startsWith('sb-')) {
+            candidate = null;
+            localStorage.removeItem('hiet_current_user');
+          }
+        } catch (netErr) {
+          console.warn('Network timeout verifying Supabase session, operating in resilient mode:', netErr);
+        }
+      }
+
+      setUser(candidate);
+    } catch (err: any) {
+      console.error('Critical initialization error:', err);
+      setInitializationError(err?.message || 'Failed to initialize session. Please retry.');
+    } finally {
+      // Small smoothing delay to prevent flash
+      setTimeout(() => {
+        setIsInitializing(false);
+      }, 150);
+    }
+  };
+
+  useEffect(() => {
+    initAppSession();
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -1126,6 +1223,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         activeWorkspaceRole,
         workspaceRoles,
         isLoading,
+        isInitializing,
+        initializationError,
+        retryInitialization: initAppSession,
         mustChangePassword: Boolean(user?.must_change_password) && user?.role !== 'student',
         login,
         logout,

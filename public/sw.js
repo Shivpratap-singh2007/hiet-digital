@@ -3,14 +3,16 @@
 // Himachal Institute of Engineering & Technology, Shahpur (H.P.)
 // =============================================================================
 
-const CACHE_NAME = 'hiet-campus-pwa-v3';
+const CACHE_NAME = 'hiet-campus-pwa-v4';
 const PRECACHE_ASSETS = [
   '/',
+  '/?source=pwa',
   '/index.html',
   '/manifest.json',
   '/favicon.svg',
   '/images/hiet_crest.png',
-  '/images/hiet_logo.png'
+  '/images/hiet_logo.png',
+  '/images/hiet_maskable.svg'
 ];
 
 // 1. Install Event: Pre-cache essential app shell assets
@@ -42,7 +44,7 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// 3. Fetch Event: Network-First for Navigation, Cache-First for static assets
+// 3. Fetch Event: Network-First with Fast Timeout for Navigation, Cache-First for static assets
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   const url = new URL(req.url);
@@ -57,22 +59,40 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Navigation requests (HTML pages): Network-First with Cache Fallback
+  // Navigation requests (HTML pages): Fast Network-First (2.5s timeout) with instant App Shell Cache Fallback
   if (req.mode === 'navigate') {
     event.respondWith(
-      fetch(req)
-        .then((networkResp) => {
-          if (networkResp && networkResp.status === 200) {
-            const copy = networkResp.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
+      (async () => {
+        try {
+          // Race network fetch against a strict 2.5-second timeout to prevent splash-screen freezing
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Navigation timeout')), 2500)
+          );
+
+          const networkPromise = fetch(req).then((networkResp) => {
+            if (networkResp && networkResp.status === 200) {
+              const copy = networkResp.clone();
+              caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
+            }
+            return networkResp;
+          });
+
+          return await Promise.race([networkPromise, timeoutPromise]);
+        } catch (err) {
+          // If network is offline or hangs > 2.5s, immediately serve cached app shell
+          const cachedResp = 
+            (await caches.match(req)) || 
+            (await caches.match('/index.html')) || 
+            (await caches.match('/?source=pwa')) || 
+            (await caches.match('/'));
+            
+          if (cachedResp) {
+            return cachedResp;
           }
-          return networkResp;
-        })
-        .catch(async () => {
-          const cachedResp = await caches.match(req);
-          if (cachedResp) return cachedResp;
-          return caches.match('/index.html');
-        })
+          // Ultimate fallback: wait for direct fetch
+          return fetch(req);
+        }
+      })()
     );
     return;
   }
