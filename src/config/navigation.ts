@@ -44,6 +44,7 @@ import {
   HeartPulse,
   HeartHandshake,
   Mic,
+  User,
   LucideIcon
 } from 'lucide-react';
 import { UserRole } from '../types';
@@ -66,6 +67,7 @@ export interface NavItemConfig {
 
 export const STUDENT_NAV: NavItemConfig[] = [
   { id: 'dashboard', label: 'Overview', href: '/app/dashboard', icon: LayoutDashboard, roles: ['student'], enabled: true },
+  { id: 'profile', label: 'My Profile', href: '/app/profile', icon: User, roles: ['student'], enabled: true },
   { id: 'id_card', label: 'Digital ID Card', href: '/app/id-card', icon: CreditCard, roles: ['student'], enabled: true },
   { id: 'attendance', label: 'Attendance', href: '/app/attendance', icon: CalendarCheck, roles: ['student'], enabled: true },
   { id: 'timetable', label: 'Timetable', href: '/app/timetable', icon: CalendarDays, roles: ['student'], enabled: true },
@@ -98,6 +100,7 @@ export const STUDENT_NAV: NavItemConfig[] = [
 
 const FACULTY_NAV: NavItemConfig[] = [
   { id: 'dashboard', label: 'Overview', href: '/app/dashboard', icon: LayoutDashboard, roles: ['faculty', 'teacher'], enabled: true },
+  { id: 'profile', label: 'My Profile', href: '/app/profile', icon: User, roles: ['faculty', 'teacher'], enabled: true },
   { id: 'timetable', label: 'My Timetable', href: '/app/timetable', icon: CalendarDays, roles: ['faculty', 'teacher'], enabled: true },
   { id: 'attendance', label: 'Attendance', href: '/app/attendance', icon: CalendarCheck, roles: ['faculty', 'teacher'], enabled: true },
   { id: 'assignments', label: 'Assignments', href: '/app/assignments', icon: FileSpreadsheet, roles: ['faculty', 'teacher'], enabled: true },
@@ -116,6 +119,7 @@ const FACULTY_NAV: NavItemConfig[] = [
 
 const HOD_NAV: NavItemConfig[] = [
   { id: 'dashboard', label: 'Overview', href: '/app/dashboard', icon: LayoutDashboard, roles: ['hod'], enabled: true },
+  { id: 'profile', label: 'My Profile', href: '/app/profile', icon: User, roles: ['hod'], enabled: true },
   { id: 'students_mgmt', label: 'Students', href: '/app/students', icon: Users, roles: ['hod'], enabled: true },
   { id: 'teachers_mgmt', label: 'Faculty', href: '/app/faculty', icon: Briefcase, roles: ['hod'], enabled: true },
   { id: 'academic_catalog', label: 'Subject Allocation', href: '/app/academic-catalog', icon: BookOpen, roles: ['hod'], enabled: true },
@@ -138,6 +142,7 @@ const HOD_NAV: NavItemConfig[] = [
 
 const PRINCIPAL_NAV: NavItemConfig[] = [
   { id: 'dashboard', label: 'Overview', href: '/app/dashboard', icon: LayoutDashboard, roles: ['principal', 'admin'], enabled: true },
+  { id: 'profile', label: 'My Profile', href: '/app/profile', icon: User, roles: ['principal', 'admin'], enabled: true },
   { id: 'students_mgmt', label: 'Students', href: '/app/students', icon: Users, roles: ['principal', 'admin'], enabled: true },
   { id: 'teachers_mgmt', label: 'Faculty', href: '/app/faculty', icon: Briefcase, roles: ['principal', 'admin'], enabled: true },
   { id: 'department', label: 'Departments', href: '/app/departments', icon: Building, roles: ['principal', 'admin'], enabled: true },
@@ -166,6 +171,7 @@ const PRINCIPAL_NAV: NavItemConfig[] = [
 
 const SECURITY_NAV: NavItemConfig[] = [
   { id: 'dashboard', label: 'Overview', href: '/app/dashboard', icon: LayoutDashboard, roles: ['security', 'security_guard'], enabled: true },
+  { id: 'profile', label: 'My Profile', href: '/app/profile', icon: User, roles: ['security', 'security_guard'], enabled: true },
   { id: 'gate_scanner', label: 'QR Scanner', href: '/app/scan', icon: Scan, roles: ['security', 'security_guard'], enabled: true },
   { id: 'gate_pass', label: 'Gate Passes', href: '/app/gate-pass', icon: QrCode, roles: ['security', 'security_guard'], enabled: true },
   { id: 'hostel_outpass', label: 'Hostel Outpasses', href: '/app/hostel-outpass', icon: ShieldCheck, roles: ['security', 'security_guard'], enabled: true },

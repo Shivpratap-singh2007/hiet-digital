@@ -58,6 +58,7 @@ import { HostelOutpassView } from '../components/student/HostelOutpassView';
 import { SyllabusProgressTrackerView } from '../components/student/SyllabusProgressTrackerView';
 import { SmartCampusOperationsView } from '../components/operations/SmartCampusOperationsView';
 import { PageHeader } from '../components/common/PageHeader';
+import { CampusHero } from '../components/common/CampusHero';
 import { StatCard } from '../components/common/StatCard';
 import { AttendanceApprovalsView } from '../components/attendance/AttendanceApprovalsView';
 
@@ -1177,566 +1178,152 @@ export const HodDashboard: React.FC<Props> = ({ currentTab = 'dashboard', onNavi
   }
 
   // ==============================================================
-  // Default Overview / Section 7 HOD Leadership Suite
+  // Default Overview / Minimal Institutional HOD Home
   // ==============================================================
   return (
-    <div className="space-y-6 animate-fade-in font-sans w-full max-w-full">
-      {/* 1. Page Header with Institutional Breadcrumbs */}
-      <PageHeader
-        breadcrumbs={[
-          { label: 'Department Directorate' },
-          { label: 'HOD Dashboard', active: true }
+    <div className="space-y-6 animate-fade-in font-sans w-full max-w-full max-w-5xl mx-auto px-1 sm:px-2 pb-8">
+      {/* 1. Official HIET Campus Hero & HOD Personalized Welcome */}
+      <CampusHero
+        userName={user?.name || 'Head of Department'}
+        roleLabel="Head of Department (HOD)"
+        subtitle="Lead departmental academics, faculty teaching allocations and student progress."
+        departmentOrBranch={`Department of ${dept} Engineering`}
+        idNumber={`HOD ID: ${user?.teacherMaster?.faculty_id || 'HOD-01'}`}
+        summaryItems={[
+          {
+            label: 'Enrolled Students',
+            value: `${deptStudents.length} Students`,
+            subtext: `Semesters 1-8 (${dept})`,
+            icon: Users,
+            onClick: () => onNavigateTab && onNavigateTab('students_mgmt')
+          },
+          {
+            label: 'Department Faculty',
+            value: `${deptTeachers.length} Professors`,
+            subtext: 'Teaching roster & allocations',
+            icon: Briefcase,
+            onClick: () => onNavigateTab && onNavigateTab('teachers_mgmt')
+          },
+          {
+            label: 'Average Attendance',
+            value: `${deptAvgAttendanceRate}%`,
+            subtext: lowAttendanceStudents.length > 0 
+              ? `${lowAttendanceStudents.length} Defaulters (<75%)`
+              : 'All cohorts compliant',
+            icon: CalendarCheck,
+            variant: lowAttendanceStudents.length > 0 ? 'warning' : 'success',
+            onClick: () => onNavigateTab && onNavigateTab('attendance')
+          },
+          {
+            label: 'Curriculum Subjects',
+            value: `${deptSubjects.length} Courses`,
+            subtext: 'HPTU syllabus active',
+            icon: BookOpen,
+            onClick: () => onNavigateTab && onNavigateTab('academic_catalog')
+          }
         ]}
-        title="HOD Dashboard"
-        description={`Departmental Administration & Academic Supervision • Department of ${dept} Engineering`}
-        badge={`Dept Code: ${dept}`}
-        actions={
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => onNavigateTab && onNavigateTab('leaves')}
-              className="px-3.5 py-2 rounded-xl bg-white border border-slate-300 hover:border-[#0f2942] text-xs font-bold text-[#0f2942] transition flex items-center gap-1.5 shadow-2xs"
-            >
-              <Clock className="w-4 h-4" />
-              <span>Leave Approvals ({pendingLeaves.length})</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => onNavigateTab && onNavigateTab('reports')}
-              className="px-4 py-2 bg-[#0f2942] hover:bg-[#0a1c2e] text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-xs"
-            >
-              <FileSpreadsheet className="w-4 h-4" />
-              <span>Department Reports</span>
-            </button>
-          </div>
-        }
       />
 
-      {/* 2. TOP 4 CARDS (Section 7: Department Students, Faculty, Subjects, Average Attendance) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          label="Department Students"
-          value={deptStudents.length}
-          subtext={`Enrolled across semesters in ${dept}`}
-          icon={Users}
-          badge="Enrolled"
-          badgeColor="blue"
-          onClick={() => onNavigateTab && onNavigateTab('students_mgmt')}
-        />
-
-        <StatCard
-          label="Faculty"
-          value={deptTeachers.length}
-          subtext={`Allocated professors in ${dept}`}
-          icon={Briefcase}
-          badge="Teaching"
-          badgeColor="emerald"
-          onClick={() => onNavigateTab && onNavigateTab('teachers_mgmt')}
-        />
-
-        <StatCard
-          label="Subjects"
-          value={deptSubjects.length}
-          subtext="Curriculum course offerings"
-          icon={BookOpen}
-          badge="Syllabus"
-          badgeColor="slate"
-          onClick={() => onNavigateTab && onNavigateTab('academic_catalog')}
-        />
-
-        <StatCard
-          label="Average Attendance"
-          value={`${deptAvgAttendanceRate}%`}
-          subtext={`${lowAttendanceStudents.length} student attendance alerts`}
-          icon={CalendarCheck}
-          badge={deptAvgAttendanceRate >= 75 ? "Compliant" : "Deficit"}
-          badgeColor={deptAvgAttendanceRate >= 75 ? "emerald" : "rose"}
-          onClick={() => onNavigateTab && onNavigateTab('attendance')}
-        />
-      </div>
-
-      {/* 3. SECTION: DEPARTMENT PERFORMANCE (Attendance, Results, Sessional Marks, Class Test Performance) */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-          <div>
-            <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
-              Department Performance
-            </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Attendance compliance, examination results, sessional evaluation submissions and class test metrics
-            </p>
-          </div>
-          <button
-            onClick={() => onNavigateTab && onNavigateTab('sessional_results')}
-            className="text-xs text-[#0f2942] font-semibold hover:underline"
-          >
-            Sessional Marks Register →
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div 
-            onClick={() => onNavigateTab && onNavigateTab('attendance')}
-            className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-[#0f2942] transition cursor-pointer space-y-2"
-          >
-            <div className="flex items-center justify-between text-xs text-slate-500 font-semibold uppercase">
-              <span>Attendance Rate</span>
-              <CalendarCheck className="w-4 h-4 text-emerald-600" />
-            </div>
-            <div className="text-2xl font-extrabold text-slate-900">{deptAvgAttendanceRate}%</div>
-            <p className="text-[11px] text-slate-500">
-              {deptPresentCount} presents across lectures logged
-            </p>
-          </div>
-
-          <div 
-            onClick={() => onNavigateTab && onNavigateTab('sessional_results')}
-            className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-[#0f2942] transition cursor-pointer space-y-2"
-          >
-            <div className="flex items-center justify-between text-xs text-slate-500 font-semibold uppercase">
-              <span>Results & CGPA</span>
-              <Award className="w-4 h-4 text-[#0f2942]" />
-            </div>
-            <div className="text-2xl font-extrabold text-slate-900">8.38 Avg</div>
-            <p className="text-[11px] text-slate-500">
-              96.4% Department semester pass rate
-            </p>
-          </div>
-
-          <div 
-            onClick={() => onNavigateTab && onNavigateTab('sessional_results')}
-            className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-[#0f2942] transition cursor-pointer space-y-2"
-          >
-            <div className="flex items-center justify-between text-xs text-slate-500 font-semibold uppercase">
-              <span>Sessional Marks</span>
-              <FileText className="w-4 h-4 text-blue-600" />
-            </div>
-            <div className="text-2xl font-extrabold text-slate-900">
-              {deptSessionals.length > 0 ? `${deptSessionals.length} Graded` : 'Verified'}
-            </div>
-            <p className="text-[11px] text-slate-500">
-              Sessional I & II internal records
-            </p>
-          </div>
-
-          <div 
-            onClick={() => onNavigateTab && onNavigateTab('assignments')}
-            className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-[#0f2942] transition cursor-pointer space-y-2"
-          >
-            <div className="flex items-center justify-between text-xs text-slate-500 font-semibold uppercase">
-              <span>Class Test Performance</span>
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-            </div>
-            <div className="text-2xl font-extrabold text-emerald-700">100% Conducted</div>
-            <p className="text-[11px] text-slate-500">
-              Class tests & unit assignments verified
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* 4. SECTION: FACULTY MANAGEMENT (Faculty assigned, Subject allocation, Workload, Today's classes) */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-          <div>
-            <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
-              Faculty Management & Workload Allocation
-            </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Professors allocated to {dept}, assigned subjects, workload distribution, and lecture schedules
-            </p>
-          </div>
-          <button
-            onClick={() => onNavigateTab && onNavigateTab('teachers_mgmt')}
-            className="text-xs text-[#0f2942] font-semibold hover:underline"
-          >
-            Manage Faculty Roster →
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {deptTeachers.map(t => {
-            const assignedCourses = deptSubjects.filter(sub => sub.teacher_id === t.id);
-            return (
-              <div key={t.id} className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-[#0f2942] transition space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="px-2 py-0.5 rounded-md font-mono text-[10px] font-bold bg-blue-50 text-[#0f2942] border border-blue-200">
-                    {t.faculty_id}
-                  </span>
-                  {t.is_hod && (
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[#0f2942] text-white">
-                      HOD
-                    </span>
-                  )}
-                </div>
-                <div>
-                  <h3 className="font-extrabold text-sm text-slate-900">{t.name}</h3>
-                  <p className="text-xs text-slate-500">{t.designation} • {t.department}</p>
-                </div>
-                <div className="text-xs space-y-1 pt-2 border-t border-slate-100">
-                  <div className="flex justify-between text-[11px] text-slate-600">
-                    <span>Teaching Workload:</span>
-                    <span className="font-bold text-slate-900">{assignedCourses.length * 4} Hours/Week</span>
-                  </div>
-                  <div className="flex justify-between text-[11px] text-slate-600">
-                    <span>Contact:</span>
-                    <span className="font-mono text-slate-700">{t.phone}</span>
-                  </div>
-                </div>
-                <div className="pt-2 border-t border-slate-100">
-                  <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">
-                    Allocated Courses ({assignedCourses.length})
-                  </span>
-                  <div className="flex flex-wrap gap-1">
-                    {assignedCourses.map(c => (
-                      <span key={c.id} className="px-1.5 py-0.5 rounded bg-blue-50 text-[#0f2942] text-[10px] font-bold border border-blue-100">
-                        {c.subject_code} (Sem {c.semester})
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* 5. SECTION: STUDENT MANAGEMENT (Students, Low Attendance, Academic Issues, Achievements, Leave Requests) */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-          <div>
-            <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
-              Student Management
-            </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Enrolled students, mandatory 75% attendance compliance, student issues, achievements, and leave review
-            </p>
-          </div>
-          <button
-            onClick={() => onNavigateTab && onNavigateTab('students_mgmt')}
-            className="text-xs text-[#0f2942] font-semibold hover:underline"
-          >
-            View All Students ({deptStudents.length}) →
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
-          <div 
-            onClick={() => onNavigateTab && onNavigateTab('students_mgmt')}
-            className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-[#0f2942] transition cursor-pointer space-y-1"
-          >
-            <div className="flex items-center justify-between text-slate-500 text-xs">
-              <span className="font-bold">Total Students</span>
-              <Users className="w-4 h-4 text-[#0f2942]" />
-            </div>
-            <div className="text-xl font-extrabold text-slate-900">{deptStudents.length}</div>
-            <div className="text-[11px] text-slate-500">Across 8 semesters</div>
-          </div>
-
-          <div 
-            onClick={() => onNavigateTab && onNavigateTab('attendance')}
-            className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-[#0f2942] transition cursor-pointer space-y-1"
-          >
-            <div className="flex items-center justify-between text-slate-500 text-xs">
-              <span className="font-bold">Low Attendance</span>
-              <ShieldAlert className="w-4 h-4 text-rose-600" />
-            </div>
-            <div className="text-xl font-extrabold text-rose-600">{lowAttendanceStudents.length}</div>
-            <div className="text-[11px] text-slate-500">&lt; 75% HPTU Warning</div>
-          </div>
-
-          <div 
-            onClick={() => onNavigateTab && onNavigateTab('complaints')}
-            className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-[#0f2942] transition cursor-pointer space-y-1"
-          >
-            <div className="flex items-center justify-between text-slate-500 text-xs">
-              <span className="font-bold">Academic Issues</span>
-              <AlertCircle className="w-4 h-4 text-amber-600" />
-            </div>
-            <div className="text-xl font-extrabold text-slate-900">{deptComplaints.length}</div>
-            <div className="text-[11px] text-slate-500">Grievances logged</div>
-          </div>
-
-          <div 
-            onClick={() => {
-              if (deptStudents.length > 0) handleOpenStudentAchievements(deptStudents[0]);
-            }}
-            className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-[#0f2942] transition cursor-pointer space-y-1"
-          >
-            <div className="flex items-center justify-between text-slate-500 text-xs">
-              <span className="font-bold">Achievements</span>
-              <Trophy className="w-4 h-4 text-amber-600" />
-            </div>
-            <div className="text-xl font-extrabold text-slate-900">{allDeptAchievements.length}</div>
-            <div className="text-[11px] text-slate-500">Verified honors & awards</div>
-          </div>
-
-          <div 
-            onClick={() => onNavigateTab && onNavigateTab('leaves')}
-            className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-[#0f2942] transition cursor-pointer space-y-1"
-          >
-            <div className="flex items-center justify-between text-slate-500 text-xs">
-              <span className="font-bold">Leave Requests</span>
-              <Clock className="w-4 h-4 text-amber-600" />
-            </div>
-            <div className="text-xl font-extrabold text-slate-900">{pendingLeaves.length}</div>
-            <div className="text-[11px] text-slate-500">
-              {hodPendingCount > 0 ? `${hodPendingCount} awaiting HOD action` : 'Pending review'}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* 6. SECTION: DEPARTMENT OPERATIONS (Timetable, Syllabus, PYQs, Assignments, Notices, Complaints, Doubts) */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
-        <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
-          <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
-            Department Operations
-          </h2>
-          <span className="text-xs text-slate-400">Direct Actions</span>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
-          <button
-            type="button"
-            onClick={() => onNavigateTab && onNavigateTab('timetable')}
-            className="p-3 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-[#0f2942] transition text-center space-y-1.5 group"
-          >
-            <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-[#0f2942] flex items-center justify-center mx-auto">
-              <CalendarDays className="w-4 h-4" />
-            </div>
-            <div className="font-bold text-slate-900 text-xs group-hover:text-[#0f2942] transition-colors truncate">
-              Timetable
-            </div>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => onNavigateTab && onNavigateTab('syllabus')}
-            className="p-3 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-[#0f2942] transition text-center space-y-1.5 group"
-          >
-            <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-[#0f2942] flex items-center justify-center mx-auto">
-              <BookOpen className="w-4 h-4" />
-            </div>
-            <div className="font-bold text-slate-900 text-xs group-hover:text-[#0f2942] transition-colors truncate">
-              Syllabus
-            </div>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => onNavigateTab && onNavigateTab('pyqs')}
-            className="p-3 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-[#0f2942] transition text-center space-y-1.5 group"
-          >
-            <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-[#0f2942] flex items-center justify-center mx-auto">
-              <FileText className="w-4 h-4" />
-            </div>
-            <div className="font-bold text-slate-900 text-xs group-hover:text-[#0f2942] transition-colors truncate">
-              PYQs
-            </div>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => onNavigateTab && onNavigateTab('assignments')}
-            className="p-3 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-[#0f2942] transition text-center space-y-1.5 group"
-          >
-            <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-[#0f2942] flex items-center justify-center mx-auto">
-              <FileSpreadsheet className="w-4 h-4" />
-            </div>
-            <div className="font-bold text-slate-900 text-xs group-hover:text-[#0f2942] transition-colors truncate">
-              Assignments
-            </div>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => onNavigateTab && onNavigateTab('notices')}
-            className="p-3 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-[#0f2942] transition text-center space-y-1.5 group"
-          >
-            <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-[#0f2942] flex items-center justify-center mx-auto">
-              <Bell className="w-4 h-4" />
-            </div>
-            <div className="font-bold text-slate-900 text-xs group-hover:text-[#0f2942] transition-colors truncate">
-              Notices
-            </div>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => onNavigateTab && onNavigateTab('complaints')}
-            className="p-3 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-[#0f2942] transition text-center space-y-1.5 group"
-          >
-            <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-[#0f2942] flex items-center justify-center mx-auto">
-              <AlertCircle className="w-4 h-4" />
-            </div>
-            <div className="font-bold text-slate-900 text-xs group-hover:text-[#0f2942] transition-colors truncate">
-              Complaints
-            </div>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => onNavigateTab && onNavigateTab('doubts')}
-            className="p-3 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-[#0f2942] transition text-center space-y-1.5 group"
-          >
-            <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 text-[#0f2942] flex items-center justify-center mx-auto">
-              <HelpCircle className="w-4 h-4" />
-            </div>
-            <div className="font-bold text-slate-900 text-xs group-hover:text-[#0f2942] transition-colors truncate">
-              Doubts ({deptDoubts.length})
-            </div>
-          </button>
-        </div>
-
-        {/* Notice Broadcast Form */}
-        <div className="p-4 rounded-xl border border-slate-100 bg-slate-50/70 space-y-3 mt-4">
-          <div className="flex items-center justify-between">
-            <h3 className="font-bold text-xs uppercase text-slate-900 tracking-wider">
-              Broadcast Department Directive / Notice
-            </h3>
-            <span className="text-[10px] text-[#0f2942] bg-blue-50 px-2 py-0.5 rounded-full font-bold border border-blue-200">
-              {dept} Faculty & Students
+      {/* 2. Low Attendance Regulatory Oversight Alert */}
+      {lowAttendanceStudents.length > 0 && (
+        <div className="p-3.5 bg-rose-50/90 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-rose-800 dark:text-rose-300 shadow-2xs">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <ShieldAlert className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
+            <span className="truncate">
+              <strong>Attendance Compliance:</strong> {lowAttendanceStudents.length} students in {dept} are currently below the 75% HPTU mandatory threshold.
             </span>
           </div>
-
-          {broadcastSuccess && (
-            <div className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-xs font-bold text-emerald-800 flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-              <span>Department circular broadcasted successfully!</span>
-            </div>
-          )}
-
-          <form onSubmit={handlePublishDeptNotice} className="space-y-3">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="sm:col-span-2">
-                <input
-                  type="text"
-                  value={noticeTitle}
-                  onChange={e => setNoticeTitle(e.target.value)}
-                  placeholder="e.g. Schedule for Major Project Mid-Term Evaluation..."
-                  required
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-[#0f2942]"
-                />
-              </div>
-              <div>
-                <select
-                  value={noticeCategory}
-                  onChange={e => setNoticeCategory(e.target.value as any)}
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white text-slate-700 focus:outline-none"
-                >
-                  <option value="Academic">Academic Notice</option>
-                  <option value="Exam">Exam Directive</option>
-                  <option value="Placement">Placement / Drive</option>
-                  <option value="Emergency">Urgent Advisory</option>
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <textarea
-                rows={2}
-                value={noticeDesc}
-                onChange={e => setNoticeDesc(e.target.value)}
-                placeholder="Enter official instructions regarding lecture schedules, lab viva or evaluation..."
-                required
-                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-[#0f2942]"
-              />
-            </div>
-
-            <div className="flex justify-end">
-              <button
-                type="submit"
-                disabled={isBroadcasting}
-                className="px-4 py-2 rounded-xl bg-[#0f2942] hover:bg-[#0a1c2e] text-white font-bold text-xs transition flex items-center gap-1.5 shadow-2xs"
-              >
-                <Send className="w-3.5 h-3.5" />
-                <span>{isBroadcasting ? 'Publishing...' : 'Dispatch Circular'}</span>
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-
-      {/* 7. SECTION: DEPARTMENT REPORTS (Attendance report, Results report, Faculty report, Student report) */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
-        <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
-          <div>
-            <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
-              Department Reports
-            </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Official academic audits and departmental reports
-            </p>
-          </div>
           <button
-            onClick={() => onNavigateTab && onNavigateTab('reports')}
-            className="text-xs text-[#0f2942] font-semibold hover:underline"
+            type="button"
+            onClick={() => onNavigateTab && onNavigateTab('attendance')}
+            className="font-bold underline hover:text-rose-950 dark:hover:text-rose-200 whitespace-nowrap cursor-pointer shrink-0 self-end sm:self-auto text-xs"
           >
-            All Reports ({dept} Engine) →
+            Review Defaulters Ledger →
           </button>
         </div>
+      )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-          <div
-            onClick={() => onNavigateTab && onNavigateTab('reports')}
-            className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-[#0f2942] transition cursor-pointer space-y-2"
-          >
-            <div className="flex items-center justify-between">
-              <span className="font-bold text-xs text-slate-900">Attendance Report</span>
-              <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
-            </div>
-            <p className="text-[11px] text-slate-500">
-              Department attendance ledger, lecture audits, and defaulter lists
-            </p>
-            <span className="text-[11px] font-bold text-[#0f2942] block">Generate Report →</span>
+      {/* 3. Essential Quick Actions (4 touch-friendly institutional actions) */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
+        <button
+          type="button"
+          onClick={() => onNavigateTab && onNavigateTab('students_mgmt')}
+          className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-[#D7DEE8] dark:border-slate-800 hover:border-[#123D70] dark:hover:border-slate-700 shadow-2xs hover:shadow-xs transition text-left flex items-center gap-3 cursor-pointer group"
+        >
+          <div className="w-9 h-9 rounded-lg bg-blue-50 dark:bg-blue-950/50 text-[#123D70] dark:text-sky-400 flex items-center justify-center shrink-0 border border-blue-100 dark:border-blue-900/40 group-hover:scale-105 transition-transform">
+            <Users className="w-4 h-4" />
           </div>
+          <div className="min-w-0">
+            <div className="text-xs font-bold text-[#172B4D] dark:text-white truncate">Students Roster</div>
+            <div className="text-[10px] text-[#64748B] dark:text-slate-400 truncate">Enrolled directory</div>
+          </div>
+        </button>
 
-          <div
-            onClick={() => onNavigateTab && onNavigateTab('reports')}
-            className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-[#0f2942] transition cursor-pointer space-y-2"
-          >
-            <div className="flex items-center justify-between">
-              <span className="font-bold text-xs text-slate-900">Results Report</span>
-              <Award className="w-4 h-4 text-[#0f2942]" />
-            </div>
-            <p className="text-[11px] text-slate-500">
-              Sessional marks compilation and semester CGPA statistics
-            </p>
-            <span className="text-[11px] font-bold text-[#0f2942] block">Generate Report →</span>
+        <button
+          type="button"
+          onClick={() => onNavigateTab && onNavigateTab('teachers_mgmt')}
+          className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-[#D7DEE8] dark:border-slate-800 hover:border-[#123D70] dark:hover:border-slate-700 shadow-2xs hover:shadow-xs transition text-left flex items-center gap-3 cursor-pointer group"
+        >
+          <div className="w-9 h-9 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-100 dark:border-emerald-900/40 group-hover:scale-105 transition-transform">
+            <Briefcase className="w-4 h-4" />
           </div>
+          <div className="min-w-0">
+            <div className="text-xs font-bold text-[#172B4D] dark:text-white truncate">Faculty Roster</div>
+            <div className="text-[10px] text-[#64748B] dark:text-slate-400 truncate">Workload & classes</div>
+          </div>
+        </button>
 
-          <div
-            onClick={() => onNavigateTab && onNavigateTab('reports')}
-            className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-[#0f2942] transition cursor-pointer space-y-2"
-          >
-            <div className="flex items-center justify-between">
-              <span className="font-bold text-xs text-slate-900">Faculty Report</span>
-              <Briefcase className="w-4 h-4 text-blue-600" />
-            </div>
-            <p className="text-[11px] text-slate-500">
-              Teaching workload, courses handled, and faculty appraisals
-            </p>
-            <span className="text-[11px] font-bold text-[#0f2942] block">Generate Report →</span>
+        <button
+          type="button"
+          onClick={() => onNavigateTab && onNavigateTab('leaves')}
+          className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-[#D7DEE8] dark:border-slate-800 hover:border-[#123D70] dark:hover:border-slate-700 shadow-2xs hover:shadow-xs transition text-left flex items-center gap-3 cursor-pointer group"
+        >
+          <div className="w-9 h-9 rounded-lg bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-100 dark:border-amber-900/40 group-hover:scale-105 transition-transform">
+            <Clock className="w-4 h-4" />
           </div>
+          <div className="min-w-0">
+            <div className="text-xs font-bold text-[#172B4D] dark:text-white truncate">Leave Approvals</div>
+            <div className="text-[10px] text-[#64748B] dark:text-slate-400 truncate">
+              {pendingLeaves.length > 0 ? `${pendingLeaves.length} pending` : 'No pending leaves'}
+            </div>
+          </div>
+        </button>
 
-          <div
-            onClick={() => onNavigateTab && onNavigateTab('reports')}
-            className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 hover:border-[#0f2942] transition cursor-pointer space-y-2"
-          >
-            <div className="flex items-center justify-between">
-              <span className="font-bold text-xs text-slate-900">Student Report</span>
-              <Users className="w-4 h-4 text-purple-600" />
-            </div>
-            <p className="text-[11px] text-slate-500">
-              Student roster, enrollment records, and academic status
-            </p>
-            <span className="text-[11px] font-bold text-[#0f2942] block">Generate Report →</span>
+        <button
+          type="button"
+          onClick={() => onNavigateTab && onNavigateTab('reports')}
+          className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-[#D7DEE8] dark:border-slate-800 hover:border-[#123D70] dark:hover:border-slate-700 shadow-2xs hover:shadow-xs transition text-left flex items-center gap-3 cursor-pointer group"
+        >
+          <div className="w-9 h-9 rounded-lg bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0 border border-purple-100 dark:border-purple-900/40 group-hover:scale-105 transition-transform">
+            <FileSpreadsheet className="w-4 h-4" />
           </div>
+          <div className="min-w-0">
+            <div className="text-xs font-bold text-[#172B4D] dark:text-white truncate">Dept Reports</div>
+            <div className="text-[10px] text-[#64748B] dark:text-slate-400 truncate">Academic audits</div>
+          </div>
+        </button>
+      </div>
+
+      {/* 4. Side Drawer Guidance Notice */}
+      <div className="p-4 rounded-xl bg-slate-50/80 dark:bg-slate-900/60 border border-[#D7DEE8] dark:border-slate-800 flex items-center justify-between gap-3 text-xs">
+        <div className="flex items-center gap-3 text-[#172B4D] dark:text-slate-300">
+          <div className="w-8 h-8 rounded-lg bg-[#123D70]/10 dark:bg-sky-400/10 flex items-center justify-center text-[#123D70] dark:text-sky-400 shrink-0 font-bold">
+            ☰
+          </div>
+          <p className="text-[11px] sm:text-xs">
+            Access <strong>Syllabus Progress, PYQs, Sessional Marks, Class Tests, Student Doubts, Smart Board Tracker,</strong> and <strong>Circulars</strong> from the <strong>Side Navigation Drawer</strong>.
+          </p>
         </div>
       </div>
 
-      {/* Render modal if student achievement is active */}
+      {/* 5. Institutional Footer */}
+      <div className="pt-4 text-center flex items-center justify-center gap-3 text-[11px] text-[#64748B] dark:text-slate-500 font-medium">
+        <div className="h-px bg-[#D7DEE8] dark:bg-slate-800 flex-1 max-w-[80px]" />
+        <span>HIET Group of Institutions • Department Directorate</span>
+        <div className="h-px bg-[#D7DEE8] dark:bg-slate-800 flex-1 max-w-[80px]" />
+      </div>
+
+      {/* Modal if student achievement is active */}
       {renderAchievementModal()}
     </div>
   );

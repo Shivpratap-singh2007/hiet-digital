@@ -36,6 +36,8 @@ import {
 import { SplashScreen } from './components/common/SplashScreen';
 import { InstitutionalErrorBoundary } from './components/common/InstitutionalErrorBoundary';
 import { AlertCircle, RefreshCw, LogIn } from 'lucide-react';
+import { ThemeProvider } from './context/ThemeContext';
+import { AppearanceModal } from './components/common/AppearanceModal';
 
 const MainLayout: React.FC = () => {
   const { 
@@ -72,6 +74,7 @@ const MainLayout: React.FC = () => {
   const [showStudentRegModal, setShowStudentRegModal] = useState(false);
   const [showTeacherRegModal, setShowTeacherRegModal] = useState(false);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
+  const [showAppearanceModal, setShowAppearanceModal] = useState(false);
 
   // Global Command Palette Shortcut (Ctrl+K or Cmd+K)
   React.useEffect(() => {
@@ -319,6 +322,8 @@ const MainLayout: React.FC = () => {
         onToggleSidebar={() => setIsMobileSidebarOpen(prev => !prev)}
         onOpenNotifications={() => setShowNotificationsModal(true)}
         onOpenProfile={() => handleTabChange('profile')}
+        onOpenSettings={() => handleTabChange('settings')}
+        onOpenAppearance={() => setShowAppearanceModal(true)}
         onOpenLogin={handleOpenLogin}
         onOpenAiAssistant={() => setShowAiAssistantModal(true)}
         onOpenSearch={() => setShowCommandPalette(true)}
@@ -327,6 +332,11 @@ const MainLayout: React.FC = () => {
 
       {/* Global Modals */}
       {mustChangePassword && role !== 'student' && <ChangePasswordModal />}
+
+      <AppearanceModal
+        isOpen={showAppearanceModal}
+        onClose={() => setShowAppearanceModal(false)}
+      />
 
       <CommandPaletteModal
         isOpen={showCommandPalette}
@@ -374,6 +384,7 @@ const MainLayout: React.FC = () => {
           onSelectTab={handleTabChange}
           isOpenMobile={isMobileSidebarOpen}
           onCloseMobile={() => setIsMobileSidebarOpen(false)}
+          onOpenAppearance={() => setShowAppearanceModal(true)}
         />
 
         <main className="flex-1 lg:pl-64 w-full min-w-0 p-3 sm:p-6 lg:p-8 max-w-7xl mx-auto pb-28 sm:pb-32 lg:pb-12">
@@ -393,14 +404,16 @@ const MainLayout: React.FC = () => {
 export default function App() {
   return (
     <InstitutionalErrorBoundary>
-      <AuthProvider>
-        <ToastProvider>
-          <PwaProvider>
-            <MainLayout />
-            <PwaInstallBanner />
-          </PwaProvider>
-        </ToastProvider>
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <ToastProvider>
+            <PwaProvider>
+              <MainLayout />
+              <PwaInstallBanner />
+            </PwaProvider>
+          </ToastProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </InstitutionalErrorBoundary>
   );
 }

@@ -49,6 +49,7 @@ import { NavTab } from '../components/common/Sidebar';
 import { TimetableSlot, LeaveRequest, AttendanceRecord } from '../types';
 import { PageHeader } from '../components/common/PageHeader';
 import { StatCard } from '../components/common/StatCard';
+import { CampusHero } from '../components/common/CampusHero';
 
 // Module Subviews
 import { AttendanceView } from '../components/student/AttendanceView';
@@ -312,378 +313,201 @@ export const StudentDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
   if (currentTab === 'parent_portal' as any) return <ParentPortalView onNavigate={onNavigateTab} />;
   if (currentTab === 'emergency_sos' as any) return <EmergencyHealthView onNavigate={onNavigateTab} />;
   if (currentTab === 'ai_campus_assistant' as any) return <VoiceAICampusAssistantView onNavigate={onNavigateTab} />;
+  if ((currentTab as string) === 'campus_presence') {
+    onNavigateTab('dashboard');
+    return null;
+  }
 
   // Default Overview / Student Dashboard Home
   return (
-    <div className="space-y-6 font-sans animate-fade-in max-w-5xl mx-auto px-1 sm:px-2">
-      {/* 1. Welcome and Student Information */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <span className="text-slate-500 font-medium text-xs sm:text-sm">
-            Welcome,
-          </span>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#0f2942] dark:text-white mt-0.5">
-            {studentName}
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Roll No: <span className="font-mono font-semibold text-slate-700 dark:text-slate-300">{displayRollNo}</span>
-            <span className="mx-2 text-slate-300">•</span>
-            Department: <span className="font-semibold text-slate-700 dark:text-slate-300">{department}</span>
-          </p>
-        </div>
+    <div className="space-y-5 font-sans animate-fade-in max-w-5xl mx-auto px-1 sm:px-2 pb-8">
+      {/* 1. Official HIET Campus Hero & Personalized Greeting */}
+      <CampusHero
+        userName={studentName}
+        roleLabel="Student"
+        subtitle="Your campus, academics and college updates — all in one place."
+        departmentOrBranch={`${department} • Sem ${studentSemester || 1} (${studentSection || 'A'})`}
+        idNumber={`Roll: ${displayRollNo}`}
+        summaryItems={[
+          {
+            label: 'Aggregate Attendance',
+            value: !studentId ? '0%' : myAttendance.length === 0 ? '0%' : `${attendanceStats.percentage}%`,
+            subtext: myAttendance.length > 0 
+              ? `${myAttendance.filter(a => a.status === 'Present').length}/${myAttendance.length} Lectures logged` 
+              : 'Records updating',
+            icon: CalendarCheck,
+            variant: attendanceStats.percentage < 75 && myAttendance.length > 0 ? 'warning' : 'success',
+            onClick: () => onNavigateTab('attendance')
+          },
+          {
+            label: 'Academic Performance',
+            value: calculatedCgpa && calculatedSgpa 
+              ? `${calculatedCgpa} CGPA` 
+              : calculatedCgpa 
+              ? `${calculatedCgpa} CGPA` 
+              : calculatedSgpa 
+              ? `${calculatedSgpa} SGPA` 
+              : 'Evaluation Period',
+            subtext: calculatedCgpa ? `SGPA: ${calculatedSgpa || '--'}` : 'Semester Grade Index',
+            icon: GraduationCap,
+            onClick: () => onNavigateTab('cgpa')
+          },
+          {
+            label: 'Class Schedule',
+            value: `Sem ${studentSemester || 1} - Sec ${studentSection || 'A'}`,
+            subtext: 'Timetable & Active Classes',
+            icon: Clock,
+            onClick: () => onNavigateTab('timetable' as any)
+          },
+          {
+            label: 'Coursework / Tasks',
+            value: `${assignmentsCount} Active`,
+            subtext: assignmentsCount === 0 ? 'All submissions cleared' : 'Coursework pending',
+            icon: BookOpen,
+            onClick: () => onNavigateTab('assignments')
+          }
+        ]}
+      />
 
-        {/* Compact Hostel / Residential Information Card */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl px-4 py-2.5 flex items-center gap-3 shadow-2xs shrink-0 self-start sm:self-auto">
-          <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 shrink-0 border border-slate-200/60 dark:border-slate-700">
-            <Building2 className="w-4 h-4" />
-          </div>
-          <div className="text-left">
-            <div className="text-xs font-bold text-slate-800 dark:text-slate-200 leading-tight">
-              {isHosteler 
-                ? `Hosteler • ${student?.hostel_name || 'Boys Hostel Block B'}` 
-                : 'Day Scholar • HIET Campus'}
-            </div>
-            <div className="text-[11px] text-slate-400 dark:text-slate-500 font-mono mt-0.5">
-              {isHosteler 
-                ? `(Rm ${student?.room_no || 'R-002'})` 
-                : '(Local Transport)'}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Statutory Attendance Warning Alert (Preserved 75% rule) */}
+      {/* 2. Statutory Attendance Warning (Preserved HPTU 75% Regulation) */}
       {attendanceStats.percentage < 75 && myAttendance.length > 0 && (
-        <div className="p-3.5 bg-rose-50/90 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-rose-800 dark:text-rose-300">
+        <div className="p-3.5 bg-rose-50/90 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-rose-800 dark:text-rose-300">
           <div className="flex items-center gap-2.5 min-w-0">
             <ShieldAlert className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
             <span className="truncate">
-              <strong>Statutory Requirement:</strong> Aggregate attendance is at {attendanceStats.percentage}%, below the HPTU mandatory 75% examination threshold.
+              <strong>Statutory Requirement:</strong> Aggregate attendance is at {attendanceStats.percentage}%, below the HPTU mandatory 75% examination eligibility threshold.
             </span>
           </div>
           <button
             type="button"
             onClick={() => onNavigateTab('attendance')}
-            className="font-bold underline hover:text-rose-950 dark:hover:text-rose-200 whitespace-nowrap cursor-pointer shrink-0 self-end sm:self-auto"
+            className="font-bold underline hover:text-rose-950 dark:hover:text-rose-200 whitespace-nowrap cursor-pointer shrink-0 self-end sm:self-auto text-xs"
           >
-            Review Attendance →
+            Review Attendance Details →
           </button>
         </div>
       )}
 
-      {/* 2. Responsive Quick Action Cards (5 Cards) */}
-      <div className="grid grid-cols-5 gap-2 sm:gap-3.5 overflow-x-auto scrollbar-none pb-1">
-        {[
-          {
-            id: 'scan_attendance',
-            label: 'Scan Attendance',
-            icon: QrCode,
-            iconClass: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/60',
-            arrowHover: 'group-hover:text-emerald-600',
-            onClick: () => onNavigateTab('attendance')
-          },
-          {
-            id: 'gate_pass',
-            label: 'Gate Pass',
-            icon: ShieldCheck,
-            iconClass: 'bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-sky-400 border-blue-100 dark:border-blue-900/60',
-            arrowHover: 'group-hover:text-blue-600',
-            onClick: () => onNavigateTab('gate_pass' as any)
-          },
-          {
-            id: 'hostel_outpass',
-            label: 'Hostel Outpass',
-            icon: Home,
-            iconClass: 'bg-purple-50 text-purple-600 dark:bg-purple-950/50 dark:text-purple-400 border-purple-100 dark:border-purple-900/60',
-            arrowHover: 'group-hover:text-purple-600',
-            onClick: () => onNavigateTab('hostel_outpass' as any)
-          },
-          {
-            id: 'apply_leave',
-            label: 'Apply Leave',
-            icon: FileText,
-            iconClass: 'bg-amber-50 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400 border-amber-100 dark:border-amber-900/60',
-            arrowHover: 'group-hover:text-amber-600',
-            onClick: () => onNavigateTab('leaves')
-          },
-          {
-            id: 'voice_ai',
-            label: 'Voice AI',
-            icon: Mic,
-            iconClass: 'bg-rose-50 text-rose-600 dark:bg-rose-950/50 dark:text-rose-400 border-rose-100 dark:border-rose-900/60',
-            arrowHover: 'group-hover:text-rose-600',
-            onClick: () => onNavigateTab('ai_campus_assistant' as any)
-          }
-        ].map(card => {
-          const Icon = card.icon;
-          return (
-            <button
-              key={card.id}
-              type="button"
-              onClick={card.onClick}
-              className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-2.5 sm:p-4 shadow-2xs hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xs transition-all flex flex-col items-center justify-between min-w-[64px] sm:min-w-[95px] text-center group cursor-pointer active:scale-95"
-            >
-              <div className={`w-9 h-9 sm:w-11 sm:h-11 rounded-2xl ${card.iconClass} border flex items-center justify-center shrink-0 mb-2 transition-transform group-hover:scale-105`}>
-                <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
-              </div>
-              <span className="font-bold text-[10px] sm:text-xs text-slate-800 dark:text-slate-200 block leading-tight">
-                {card.label}
-              </span>
-              <span className={`text-slate-400 text-xs mt-1.5 sm:mt-2 transition-all group-hover:translate-x-0.5 ${card.arrowHover}`}>
-                →
-              </span>
-            </button>
-          );
-        })}
+      {/* 3. Essential Quick Actions (Minimal row of institutional services) */}
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 sm:gap-3">
+        <button
+          id="scan_attendance"
+          type="button"
+          onClick={() => onNavigateTab('attendance')}
+          className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-[#D7DEE8] dark:border-slate-800 hover:border-[#123D70] dark:hover:border-slate-700 shadow-2xs hover:shadow-xs transition text-left flex items-center gap-2.5 cursor-pointer group"
+        >
+          <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950/50 text-[#123D70] dark:text-sky-400 flex items-center justify-center shrink-0 border border-blue-100 dark:border-blue-900/40 group-hover:scale-105 transition-transform">
+            <QrCode className="w-4 h-4" />
+          </div>
+          <div className="min-w-0">
+            <div className="text-xs font-bold text-[#172B4D] dark:text-white truncate">Attendance</div>
+            <div className="text-[10px] text-[#64748B] dark:text-slate-400 truncate">Scan Lecture</div>
+          </div>
+        </button>
+
+        <button
+          id="gate_pass"
+          type="button"
+          onClick={() => onNavigateTab('gate_pass' as any)}
+          className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-[#D7DEE8] dark:border-slate-800 hover:border-[#123D70] dark:hover:border-slate-700 shadow-2xs hover:shadow-xs transition text-left flex items-center gap-2.5 cursor-pointer group"
+        >
+          <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-100 dark:border-emerald-900/40 group-hover:scale-105 transition-transform">
+            <ShieldCheck className="w-4 h-4" />
+          </div>
+          <div className="min-w-0">
+            <div className="text-xs font-bold text-[#172B4D] dark:text-white truncate">Gate Pass</div>
+            <div className="text-[10px] text-[#64748B] dark:text-slate-400 truncate">QR Movement</div>
+          </div>
+        </button>
+
+        <button
+          id="hostel_outpass"
+          type="button"
+          onClick={() => onNavigateTab('hostel_outpass' as any)}
+          className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-[#D7DEE8] dark:border-slate-800 hover:border-[#123D70] dark:hover:border-slate-700 shadow-2xs hover:shadow-xs transition text-left flex items-center gap-2.5 cursor-pointer group"
+        >
+          <div className="w-8 h-8 rounded-lg bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0 border border-purple-100 dark:border-purple-900/40 group-hover:scale-105 transition-transform">
+            <Home className="w-4 h-4" />
+          </div>
+          <div className="min-w-0">
+            <div className="text-xs font-bold text-[#172B4D] dark:text-white truncate">Hostel Pass</div>
+            <div className="text-[10px] text-[#64748B] dark:text-slate-400 truncate">Night Outpass</div>
+          </div>
+        </button>
+
+        <button
+          id="apply_leave"
+          type="button"
+          onClick={() => onNavigateTab('leaves')}
+          className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-[#D7DEE8] dark:border-slate-800 hover:border-[#123D70] dark:hover:border-slate-700 shadow-2xs hover:shadow-xs transition text-left flex items-center gap-2.5 cursor-pointer group"
+        >
+          <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-100 dark:border-amber-900/40 group-hover:scale-105 transition-transform">
+            <FileText className="w-4 h-4" />
+          </div>
+          <div className="min-w-0">
+            <div className="text-xs font-bold text-[#172B4D] dark:text-white truncate">Leave</div>
+            <div className="text-[10px] text-[#64748B] dark:text-slate-400 truncate">Apply Leave</div>
+          </div>
+        </button>
+
+        <button
+          id="voice_ai"
+          type="button"
+          onClick={() => onNavigateTab('ai_campus_assistant' as any)}
+          className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-[#D7DEE8] dark:border-slate-800 hover:border-[#123D70] dark:hover:border-slate-700 shadow-2xs hover:shadow-xs transition text-left flex items-center gap-2.5 cursor-pointer group col-span-2 sm:col-span-1"
+        >
+          <div className="w-8 h-8 rounded-lg bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 border border-rose-100 dark:border-rose-900/40 group-hover:scale-105 transition-transform">
+            <Mic className="w-4 h-4" />
+          </div>
+          <div className="min-w-0">
+            <div className="text-xs font-bold text-[#172B4D] dark:text-white truncate">Voice AI</div>
+            <div className="text-[10px] text-[#64748B] dark:text-slate-400 truncate">Campus Assist</div>
+          </div>
+        </button>
       </div>
 
-      {/* 3. Dashboard Statistics (2x2 Grid) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {/* Attendance */}
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-5 sm:p-6 shadow-2xs flex flex-col justify-between space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-sky-400 flex items-center justify-center border border-blue-100 dark:border-blue-900/40">
-                <CalendarDays className="w-4 h-4" />
-              </div>
-              <span className="font-bold text-sm text-slate-900 dark:text-white">Attendance</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => onNavigateTab('attendance')}
-              className="text-xs text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-sky-400 font-semibold flex items-center gap-1 transition cursor-pointer"
-            >
-              <span>View Details</span>
-              <span>→</span>
-            </button>
+      {/* 4. Side Navigation Guidance Banner */}
+      <div className="p-4 rounded-xl bg-slate-50/80 dark:bg-slate-900/60 border border-[#D7DEE8] dark:border-slate-800 flex items-center justify-between gap-3 text-xs">
+        <div className="flex items-center gap-3 text-[#172B4D] dark:text-slate-300">
+          <div className="w-8 h-8 rounded-lg bg-[#123D70]/10 dark:bg-sky-400/10 flex items-center justify-center text-[#123D70] dark:text-sky-400 shrink-0 font-bold">
+            ☰
           </div>
-
-          <div>
-            <div className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-              {!studentId ? '0%' : myAttendance.length === 0 ? '0%' : `${attendanceStats.percentage}%`}
-            </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
-              {!studentId
-                ? 'Student record not mapped'
-                : myAttendance.length === 0
-                ? 'No attendance records found'
-                : `${myAttendance.filter(a => a.status === 'Present').length} of ${myAttendance.length} lectures logged`}
-            </p>
-
-            {/* Attendance Progress Bar */}
-            <div className="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden mt-3">
-              <div
-                className={`h-full rounded-full transition-all duration-500 ${
-                  attendanceStats.percentage >= 75 ? 'bg-emerald-500' : 'bg-rose-500'
-                }`}
-                style={{ width: `${Math.min(100, Math.max(0, attendanceStats.percentage))}%` }}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* CGPA / SGPA */}
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-5 sm:p-6 shadow-2xs flex flex-col justify-between space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-sky-400 flex items-center justify-center border border-blue-100 dark:border-blue-900/40">
-                <GraduationCap className="w-4 h-4" />
-              </div>
-              <span className="font-bold text-sm text-slate-900 dark:text-white">CGPA / SGPA</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => onNavigateTab('cgpa')}
-              className="text-xs text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-sky-400 font-semibold flex items-center gap-1 transition cursor-pointer"
-            >
-              <span>View Details</span>
-              <span>→</span>
-            </button>
-          </div>
-
-          <div>
-            <div className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-              {calculatedCgpa && calculatedSgpa 
-                ? `${calculatedCgpa} / ${calculatedSgpa}` 
-                : calculatedCgpa 
-                ? `${calculatedCgpa} CGPA` 
-                : calculatedSgpa
-                ? `${calculatedSgpa} SGPA`
-                : '--'}
-            </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
-              {calculatedCgpa ? 'Cumulative & Semester Grade Index' : 'Results not published yet.'}
-            </p>
-          </div>
-        </div>
-
-        {/* Current Semester */}
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-5 sm:p-6 shadow-2xs flex flex-col justify-between space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-sky-400 flex items-center justify-center border border-blue-100 dark:border-blue-900/40">
-                <Layers className="w-4 h-4" />
-              </div>
-              <span className="font-bold text-sm text-slate-900 dark:text-white">Current Semester</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => onNavigateTab('timetable' as any)}
-              className="text-xs text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-sky-400 font-semibold flex items-center gap-1 transition cursor-pointer"
-            >
-              <span>View Details</span>
-              <span>→</span>
-            </button>
-          </div>
-
-          <div>
-            <div className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-              Semester {studentSemester || 1}
-            </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
-              Section {studentSection || 'A'} • {studentBranch || 'CSE'}
-            </p>
-          </div>
-        </div>
-
-        {/* Pending Assignments */}
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-5 sm:p-6 shadow-2xs flex flex-col justify-between space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-sky-400 flex items-center justify-center border border-blue-100 dark:border-blue-900/40">
-                <FileSpreadsheet className="w-4 h-4" />
-              </div>
-              <span className="font-bold text-sm text-slate-900 dark:text-white">Pending Assignments</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => onNavigateTab('assignments')}
-              className="text-xs text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-sky-400 font-semibold flex items-center gap-1 transition cursor-pointer"
-            >
-              <span>View Details</span>
-              <span>→</span>
-            </button>
-          </div>
-
-          <div>
-            <div className="flex items-center gap-3">
-              <span className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-                {assignmentsCount} Active
-              </span>
-              {assignmentsCount === 0 ? (
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  Cleared
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                  Due Soon
-                </span>
-              )}
-            </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
-              Coursework deadlines active
-            </p>
-          </div>
+          <p className="text-[11px] sm:text-xs">
+            Looking for <strong>Syllabus, PYQs, Results, Doubt Box, Fee Receipts,</strong> or <strong>Hostel Outpass</strong>? Access all institutional modules from the <strong>Side Drawer Menu</strong>.
+          </p>
         </div>
       </div>
 
-      {/* 4. Stay Updated (Notices & Announcements - Full Width Card) */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-5 sm:p-6 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-sky-400 flex items-center justify-center shrink-0 border border-blue-100 dark:border-blue-900/40">
-            <Megaphone className="w-6 h-6" />
+      {/* 5. Institutional Announcements Notice */}
+      <div className="p-4 sm:p-5 rounded-xl bg-white dark:bg-slate-900 border border-[#D7DEE8] dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3.5">
+          <div className="w-10 h-10 rounded-xl bg-[#123D70]/10 dark:bg-blue-950/60 text-[#123D70] dark:text-sky-400 flex items-center justify-center shrink-0 border border-blue-100 dark:border-blue-900/40">
+            <Megaphone className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="font-extrabold text-base text-slate-900 dark:text-white leading-tight">
-              Stay Updated
-            </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Check your latest notices, updates and important information from your institute.
+            <h4 className="font-bold text-sm text-[#172B4D] dark:text-white">
+              Official Campus Notices & Bulletins
+            </h4>
+            <p className="text-xs text-[#64748B] dark:text-slate-400 mt-0.5">
+              Stay updated with academic circulars, HPTU notifications, and exam schedules.
             </p>
           </div>
         </div>
-
         <button
           type="button"
           onClick={() => onNavigateTab('notices')}
-          className="px-5 py-2.5 rounded-xl bg-[#0F2942] hover:bg-[#0a1c2e] dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition active:scale-95 cursor-pointer shrink-0"
+          className="px-4 py-2 rounded-lg bg-[#123D70] hover:bg-[#0B2545] text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-2xs transition active:scale-95 cursor-pointer shrink-0 self-start sm:self-auto"
         >
-          <span>View Notices</span>
+          <span>View Circulars</span>
           <span>→</span>
         </button>
       </div>
 
-      {/* 5. Quick Links Section */}
-      <div className="space-y-3">
-        <div className="flex items-center gap-2 text-slate-900 dark:text-white font-bold text-sm">
-          <Link2 className="w-4 h-4 text-slate-500 dark:text-slate-400" />
-          <span>Quick Links</span>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-          {/* Academic Calendar */}
-          <button
-            type="button"
-            onClick={() => onNavigateTab('calendar')}
-            className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-4 shadow-2xs hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xs transition cursor-pointer flex flex-col justify-between h-24 text-left group"
-          >
-            <CalendarDays className="w-5 h-5 text-slate-700 dark:text-slate-300 group-hover:text-blue-600 dark:group-hover:text-sky-400 transition" />
-            <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center justify-between">
-              <span>Academic Calendar</span>
-              <span className="text-slate-400 group-hover:translate-x-0.5 transition-transform">›</span>
-            </span>
-          </button>
-
-          {/* Fee Details */}
-          <button
-            type="button"
-            onClick={() => onNavigateTab('fees' as any)}
-            className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-4 shadow-2xs hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xs transition cursor-pointer flex flex-col justify-between h-24 text-left group"
-          >
-            <span className="font-bold text-lg text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-sky-400 transition leading-none">
-              ₹
-            </span>
-            <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center justify-between">
-              <span>Fee Details</span>
-              <span className="text-slate-400 group-hover:translate-x-0.5 transition-transform">›</span>
-            </span>
-          </button>
-
-          {/* Contact Us */}
-          <button
-            type="button"
-            onClick={() => onNavigateTab('social_links' as any)}
-            className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-4 shadow-2xs hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xs transition cursor-pointer flex flex-col justify-between h-24 text-left group"
-          >
-            <Phone className="w-5 h-5 text-slate-700 dark:text-slate-300 group-hover:text-blue-600 dark:group-hover:text-sky-400 transition" />
-            <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center justify-between">
-              <span>Contact Us</span>
-              <span className="text-slate-400 group-hover:translate-x-0.5 transition-transform">›</span>
-            </span>
-          </button>
-
-          {/* Help & Support */}
-          <button
-            type="button"
-            onClick={() => onNavigateTab('complaints')}
-            className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-4 shadow-2xs hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xs transition cursor-pointer flex flex-col justify-between h-24 text-left group"
-          >
-            <HelpCircle className="w-5 h-5 text-slate-700 dark:text-slate-300 group-hover:text-blue-600 dark:group-hover:text-sky-400 transition" />
-            <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center justify-between">
-              <span>Help & Support</span>
-              <span className="text-slate-400 group-hover:translate-x-0.5 transition-transform">›</span>
-            </span>
-          </button>
-        </div>
-      </div>
-
-      {/* 6. Footer Institutional Branding */}
-      <div className="pt-6 pb-2 text-center flex items-center justify-center gap-3 text-[11px] text-slate-400 dark:text-slate-500 font-medium">
-        <div className="h-px bg-slate-200 dark:bg-slate-800 flex-1 max-w-[80px]" />
-        <span>HIET Group of Institutions | Empowering Future</span>
-        <div className="h-px bg-slate-200 dark:bg-slate-800 flex-1 max-w-[80px]" />
+      {/* 6. Institutional Footer */}
+      <div className="pt-4 text-center flex items-center justify-center gap-3 text-[11px] text-[#64748B] dark:text-slate-500 font-medium">
+        <div className="h-px bg-[#D7DEE8] dark:bg-slate-800 flex-1 max-w-[80px]" />
+        <span>HIET Group of Institutions • Shahpur (Kangra)</span>
+        <div className="h-px bg-[#D7DEE8] dark:bg-slate-800 flex-1 max-w-[80px]" />
       </div>
     </div>
   );

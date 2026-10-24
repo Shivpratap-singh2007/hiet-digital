@@ -32,6 +32,7 @@ import { LeaveRequest } from '../types';
 import { NavTab } from '../components/common/Sidebar';
 import { PageHeader } from '../components/common/PageHeader';
 import { StatCard } from '../components/common/StatCard';
+import { CampusHero } from '../components/common/CampusHero';
 import { StatusBadge } from '../components/common/StatusBadge';
 
 // Tab components
@@ -191,639 +192,202 @@ export const TeacherDashboard: React.FC<Props> = ({ currentTab, onNavigateTab })
   if (currentTab === 'hostel_outpass' as any) return <HostelOutpassView />;
 
   return (
-    <div className="space-y-6 font-sans">
-      {/* 1. Page Header with Hierarchy Breadcrumbs (Monochrome) */}
-      <PageHeader
-        breadcrumbs={[
-          { label: 'Faculty Directorate' },
-          { label: activeConsoleMode === 'faculty' ? 'Faculty Dashboard' : 'Class In-Charge Console', active: true }
+    <div className="space-y-5 font-sans animate-fade-in max-w-5xl mx-auto px-1 sm:px-2 pb-8">
+      {/* 1. Official HIET Campus Hero & Faculty Greeting */}
+      <CampusHero
+        userName={user?.name || teacher?.name || 'Faculty Member'}
+        roleLabel="Faculty Member"
+        subtitle="Manage your classes, teaching activities and academic updates."
+        departmentOrBranch={`Dept: ${teacher?.department || 'CSE'} • ${teacher?.designation || 'Assistant Professor'}`}
+        idNumber={`Faculty ID: ${teacher?.faculty_id || 'FAC001'}`}
+        summaryItems={[
+          {
+            label: "Today's Schedule",
+            value: `${todayClasses.length} Scheduled`,
+            subtext: runningClass 
+              ? `Active: ${runningClass.subject_code} (Rm ${runningClass.room_no})`
+              : upcomingClass 
+              ? `Next: ${upcomingClass.subject_code} (${upcomingClass.start_time})` 
+              : 'All lectures concluded',
+            icon: Clock,
+            variant: runningClass ? 'success' : 'default',
+            onClick: () => onNavigateTab('timetable')
+          },
+          {
+            label: 'Assigned Courses',
+            value: `${mySubjects.length} Subjects`,
+            subtext: `${teacher?.department || 'Department'} Curriculum`,
+            icon: BookOpen,
+            onClick: () => onNavigateTab('syllabus')
+          },
+          {
+            label: 'Student Inquiries',
+            value: `${myDoubts.filter(d => d.status === 'Open').length} Pending`,
+            subtext: myDoubts.length > 0 ? `${myDoubts.length} queries logged` : 'No unresolved doubts',
+            icon: HelpCircle,
+            variant: myDoubts.filter(d => d.status === 'Open').length > 0 ? 'warning' : 'success',
+            onClick: () => onNavigateTab('doubts')
+          },
+          {
+            label: 'Leave Applications',
+            value: `${pendingLeaves.length} For Review`,
+            subtext: 'Student leave requests',
+            icon: CalendarCheck,
+            variant: pendingLeaves.length > 0 ? 'warning' : 'default',
+            onClick: () => onNavigateTab('leaves')
+          }
         ]}
-        title={`Welcome, ${user?.name || 'Faculty Member'}`}
-        description={`Faculty ID: ${teacher?.faculty_id || 'FAC001'} • Department: ${teacher?.department || 'CSE'} • Designation: ${teacher?.designation || 'Professor'}`}
-        badge="Faculty Member"
-        actions={
-          <div className="flex items-center gap-2">
-            {isClassInCharge && (
-              <div className="flex items-center bg-neutral-100 p-0.5 rounded-xl border border-neutral-300">
-                <button
-                  type="button"
-                  onClick={() => setActiveConsoleMode('faculty')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
-                    activeConsoleMode === 'faculty'
-                      ? 'bg-black text-white shadow-2xs'
-                      : 'text-neutral-600 hover:text-black'
-                  }`}
-                >
-                  Teaching Duties
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveConsoleMode('class_incharge')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
-                    activeConsoleMode === 'class_incharge'
-                      ? 'bg-black text-white shadow-2xs'
-                      : 'text-neutral-600 hover:text-black'
-                  }`}
-                >
-                  <GraduationCap className="w-3.5 h-3.5" />
-                  <span>Class In-Charge ({inchargeBranch} Sem {inchargeSemester}-{inchargeSection})</span>
-                </button>
-              </div>
-            )}
-            <button
-              type="button"
-              onClick={() => onNavigateTab('attendance')}
-              className="px-3.5 py-2 rounded-xl bg-black hover:bg-neutral-800 text-xs font-bold text-white transition flex items-center gap-1.5 shadow-2xs cursor-pointer"
-            >
-              <CalendarCheck className="w-4 h-4 text-white" />
-              <span>Mark Attendance</span>
-            </button>
-          </div>
-        }
       />
 
-      {/* ============================================================== */}
-      {/* SECTION 9: CLASS IN-CHARGE CONSOLE VIEW (Monochrome)           */}
-      {/* ============================================================== */}
-      {activeConsoleMode === 'class_incharge' ? (
-        <div className="space-y-6 animate-fade-in">
-          {/* Class Overview Cards */}
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <div>
-                <h2 className="text-xs font-extrabold uppercase tracking-wider text-black">
-                  Class Overview • {inchargeBranch} Semester {inchargeSemester} (Section {inchargeSection})
-                </h2>
-                <p className="text-[11px] text-neutral-600">
-                  Responsible class in-charge oversight, student attendance alerts, and academic monitoring
-                </p>
-              </div>
-              <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-neutral-100 text-black border border-neutral-300">
-                Designated Class In-Charge
-              </span>
+      {/* 2. Active / Next Class Notification Banner (When classes are scheduled) */}
+      {(runningClass || upcomingClass) && (
+        <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-[#D7DEE8] dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+          <div className="flex items-center gap-3">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border ${
+              runningClass 
+                ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800 animate-pulse'
+                : 'bg-blue-50 dark:bg-blue-950/60 text-[#123D70] dark:text-sky-400 border-blue-100 dark:border-blue-900/40'
+            }`}>
+              <Clock className="w-5 h-5" />
             </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <StatCard
-                label="Class Strength"
-                value={classStudents.length}
-                subtext={`Enrolled in ${inchargeBranch} Sem ${inchargeSemester}-${inchargeSection}`}
-                icon={Users}
-                badge="Class"
-                badgeColor="slate"
-              />
-
-              <StatCard
-                label="Overall Attendance"
-                value={`${classAvgAttendance}%`}
-                subtext="Class aggregate daily rate"
-                icon={CalendarCheck}
-                badge={classAvgAttendance >= 75 ? "Satisfactory" : "Low"}
-                badgeColor="slate"
-                onClick={() => onNavigateTab('attendance')}
-              />
-
-              <StatCard
-                label="Low Attendance Defaulters"
-                value={classDefaulters.length}
-                subtext="< 75% HPTU compliance warning"
-                icon={ShieldAlert}
-                badge={classDefaulters.length > 0 ? "Requires Warning" : "Clear"}
-                badgeColor="slate"
-                onClick={() => onNavigateTab('attendance')}
-              />
-
-              <StatCard
-                label="Class Performance"
-                value="83.4%"
-                subtext="Sessional & test average"
-                icon={Award}
-                badge="Good"
-                badgeColor="slate"
-                onClick={() => onNavigateTab('sessional_results')}
-              />
-            </div>
-          </div>
-
-          {/* Class Operations & Management */}
-          <div className="bg-white border border-neutral-300 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
-            <div className="flex items-center justify-between border-b border-neutral-200 pb-3">
-              <div>
-                <h2 className="text-sm font-bold text-black uppercase tracking-wider">
-                  Class Operations & Student Communication
-                </h2>
-                <p className="text-xs text-neutral-600 mt-0.5">
-                  Direct operations for {inchargeBranch} Sem {inchargeSemester}-{inchargeSection}
-                </p>
-              </div>
-              <span className="text-xs text-neutral-500 font-medium">In-Charge Actions</span>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-              <button
-                type="button"
-                onClick={() => onNavigateTab('attendance')}
-                className="p-3.5 rounded-xl border border-neutral-200 bg-neutral-50 hover:bg-neutral-100 hover:border-black transition text-center space-y-1.5 cursor-pointer"
-              >
-                <div className="w-8 h-8 rounded-lg bg-white border border-neutral-300 text-black flex items-center justify-center mx-auto">
-                  <CalendarCheck className="w-4 h-4" />
-                </div>
-                <div className="font-bold text-xs text-black">Attendance</div>
-                <div className="text-[10px] text-neutral-500">Defaulter ledger</div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => onNavigateTab('doubts')}
-                className="p-3.5 rounded-xl border border-neutral-200 bg-neutral-50 hover:bg-neutral-100 hover:border-black transition text-center space-y-1.5 cursor-pointer"
-              >
-                <div className="w-8 h-8 rounded-lg bg-white border border-neutral-300 text-black flex items-center justify-center mx-auto">
-                  <HelpCircle className="w-4 h-4" />
-                </div>
-                <div className="font-bold text-xs text-black">Student Issues</div>
-                <div className="text-[10px] text-neutral-500">{myDoubts.length} Queries</div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => onNavigateTab('leaves')}
-                className="p-3.5 rounded-xl border border-neutral-200 bg-neutral-50 hover:bg-neutral-100 hover:border-black transition text-center space-y-1.5 cursor-pointer"
-              >
-                <div className="w-8 h-8 rounded-lg bg-white border border-neutral-300 text-black flex items-center justify-center mx-auto">
-                  <Clock className="w-4 h-4" />
-                </div>
-                <div className="font-bold text-xs text-black">Leave Requests</div>
-                <div className="text-[10px] text-neutral-500">{classPendingLeaves} Pending</div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => onNavigateTab('notices')}
-                className="p-3.5 rounded-xl border border-neutral-200 bg-neutral-50 hover:bg-neutral-100 hover:border-black transition text-center space-y-1.5 cursor-pointer"
-              >
-                <div className="w-8 h-8 rounded-lg bg-white border border-neutral-300 text-black flex items-center justify-center mx-auto">
-                  <Bell className="w-4 h-4" />
-                </div>
-                <div className="font-bold text-xs text-black">Class Notices</div>
-                <div className="text-[10px] text-neutral-500">Broadcast circular</div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => onNavigateTab('timetable')}
-                className="p-3.5 rounded-xl border border-neutral-200 bg-neutral-50 hover:bg-neutral-100 hover:border-black transition text-center space-y-1.5 cursor-pointer"
-              >
-                <div className="w-8 h-8 rounded-lg bg-white border border-neutral-300 text-black flex items-center justify-center mx-auto">
-                  <CalendarDays className="w-4 h-4" />
-                </div>
-                <div className="font-bold text-xs text-black">Timetable</div>
-                <div className="text-[10px] text-neutral-500">Weekly schedule</div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  const target = classDefaultersWithPct[0] || (classStudents[0] ? { student: classStudents[0], pct: 68 } : null);
-                  if (target) {
-                    setSelectedDefaulterForWhatsApp(target);
-                  }
-                }}
-                className="p-3.5 rounded-xl border border-neutral-300 bg-neutral-100 hover:bg-neutral-200 transition text-center space-y-1.5 cursor-pointer"
-              >
-                <div className="w-8 h-8 rounded-lg bg-white border border-neutral-300 text-black flex items-center justify-center mx-auto">
-                  <MessageSquare className="w-4 h-4" />
-                </div>
-                <div className="font-bold text-xs text-black">WhatsApp Alert</div>
-                <div className="text-[10px] text-neutral-500">Parent warning</div>
-              </button>
-            </div>
-          </div>
-
-          {/* Low Attendance Defaulter Parental Warning Action Panel */}
-          {classDefaultersWithPct.length > 0 && (
-            <div className="bg-white border border-neutral-300 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-neutral-200 pb-3">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-neutral-100 border border-neutral-300 text-black flex items-center justify-center shrink-0">
-                    <ShieldAlert className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-black">
-                      Attendance Shortage Parental Alerts (&lt; 75% HPTU Rule)
-                    </h3>
-                    <p className="text-xs text-neutral-600">
-                      Send official WhatsApp warnings to ensure attendance compliance before exam hall ticket generation
-                    </p>
-                  </div>
-                </div>
-                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-neutral-100 text-black border border-neutral-300 shrink-0">
-                  {classDefaultersWithPct.length} Defaulters
+            <div>
+              <div className="flex items-center gap-2">
+                <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                  runningClass 
+                    ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300'
+                    : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
+                }`}>
+                  {runningClass ? 'Class In Progress' : 'Upcoming Session'}
+                </span>
+                <span className="text-xs font-bold text-[#172B4D] dark:text-white">
+                  {(runningClass || upcomingClass)?.subject_code} • {(runningClass || upcomingClass)?.subject_name}
                 </span>
               </div>
-
-              <div className="divide-y divide-neutral-200">
-                {classDefaultersWithPct.slice(0, 5).map(({ student, pct }) => (
-                  <div key={student.id} className="py-2.5 flex items-center justify-between gap-2 flex-wrap sm:flex-nowrap">
-                    <div>
-                      <div className="text-xs font-bold text-black">
-                        {student.name} <span className="text-neutral-500 font-normal">({student.roll_no})</span>
-                      </div>
-                      <div className="text-[11px] text-neutral-600">
-                        Parent: {student.parent_name || 'Guardian'} • {student.parent_phone || student.phone || 'Contact on file'}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-black px-2 py-0.5 rounded-md bg-neutral-100 border border-neutral-300">
-                        {pct}% Attendance
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setSelectedDefaulterForWhatsApp({ student, pct })}
-                        className="px-2.5 py-1.5 rounded-lg bg-black hover:bg-neutral-800 text-white text-xs font-bold transition flex items-center gap-1 shadow-2xs cursor-pointer"
-                      >
-                        <MessageSquare className="w-3.5 h-3.5" />
-                        <span>Send WhatsApp</span>
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      ) : (
-        /* ============================================================== */
-        /* SECTION 8: FACULTY MEMBER DASHBOARD (Monochrome)               */
-        /* ============================================================== */
-        <div className="space-y-6 animate-fade-in">
-          {/* SECTION: TODAY (Today's Classes, Current Class, Upcoming Class) */}
-          <div className="bg-white border border-neutral-300 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
-            <div className="flex items-center justify-between border-b border-neutral-200 pb-3">
-              <div>
-                <h2 className="text-sm font-bold text-black uppercase tracking-wider">
-                  Today's Teaching Schedule ({currentDayName})
-                </h2>
-                <p className="text-xs text-neutral-600 mt-0.5">
-                  Real-time schedule of your classes, lectures in session, and upcoming batches
-                </p>
-              </div>
-              <button
-                onClick={() => onNavigateTab('timetable')}
-                className="text-xs text-black font-bold hover:underline"
-              >
-                Full Timetable →
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Today's Classes Summary */}
-              <div className="p-4 rounded-xl border border-neutral-300 bg-neutral-50 space-y-2">
-                <div className="flex items-center justify-between text-xs font-bold text-neutral-700">
-                  <span>Today's Total Classes</span>
-                  <CalendarDays className="w-4 h-4 text-black" />
-                </div>
-                <div className="text-2xl font-extrabold text-black">
-                  {todayClasses.length} Lectures Scheduled
-                </div>
-                <p className="text-[11px] text-neutral-600">
-                  {todayClasses.map(c => c.subject_code).join(', ') || 'No classes today'}
-                </p>
-              </div>
-
-              {/* Current Class */}
-              <div className="p-4 rounded-xl border border-neutral-300 bg-neutral-50 space-y-2">
-                <div className="flex items-center justify-between text-xs font-bold text-neutral-700">
-                  <span>Current Class</span>
-                  <span className={`w-2.5 h-2.5 rounded-full ${runningClass ? 'bg-black animate-pulse' : 'bg-neutral-300'}`} />
-                </div>
-                <div className="text-base font-extrabold text-black truncate">
-                  {runningClass ? runningClass.subject_name : 'No Class in Session'}
-                </div>
-                <p className="text-[11px] text-neutral-600">
-                  {runningClass 
-                    ? `${runningClass.start_time} - ${runningClass.end_time} • Room ${runningClass.room_number || '304'}`
-                    : 'Next lecture starts shortly'}
-                </p>
-              </div>
-
-              {/* Upcoming Class */}
-              <div className="p-4 rounded-xl border border-neutral-300 bg-neutral-50 space-y-2">
-                <div className="flex items-center justify-between text-xs font-bold text-neutral-700">
-                  <span>Upcoming Class</span>
-                  <Clock className="w-4 h-4 text-black" />
-                </div>
-                <div className="text-base font-extrabold text-black truncate">
-                  {upcomingClass ? upcomingClass.subject_name : 'Day Complete'}
-                </div>
-                <p className="text-[11px] text-neutral-600">
-                  {upcomingClass 
-                    ? `${upcomingClass.start_time} • Sem ${upcomingClass.semester} (${upcomingClass.branch})`
-                    : 'All lectures for today concluded'}
-                </p>
-              </div>
+              <p className="text-xs text-[#64748B] dark:text-slate-400 mt-0.5">
+                {(runningClass || upcomingClass)?.start_time} - {(runningClass || upcomingClass)?.end_time} • Room {(runningClass || upcomingClass)?.room_no} • Sem {(runningClass || upcomingClass)?.semester} (Sec {(runningClass || upcomingClass)?.section || 'A'})
+              </p>
             </div>
           </div>
 
-          {/* SECTION: MY SUBJECTS (Assigned Subjects, Student Count, Attendance) */}
-          <div className="bg-white border border-neutral-300 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
-            <div className="flex items-center justify-between border-b border-neutral-200 pb-3">
-              <div>
-                <h2 className="text-sm font-bold text-black uppercase tracking-wider">
-                  My Subjects
-                </h2>
-                <p className="text-xs text-neutral-600 mt-0.5">
-                  Curriculum courses under your direct academic instruction
-                </p>
-              </div>
-              <button
-                onClick={() => onNavigateTab('syllabus')}
-                className="text-xs text-black font-bold hover:underline"
-              >
-                Curriculum Syllabus →
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-              {mySubjects.map(sub => {
-                const subAttendance = allAttendance.filter(a => a.subject_id === sub.id || (a as any).branch === sub.branch);
-                const subPresent = subAttendance.filter(a => a.status === 'Present').length;
-                const subAttRate = subAttendance.length > 0 ? Math.round((subPresent / subAttendance.length) * 100) : 86;
-
-                return (
-                  <div
-                    key={sub.id}
-                    className="p-4 rounded-xl border border-neutral-300 bg-neutral-50 hover:bg-neutral-100 hover:border-black transition space-y-3"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <span className="font-mono text-xs font-bold text-black">{sub.subject_code}</span>
-                        <h3 className="font-bold text-black text-sm mt-0.5 leading-snug">{sub.subject_name}</h3>
-                      </div>
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-black text-white">
-                        Assigned
-                      </span>
-                    </div>
-
-                    <div className="text-xs text-neutral-600 flex items-center justify-between pt-2 border-t border-neutral-200">
-                      <span>Sem {sub.semester} ({sub.branch}) • 64 Students</span>
-                      <span className="font-bold text-black">{subAttRate}% Attendance</span>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2 pt-1">
-                      <button
-                        type="button"
-                        onClick={() => onNavigateTab('attendance')}
-                        className="px-2.5 py-1.5 rounded-lg bg-white border border-neutral-300 text-black hover:border-black text-[11px] font-bold text-center transition shadow-2xs cursor-pointer"
-                      >
-                        Mark Attendance
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => onNavigateTab('assignments')}
-                        className="px-2.5 py-1.5 rounded-lg bg-black text-white hover:bg-neutral-800 text-[11px] font-bold text-center transition shadow-2xs cursor-pointer"
-                      >
-                        Assignments
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* SECTION: ACADEMIC WORK */}
-          <div className="bg-white border border-neutral-300 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
-            <div className="border-b border-neutral-200 pb-3 flex items-center justify-between">
-              <div>
-                <h2 className="text-sm font-bold text-black uppercase tracking-wider">
-                  Academic Work
-                </h2>
-                <p className="text-xs text-neutral-600 mt-0.5">
-                  Class assignments, student submissions, syllabus modules, PYQs, and examination grading
-                </p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-              <button
-                type="button"
-                onClick={() => onNavigateTab('assignments')}
-                className="p-3.5 rounded-xl border border-neutral-200 bg-neutral-50 hover:bg-neutral-100 hover:border-black transition text-center space-y-1.5 cursor-pointer"
-              >
-                <div className="w-8 h-8 rounded-lg bg-white border border-neutral-300 text-black flex items-center justify-center mx-auto">
-                  <FileSpreadsheet className="w-4 h-4" />
-                </div>
-                <div className="font-bold text-xs text-black">Assignments</div>
-                <div className="text-[10px] text-neutral-500">Create & manage</div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => onNavigateTab('assignments')}
-                className="p-3.5 rounded-xl border border-neutral-200 bg-neutral-50 hover:bg-neutral-100 hover:border-black transition text-center space-y-1.5 cursor-pointer"
-              >
-                <div className="w-8 h-8 rounded-lg bg-white border border-neutral-300 text-black flex items-center justify-center mx-auto">
-                  <CheckCircle2 className="w-4 h-4" />
-                </div>
-                <div className="font-bold text-xs text-black">Submissions</div>
-                <div className="text-[10px] text-neutral-500">Student homework</div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => onNavigateTab('syllabus')}
-                className="p-3.5 rounded-xl border border-neutral-200 bg-neutral-50 hover:bg-neutral-100 hover:border-black transition text-center space-y-1.5 cursor-pointer"
-              >
-                <div className="w-8 h-8 rounded-lg bg-white border border-neutral-300 text-black flex items-center justify-center mx-auto">
-                  <BookOpen className="w-4 h-4" />
-                </div>
-                <div className="font-bold text-xs text-black">Syllabus</div>
-                <div className="text-[10px] text-neutral-500">Course modules</div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => onNavigateTab('pyqs')}
-                className="p-3.5 rounded-xl border border-neutral-200 bg-neutral-50 hover:bg-neutral-100 hover:border-black transition text-center space-y-1.5 cursor-pointer"
-              >
-                <div className="w-8 h-8 rounded-lg bg-white border border-neutral-300 text-black flex items-center justify-center mx-auto">
-                  <FileQuestion className="w-4 h-4" />
-                </div>
-                <div className="font-bold text-xs text-black">PYQs</div>
-                <div className="text-[10px] text-neutral-500">Previous papers</div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => onNavigateTab('sessional_results')}
-                className="p-3.5 rounded-xl border border-neutral-200 bg-neutral-50 hover:bg-neutral-100 hover:border-black transition text-center space-y-1.5 cursor-pointer"
-              >
-                <div className="w-8 h-8 rounded-lg bg-white border border-neutral-300 text-black flex items-center justify-center mx-auto">
-                  <Award className="w-4 h-4" />
-                </div>
-                <div className="font-bold text-xs text-black">Sessional Marks</div>
-                <div className="text-[10px] text-neutral-500">Grading portal</div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => onNavigateTab('sessional_results')}
-                className="p-3.5 rounded-xl border border-neutral-200 bg-neutral-50 hover:bg-neutral-100 hover:border-black transition text-center space-y-1.5 cursor-pointer"
-              >
-                <div className="w-8 h-8 rounded-lg bg-white border border-neutral-300 text-black flex items-center justify-center mx-auto">
-                  <FileText className="w-4 h-4" />
-                </div>
-                <div className="font-bold text-xs text-black">Class Tests</div>
-                <div className="text-[10px] text-neutral-500">Unit assessments</div>
-              </button>
-            </div>
-          </div>
-
-          {/* SECTION: STUDENT SUPPORT */}
-          <div className="bg-white border border-neutral-300 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
-            <div className="border-b border-neutral-200 pb-3 flex items-center justify-between">
-              <div>
-                <h2 className="text-sm font-bold text-black uppercase tracking-wider">
-                  Student Support & Redressal
-                </h2>
-                <p className="text-xs text-neutral-600 mt-0.5">
-                  Academic query resolution, student leaves, certificate verification, and campus notifications
-                </p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div 
-                onClick={() => onNavigateTab('doubts')}
-                className="p-4 rounded-xl border border-neutral-300 bg-neutral-50 hover:bg-neutral-100 hover:border-black transition cursor-pointer space-y-1"
-              >
-                <div className="flex items-center justify-between text-xs font-bold text-neutral-700">
-                  <span>Student Doubts</span>
-                  <HelpCircle className="w-4 h-4 text-black" />
-                </div>
-                <div className="text-xl font-extrabold text-black">
-                  {myDoubts.filter(d => d.status === 'Open').length} Unresolved
-                </div>
-                <p className="text-[11px] text-neutral-500">Direct academic questions from students</p>
-              </div>
-
-              <div 
-                onClick={() => onNavigateTab('leaves')}
-                className="p-4 rounded-xl border border-neutral-300 bg-neutral-50 hover:bg-neutral-100 hover:border-black transition cursor-pointer space-y-1"
-              >
-                <div className="flex items-center justify-between text-xs font-bold text-neutral-700">
-                  <span>Leave Requests</span>
-                  <Clock className="w-4 h-4 text-black" />
-                </div>
-                <div className="text-xl font-extrabold text-black">
-                  {pendingLeaves.length} Pending Review
-                </div>
-                <p className="text-[11px] text-neutral-500">Medical & personal leave applications</p>
-              </div>
-
-              <div 
-                onClick={() => onNavigateTab('achievements')}
-                className="p-4 rounded-xl border border-neutral-300 bg-neutral-50 hover:bg-neutral-100 hover:border-black transition cursor-pointer space-y-1"
-              >
-                <div className="flex items-center justify-between text-xs font-bold text-neutral-700">
-                  <span>Achievements</span>
-                  <Trophy className="w-4 h-4 text-black" />
-                </div>
-                <div className="text-xl font-extrabold text-black">
-                  {pendingAchievements.length} Pending
-                </div>
-                <p className="text-[11px] text-neutral-500">Student awards & certificates to verify</p>
-              </div>
-
-              <div 
-                onClick={() => onNavigateTab('notices')}
-                className="p-4 rounded-xl border border-neutral-300 bg-neutral-50 hover:bg-neutral-100 hover:border-black transition cursor-pointer space-y-1"
-              >
-                <div className="flex items-center justify-between text-xs font-bold text-neutral-700">
-                  <span>Notifications</span>
-                  <Bell className="w-4 h-4 text-black" />
-                </div>
-                <div className="text-xl font-extrabold text-black">
-                  {notices.length} Circulars
-                </div>
-                <p className="text-[11px] text-neutral-500">Institutional circulars & directives</p>
-              </div>
-            </div>
-          </div>
-
-          {/* SECTION: QUICK ACTIONS */}
-          <div className="bg-white border border-neutral-300 rounded-2xl p-5 sm:p-6 shadow-xs space-y-4">
-            <div className="border-b border-neutral-200 pb-3 flex items-center justify-between">
-              <h2 className="text-sm font-bold text-black uppercase tracking-wider">
-                Quick Actions
-              </h2>
-              <span className="text-xs text-neutral-500">Faculty Shortcuts</span>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-              <button
-                type="button"
-                onClick={() => onNavigateTab('attendance')}
-                className="p-3.5 rounded-xl border border-neutral-200 bg-neutral-50 hover:bg-neutral-100 hover:border-black transition text-center space-y-1.5 cursor-pointer"
-              >
-                <div className="w-8 h-8 rounded-lg bg-white border border-neutral-300 text-black flex items-center justify-center mx-auto">
-                  <CalendarCheck className="w-4 h-4" />
-                </div>
-                <div className="font-bold text-xs text-black">Mark Attendance</div>
-                <div className="text-[10px] text-neutral-500">Live lecture roll-call</div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => onNavigateTab('assignments')}
-                className="p-3.5 rounded-xl border border-neutral-200 bg-neutral-50 hover:bg-neutral-100 hover:border-black transition text-center space-y-1.5 cursor-pointer"
-              >
-                <div className="w-8 h-8 rounded-lg bg-white border border-neutral-300 text-black flex items-center justify-center mx-auto">
-                  <Plus className="w-4 h-4" />
-                </div>
-                <div className="font-bold text-xs text-black">Create Assignment</div>
-                <div className="text-[10px] text-neutral-500">Post new homework</div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => onNavigateTab('pyqs')}
-                className="p-3.5 rounded-xl border border-neutral-200 bg-neutral-50 hover:bg-neutral-100 hover:border-black transition text-center space-y-1.5 cursor-pointer"
-              >
-                <div className="w-8 h-8 rounded-lg bg-white border border-neutral-300 text-black flex items-center justify-center mx-auto">
-                  <FileQuestion className="w-4 h-4" />
-                </div>
-                <div className="font-bold text-xs text-black">Upload PYQ</div>
-                <div className="text-[10px] text-neutral-500">Past question paper</div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => onNavigateTab('syllabus')}
-                className="p-3.5 rounded-xl border border-neutral-200 bg-neutral-50 hover:bg-neutral-100 hover:border-black transition text-center space-y-1.5 cursor-pointer"
-              >
-                <div className="w-8 h-8 rounded-lg bg-white border border-neutral-300 text-black flex items-center justify-center mx-auto">
-                  <BookOpen className="w-4 h-4" />
-                </div>
-                <div className="font-bold text-xs text-black">Upload Syllabus</div>
-                <div className="text-[10px] text-neutral-500">HPTU curriculum</div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => onNavigateTab('assignments')}
-                className="p-3.5 rounded-xl border border-neutral-200 bg-neutral-50 hover:bg-neutral-100 hover:border-black transition text-center space-y-1.5 cursor-pointer"
-              >
-                <div className="w-8 h-8 rounded-lg bg-white border border-neutral-300 text-black flex items-center justify-center mx-auto">
-                  <CheckCircle2 className="w-4 h-4" />
-                </div>
-                <div className="font-bold text-xs text-black">View Submissions</div>
-                <div className="text-[10px] text-neutral-500">Grade submissions</div>
-              </button>
-            </div>
-          </div>
+          <button
+            type="button"
+            onClick={() => onNavigateTab('attendance')}
+            className="px-4 py-2 rounded-lg bg-[#123D70] hover:bg-[#0B2545] text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-2xs transition active:scale-95 cursor-pointer shrink-0 self-start sm:self-auto"
+          >
+            <CalendarCheck className="w-4 h-4" />
+            <span>Mark Lecture Attendance</span>
+          </button>
         </div>
       )}
+
+      {/* 3. Essential Quick Actions (4 touch-friendly institutional actions) */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
+        <button
+          type="button"
+          onClick={() => onNavigateTab('attendance')}
+          className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-[#D7DEE8] dark:border-slate-800 hover:border-[#123D70] dark:hover:border-slate-700 shadow-2xs hover:shadow-xs transition text-left flex items-center gap-3 cursor-pointer group"
+        >
+          <div className="w-9 h-9 rounded-lg bg-blue-50 dark:bg-blue-950/50 text-[#123D70] dark:text-sky-400 flex items-center justify-center shrink-0 border border-blue-100 dark:border-blue-900/40 group-hover:scale-105 transition-transform">
+            <CalendarCheck className="w-4 h-4" />
+          </div>
+          <div className="min-w-0">
+            <div className="text-xs font-bold text-[#172B4D] dark:text-white truncate">Attendance</div>
+            <div className="text-[10px] text-[#64748B] dark:text-slate-400 truncate">Log lecture record</div>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => onNavigateTab('assignments')}
+          className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-[#D7DEE8] dark:border-slate-800 hover:border-[#123D70] dark:hover:border-slate-700 shadow-2xs hover:shadow-xs transition text-left flex items-center gap-3 cursor-pointer group"
+        >
+          <div className="w-9 h-9 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-100 dark:border-emerald-900/40 group-hover:scale-105 transition-transform">
+            <CheckCircle2 className="w-4 h-4" />
+          </div>
+          <div className="min-w-0">
+            <div className="text-xs font-bold text-[#172B4D] dark:text-white truncate">Coursework</div>
+            <div className="text-[10px] text-[#64748B] dark:text-slate-400 truncate">Assignments & grades</div>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => onNavigateTab('doubts')}
+          className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-[#D7DEE8] dark:border-slate-800 hover:border-[#123D70] dark:hover:border-slate-700 shadow-2xs hover:shadow-xs transition text-left flex items-center gap-3 cursor-pointer group"
+        >
+          <div className="w-9 h-9 rounded-lg bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0 border border-purple-100 dark:border-purple-900/40 group-hover:scale-105 transition-transform">
+            <HelpCircle className="w-4 h-4" />
+          </div>
+          <div className="min-w-0">
+            <div className="text-xs font-bold text-[#172B4D] dark:text-white truncate">Doubt Box</div>
+            <div className="text-[10px] text-[#64748B] dark:text-slate-400 truncate">Answer inquiries</div>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => onNavigateTab('smartboard')}
+          className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-[#D7DEE8] dark:border-slate-800 hover:border-[#123D70] dark:hover:border-slate-700 shadow-2xs hover:shadow-xs transition text-left flex items-center gap-3 cursor-pointer group"
+        >
+          <div className="w-9 h-9 rounded-lg bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-100 dark:border-amber-900/40 group-hover:scale-105 transition-transform">
+            <GraduationCap className="w-4 h-4" />
+          </div>
+          <div className="min-w-0">
+            <div className="text-xs font-bold text-[#172B4D] dark:text-white truncate">Smart Board</div>
+            <div className="text-[10px] text-[#64748B] dark:text-slate-400 truncate">Interactive classroom</div>
+          </div>
+        </button>
+      </div>
+
+      {/* 4. Class In-Charge Institutional Overview (Only if designated) */}
+      {isClassInCharge && (
+        <div className="p-4 rounded-xl bg-slate-50/90 dark:bg-slate-900/70 border border-[#D7DEE8] dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-black text-white flex items-center justify-center shrink-0 font-bold text-xs">
+              CIC
+            </div>
+            <div>
+              <div className="font-bold text-[#172B4D] dark:text-white">
+                Class In-Charge • {inchargeBranch} Sem {inchargeSemester} ({inchargeSection})
+              </div>
+              <div className="text-[11px] text-[#64748B] dark:text-slate-400 mt-0.5">
+                {classStudents.length} Students enrolled • Average Attendance: {classAvgAttendance}%
+                {classDefaulters.length > 0 && (
+                  <span className="text-rose-600 font-semibold ml-1">
+                    • ({classDefaulters.length} Defaulters &lt;75%)
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => onNavigateTab('students_mgmt')}
+            className="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-[#D7DEE8] dark:border-slate-700 hover:border-[#123D70] text-[#172B4D] dark:text-slate-200 font-semibold text-xs cursor-pointer shrink-0 self-start sm:self-auto"
+          >
+            Manage Class Students →
+          </button>
+        </div>
+      )}
+
+      {/* 5. Side Drawer Guidance Notice */}
+      <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-[#D7DEE8] dark:border-slate-800 flex items-center justify-between gap-3 text-xs">
+        <div className="flex items-center gap-3 text-[#172B4D] dark:text-slate-300">
+          <div className="w-8 h-8 rounded-lg bg-[#123D70]/10 dark:bg-sky-400/10 flex items-center justify-center text-[#123D70] dark:text-sky-400 shrink-0 font-bold">
+            ☰
+          </div>
+          <p className="text-[11px] sm:text-xs text-[#64748B] dark:text-slate-400">
+            Access <strong>Sessional Marks, Class Tests, Syllabus Uploads, PYQs, Achievements, Timetable,</strong> and <strong>Circulars</strong> from the <strong>Side Navigation Drawer</strong>.
+          </p>
+        </div>
+      </div>
+
+      {/* 6. Institutional Footer */}
+      <div className="pt-4 text-center flex items-center justify-center gap-3 text-[11px] text-[#64748B] dark:text-slate-500 font-medium">
+        <div className="h-px bg-[#D7DEE8] dark:bg-slate-800 flex-1 max-w-[80px]" />
+        <span>HIET Group of Institutions • Faculty Directorate</span>
+        <div className="h-px bg-[#D7DEE8] dark:bg-slate-800 flex-1 max-w-[80px]" />
+      </div>
 
       {selectedDefaulterForWhatsApp && (
         <WhatsAppAlertModal

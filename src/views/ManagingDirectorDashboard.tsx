@@ -31,6 +31,7 @@ import { dataStore } from '../lib/mockData';
 import { apiService } from '../lib/supabase';
 import { NavTab } from '../components/common/Sidebar';
 import { PageHeader } from '../components/common/PageHeader';
+import { CampusHero } from '../components/common/CampusHero';
 import { AttendanceBatch, SessionalResult, Complaint } from '../types';
 
 // Subviews
@@ -243,6 +244,13 @@ export const ManagingDirectorDashboard: React.FC<Props> = ({ currentTab, onNavig
     ? Math.round((presentCount / attendance.length) * 100)
     : 85;
 
+  const totalAttendanceDefaulters = students.filter(s => {
+    const sAtt = attendance.filter(a => a.student_id === s.id);
+    if (sAtt.length === 0) return false;
+    const p = sAtt.filter(a => a.status === 'Present').length;
+    return (p / sAtt.length) < 0.75;
+  }).length;
+
   // Grievance metrics
   const totalGrievances = complaints.length;
   const resolvedGrievances = complaints.filter(c => c.status === 'Resolved' || c.status === 'Closed').length;
@@ -378,6 +386,46 @@ export const ManagingDirectorDashboard: React.FC<Props> = ({ currentTab, onNavig
 
   return (
     <div className="space-y-6 font-sans text-black dark:text-white w-full max-w-full">
+      {/* Official HIET Campus Hero & Managing Director Greeting */}
+      <CampusHero
+        userName={mdName || 'Er. D. S. Pathania'}
+        roleLabel="Managing Director"
+        subtitle="Strategic institutional governance, executive performance and campus vision."
+        departmentOrBranch="HIET Group of Institutions • Board of Governors"
+        idNumber={`Executive ID: ${mdDisplayId || 'MD-01'}`}
+        summaryItems={[
+          {
+            label: 'Total Students',
+            value: `${totalActiveStudents} Enrolled`,
+            subtext: 'Active campus strength',
+            icon: Users,
+            onClick: () => onNavigateTab('department')
+          },
+          {
+            label: 'Faculty & Staff',
+            value: `${totalFacultyAndStaff} Personnel`,
+            subtext: 'Teaching & technical staff',
+            icon: Briefcase,
+            onClick: () => onNavigateTab('department')
+          },
+          {
+            label: 'Departments',
+            value: `${totalAcademicDepartments} Academic`,
+            subtext: `${totalActiveProgrammes} Programmes active`,
+            icon: Building,
+            onClick: () => onNavigateTab('department')
+          },
+          {
+            label: 'Attendance Rate',
+            value: `${overallAttendanceRate}%`,
+            subtext: totalAttendanceDefaulters > 0 ? `${totalAttendanceDefaulters} Alerts (<75%)` : 'Institutional compliance met',
+            icon: CalendarCheck,
+            variant: totalAttendanceDefaulters > 0 ? 'warning' : 'success',
+            onClick: () => onNavigateTab('attendance')
+          }
+        ]}
+      />
+
       {/* 1. Header with Institutional Breadcrumbs (Strict Monochrome) */}
       <PageHeader
         breadcrumbs={[

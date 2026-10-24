@@ -5,60 +5,117 @@
 @layer base {
   :root,
   .light {
-    --background: 246 248 251;
-    --foreground: 22 32 51;
+    --background: 243 245 248; /* #F3F5F8 Light Grey */
+    --foreground: 23 43 77;   /* #172B4D Primary Text */
 
-    --card: 255 255 255;
-    --card-foreground: 22 32 51;
+    --card: 255 255 255;       /* #FFFFFF White */
+    --card-foreground: 23 43 77;
 
     --popover: 255 255 255;
-    --popover-foreground: 22 32 51;
+    --popover-foreground: 23 43 77;
 
-    --primary: 11 31 58;
+    --primary: 18 61 112;      /* #123D70 Navy Blue */
     --primary-foreground: 255 255 255;
 
     --secondary: 235 240 247;
-    --secondary-foreground: 22 32 51;
+    --secondary-foreground: 23 43 77;
 
-    --muted: 244 246 250;
-    --muted-foreground: 102 112 133;
+    --muted: 243 245 248;
+    --muted-foreground: 100 116 139; /* #64748B Secondary Text */
 
     --accent: 230 237 248;
-    --accent-foreground: 22 32 51;
+    --accent-foreground: 23 43 77;
 
-    --border: 229 234 240;
-    --input: 229 234 240;
-    --ring: 21 87 166;
+    --border: 215 222 232;     /* #D7DEE8 Border Grey */
+    --input: 215 222 232;
+    --ring: 18 61 112;
 
-    --sidebar: 11 31 58;
+    --sidebar: 11 37 69;       /* #0B2545 Deep Navy */
     --sidebar-foreground: 240 244 248;
     --sidebar-muted: 157 176 202;
-    --sidebar-active: 21 87 166;
-    --sidebar-border: 31 53 84;
+    --sidebar-active: 18 61 112;
+    --sidebar-border: 27 57 97;
 
     --success: 22 132 91;
     --warning: 183 121 31;
     --danger: 197 48 48;
-    --info: 43 108 176;
+    --info: 18 61 112;
 
-    /* HIET Brand Design Tokens */
-    --color-primary: #0f2942;
-    --color-primary-pressed: #091a2b;
+    /* Official HIET Brand Design Tokens */
+    --hiet-navy: #123D70;
+    --hiet-deep-navy: #0B2545;
+    --hiet-white: #FFFFFF;
+    --hiet-light-grey: #F3F5F8;
+    --hiet-border-grey: #D7DEE8;
+    --hiet-primary-text: #172B4D;
+    --hiet-secondary-text: #64748B;
+
+    --color-primary: #123D70;
+    --color-primary-pressed: #0B2545;
     --color-canvas: #ffffff;
-    --color-surface-soft: #f8fafc;
+    --color-surface-soft: #F3F5F8;
     --color-surface-card: #ffffff;
-    --color-secondary-bg: #f1f5f9;
-    --color-secondary-pressed: #e2e8f0;
-    --color-hairline: #e2e8f0;
-    --color-hairline-soft: #edf2f7;
-    --color-ink: #0f172a;
-    --color-ink-soft: #1e293b;
-    --color-body: #334155;
-    --color-mute: #64748b;
+    --color-secondary-bg: #F3F5F8;
+    --color-secondary-pressed: #E2E8F0;
+    --color-hairline: #D7DEE8;
+    --color-hairline-soft: #E2E8F0;
+    --color-ink: #172B4D;
+    --color-ink-soft: #334155;
+    --color-body: #172B4D;
+    --color-mute: #64748B;
     --color-ash: #94a3b8;
     --color-stone: #cbd5e1;
-    --color-surface-dark: #0f172a;
+    --color-surface-dark: #0B2545;
     color-scheme: light;
+  }
+
+  .dark {
+    --background: 11 37 69;   /* #0B2545 Deep Navy */
+    --foreground: 241 245 249;
+
+    --card: 15 35 60;
+    --card-foreground: 241 245 249;
+
+    --popover: 15 35 60;
+    --popover-foreground: 241 245 249;
+
+    --primary: 56 130 220;
+    --primary-foreground: 255 255 255;
+
+    --secondary: 20 48 80;
+    --secondary-foreground: 241 245 249;
+
+    --muted: 18 43 73;
+    --muted-foreground: 148 163 184;
+
+    --accent: 24 55 92;
+    --accent-foreground: 241 245 249;
+
+    --border: 30 58 95;
+    --input: 30 58 95;
+    --ring: 56 130 220;
+
+    --sidebar: 8 26 49;
+    --sidebar-foreground: 240 244 248;
+    --sidebar-muted: 148 163 184;
+    --sidebar-active: 18 61 112;
+    --sidebar-border: 24 50 82;
+
+    --color-primary: #123D70;
+    --color-primary-pressed: #0B2545;
+    --color-canvas: #0B2545;
+    --color-surface-soft: #081C33;
+    --color-surface-card: #0F2A4A;
+    --color-secondary-bg: #153358;
+    --color-secondary-pressed: #1E4270;
+    --color-hairline: #22436C;
+    --color-hairline-soft: #1A365D;
+    --color-ink: #F8FAFC;
+    --color-ink-soft: #CBD5E1;
+    --color-body: #E2E8F0;
+    --color-mute: #94A3B8;
+    --color-surface-dark: #0B2545;
+    color-scheme: dark;
   }
 
   *, *::before, *::after {
