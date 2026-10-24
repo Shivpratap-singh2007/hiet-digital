@@ -11,8 +11,7 @@ import {
   Sparkles,
   Search,
   Download,
-  Settings,
-  Palette
+  Settings
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { usePwa } from '../../context/PwaContext';
@@ -24,7 +23,6 @@ interface Props {
   onOpenNotifications?: () => void;
   onOpenProfile?: () => void;
   onOpenSettings?: () => void;
-  onOpenAppearance?: () => void;
   onOpenLogin?: () => void;
   onOpenAiAssistant?: () => void;
   onOpenSearch?: () => void;
@@ -36,7 +34,6 @@ export const Navbar: React.FC<Props> = ({
   onOpenNotifications,
   onOpenProfile,
   onOpenSettings,
-  onOpenAppearance,
   onOpenLogin,
   onOpenAiAssistant,
   onOpenSearch,
@@ -333,18 +330,6 @@ export const Navbar: React.FC<Props> = ({
                       >
                         <Settings className="w-4 h-4 text-[#123D70] dark:text-sky-400" />
                         <span>Settings</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowProfileMenu(false);
-                          onOpenAppearance?.();
-                        }}
-                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-[#172B4D] dark:text-slate-200 hover:bg-[#F3F5F8] dark:hover:bg-slate-800 transition text-left cursor-pointer"
-                      >
-                        <Palette className="w-4 h-4 text-[#123D70] dark:text-sky-400" />
-                        <span>Appearance</span>
                       </button>
 
                       <div className="my-1 border-t border-[#D7DEE8] dark:border-slate-800" />

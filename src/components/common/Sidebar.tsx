@@ -42,8 +42,7 @@ import {
   HeartHandshake,
   Mic,
   Ticket,
-  Wrench,
-  Palette
+  Wrench
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { getNavigationForRole } from '../../config/navigation';
@@ -124,15 +123,13 @@ interface Props {
   onSelectTab: (tab: NavTab) => void;
   isOpenMobile: boolean;
   onCloseMobile: () => void;
-  onOpenAppearance?: () => void;
 }
 
 export const Sidebar: React.FC<Props> = ({
   currentTab,
   onSelectTab,
   isOpenMobile,
-  onCloseMobile,
-  onOpenAppearance
+  onCloseMobile
 }) => {
   const { role, user } = useAuth();
 
@@ -314,26 +311,8 @@ export const Sidebar: React.FC<Props> = ({
           })}
         </div>
 
-        {/* Drawer Footer: Appearance Quick Toggle & College Identity */}
+        {/* Drawer Footer: College Identity */}
         <div className="p-3 border-t border-[#D7DEE8] dark:border-slate-800 bg-[#F3F5F8]/80 dark:bg-[#071322] space-y-2 shrink-0">
-          {onOpenAppearance && (
-            <button
-              type="button"
-              onClick={() => {
-                onCloseMobile();
-                onOpenAppearance();
-              }}
-              className="w-full flex items-center justify-between px-3 py-1.5 rounded-xl border border-[#D7DEE8] dark:border-slate-800 bg-white dark:bg-slate-900 text-xs text-[#172B4D] dark:text-slate-300 hover:border-[#123D70] transition cursor-pointer"
-            >
-              <div className="flex items-center gap-2">
-                <Palette className="w-3.5 h-3.5 text-[#123D70] dark:text-sky-400" />
-                <span className="font-semibold">Appearance</span>
-              </div>
-              <span className="text-[10px] text-[#64748B] dark:text-slate-400 capitalize">
-                Theme
-              </span>
-            </button>
-          )}
 
           <div className="flex items-center justify-center gap-2 text-[11px] text-[#64748B] dark:text-slate-400">
             <img 

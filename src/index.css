@@ -69,55 +69,6 @@
     color-scheme: light;
   }
 
-  .dark {
-    --background: 11 37 69;   /* #0B2545 Deep Navy */
-    --foreground: 241 245 249;
-
-    --card: 15 35 60;
-    --card-foreground: 241 245 249;
-
-    --popover: 15 35 60;
-    --popover-foreground: 241 245 249;
-
-    --primary: 56 130 220;
-    --primary-foreground: 255 255 255;
-
-    --secondary: 20 48 80;
-    --secondary-foreground: 241 245 249;
-
-    --muted: 18 43 73;
-    --muted-foreground: 148 163 184;
-
-    --accent: 24 55 92;
-    --accent-foreground: 241 245 249;
-
-    --border: 30 58 95;
-    --input: 30 58 95;
-    --ring: 56 130 220;
-
-    --sidebar: 8 26 49;
-    --sidebar-foreground: 240 244 248;
-    --sidebar-muted: 148 163 184;
-    --sidebar-active: 18 61 112;
-    --sidebar-border: 24 50 82;
-
-    --color-primary: #123D70;
-    --color-primary-pressed: #0B2545;
-    --color-canvas: #0B2545;
-    --color-surface-soft: #081C33;
-    --color-surface-card: #0F2A4A;
-    --color-secondary-bg: #153358;
-    --color-secondary-pressed: #1E4270;
-    --color-hairline: #22436C;
-    --color-hairline-soft: #1A365D;
-    --color-ink: #F8FAFC;
-    --color-ink-soft: #CBD5E1;
-    --color-body: #E2E8F0;
-    --color-mute: #94A3B8;
-    --color-surface-dark: #0B2545;
-    color-scheme: dark;
-  }
-
   *, *::before, *::after {
     box-sizing: border-box;
   }
