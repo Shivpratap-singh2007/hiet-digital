@@ -256,13 +256,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<Profile | null>(() => {
     // 1. Development-only dashboard preview via ?previewRole=... (Section 62)
     if (import.meta.env.DEV && typeof window !== 'undefined') {
-      if (sessionStorage.getItem('hiet_logged_out') === 'true') {
-        return null;
-      }
       try {
         const params = new URLSearchParams(window.location.search);
         const previewRole = params.get('previewRole');
         if (previewRole) {
+          sessionStorage.removeItem('hiet_logged_out');
           switch (previewRole.toLowerCase()) {
             case 'student': return DEMO_STUDENT_CSE;
             case 'faculty':
@@ -278,6 +276,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       } catch (err) {
         console.warn('Dev preview query parse error:', err);
+      }
+      if (sessionStorage.getItem('hiet_logged_out') === 'true') {
+        return null;
       }
     }
 
@@ -317,14 +318,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       // 1. Development preview via ?previewRole=... (Section 62)
       if (import.meta.env.DEV && typeof window !== 'undefined') {
-        if (sessionStorage.getItem('hiet_logged_out') === 'true') {
-          setUser(null);
-          setIsInitializing(false);
-          return;
-        }
         const params = new URLSearchParams(window.location.search);
         const previewRole = params.get('previewRole');
         if (previewRole) {
+          sessionStorage.removeItem('hiet_logged_out');
           switch (previewRole.toLowerCase()) {
             case 'student': setUser(DEMO_STUDENT_CSE); setIsInitializing(false); return;
             case 'faculty':
@@ -337,6 +334,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             case 'md':
             case 'managing_director': setUser(DEMO_MD); setIsInitializing(false); return;
           }
+        }
+        if (sessionStorage.getItem('hiet_logged_out') === 'true') {
+          setUser(null);
+          setIsInitializing(false);
+          return;
         }
       }
 

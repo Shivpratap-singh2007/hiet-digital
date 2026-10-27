@@ -198,20 +198,21 @@ const MainLayout: React.FC = () => {
     return <VerifyPublicDoc type="certificate" token={token} onGoHome={() => { navigateTo('dashboard'); }} />;
   }
 
-  // Development Role Preview Support (?previewRole=student|faculty|hod|principal|security)
+  // Development Role Preview Support (?previewRole=student|faculty|hod|principal|security|md|managing_director)
   let effectiveRole = role;
   let devPreviewActive = false;
 
-  if (areDevRoutesEnabled() && typeof window !== 'undefined' && user) {
+  if (areDevRoutesEnabled() && typeof window !== 'undefined') {
     const params = new URLSearchParams(window.location.search);
     const pRole = params.get('previewRole');
     if (pRole) {
       devPreviewActive = true;
-      if (pRole === 'faculty') effectiveRole = 'teacher';
-      else if (pRole === 'principal') effectiveRole = 'principal';
+      if (pRole === 'faculty' || pRole === 'teacher') effectiveRole = 'teacher';
+      else if (pRole === 'principal' || pRole === 'admin') effectiveRole = 'principal';
       else if (pRole === 'hod') effectiveRole = 'hod';
       else if (pRole === 'student') effectiveRole = 'student';
-      else if (pRole === 'security') effectiveRole = 'security_guard';
+      else if (pRole === 'security' || pRole === 'security_guard') effectiveRole = 'security_guard';
+      else if (pRole === 'md' || pRole === 'managing_director') effectiveRole = 'managing_director';
     }
   }
 
