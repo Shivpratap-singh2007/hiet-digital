@@ -16,7 +16,7 @@ describe('HIET Digital Campus — Managing Director (MD) Master Verification', (
   describe('1. MD Identity & Persistent Institutional ID', () => {
     it('verifies DEMO_MD has role "managing_director" and authorized legal name', () => {
       expect(DEMO_MD.role).toBe('managing_director');
-      expect(DEMO_MD.name).toBe('Dushyant Kaistha');
+      expect(DEMO_MD.name).toBe('Mr Dushyant Kaistha');
       expect(DEMO_MD.email).toBe('md@hiet.ac.in');
       expect(DEMO_MD.id).toBe('prof-md-01');
     });

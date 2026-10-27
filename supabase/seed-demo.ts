@@ -23,7 +23,7 @@ const DEMO_USERS = [
   { role: 'faculty', email: 'faculty.cse01@hiet.demo', name: 'Dr. Anuj Sharma', identifier: 'HIET-FAC-CSE-001' },
   { role: 'hod', email: 'hod.cse@hiet.demo', name: 'Dr. Anuj Sharma (HOD)', identifier: 'HIET-HOD-CSE-001' },
   { role: 'principal', email: 'principal@hiet.demo', name: 'Dr Arjun Kumar', identifier: 'HIET-PRI-001' },
-  { role: 'managing_director', email: 'md@hiet.demo', name: 'Dushyant Kaistha', identifier: 'HIET-MD-001' },
+  { role: 'managing_director', email: 'md@hiet.demo', name: 'Mr Dushyant Kaistha', identifier: 'HIET-MD-001' },
   { role: 'security', email: 'security@hiet.demo', name: 'Ramesh Thakur', identifier: 'HIET-SEC-001' },
   { role: 'warden', email: 'warden@hiet.demo', name: 'Ms. Neha Verma', identifier: 'HIET-WAR-001' },
   { role: 'library_staff', email: 'library@hiet.demo', name: 'Sunita Devi', identifier: 'HIET-LIB-001' },

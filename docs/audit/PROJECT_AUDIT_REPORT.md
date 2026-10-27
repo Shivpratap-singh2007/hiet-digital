@@ -39,7 +39,7 @@ Key systems actively built and verified:
   Switch instantly between teaching workspace and department executive workspace; view department-wide attendance averages; filter low-attendance students (< 75%); allocate subjects to department faculty; audit curriculum syllabus progress; review Smart Board classroom utilization; resolve student departmental grievances.
 - **Principal & Director (Dr Arjun Kumar):**  
   View macro institutional metrics across all engineering branches (CSE, ECE, ME); appoint Heads of Departments; manage the academic catalog; monitor campus-wide attendance, complaints, and facility maintenance; execute master CSV/JSON imports with dry-run validation; inspect immutable system audit logs.
-- **Managing Director (Dushyant Kaistha):**  
+- **Managing Director (Mr Dushyant Kaistha):**  
   Review executive analytics, long-term enrollment trends, and financial clearance rates; monitor live campus headcount across buildings; inspect high-level audit trails.
 - **Campus Security (Ramesh Thakur):**  
   Scan student QR gate passes and hostel outpasses using camera; log entry and exit times; view real-time headcount of students on campus; receive automatic visual alerts for students overdue past their return deadline. (Academic marks and financial data are strictly hidden).
@@ -164,7 +164,7 @@ All accounts use the standard development password: **`Hiet@12345`**
 | Faculty | `faculty.cse02@hiet.demo` | `HIET-FAC-CSE-002` | Dr. Neha Kapoor | Mathematics, sessional marks entry |
 | Faculty | `faculty.cse03@hiet.demo` | `HIET-FAC-CSE-003` | Mr. Rohit Mehta | Class In-charge CSE-1A, leave approvals |
 | Principal | `principal@hiet.demo` | `HIET-PRI-001` | Dr Arjun Kumar | Institution overview, HOD appointment |
-| Managing Director | `md@hiet.demo` | `HIET-MD-001` | Dushyant Kaistha | Executive analytics, live headcount |
+| Managing Director | `md@hiet.demo` | `HIET-MD-001` | Mr Dushyant Kaistha | Executive analytics, live headcount |
 | Security | `security@hiet.demo` | `HIET-SEC-001` | Ramesh Thakur | QR gate scanner, entry/exit logs |
 | Warden | `warden@hiet.demo` | `HIET-WAR-001` | Ms. Neha Verma | Overnight hostel outpasses |
 | Library | `library@hiet.demo` | `HIET-LIB-001` | Sunita Devi | Book dues & no-dues clearance |

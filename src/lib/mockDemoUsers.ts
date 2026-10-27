@@ -366,7 +366,7 @@ export const DEMO_MD_SHARMA: Profile & { identifier: string } = {
   id: 'prof-md-01',
   auth_user_id: 'auth-md-01',
   role: 'managing_director',
-  name: 'Dushyant Kaistha',
+  name: 'Mr Dushyant Kaistha',
   email: 'md@hiet.ac.in',
   identifier: 'HIET-MD-2026-001',
   activeRoles: ['managing_director'],

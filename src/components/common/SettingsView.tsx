@@ -41,7 +41,7 @@ export const SettingsView: React.FC<Props> = ({ initialTab = 'profile' }) => {
   const isFaculty = !isMD && !isStudent && (role === 'teacher' || role === 'faculty' || user?.role === 'teacher' || user?.role === 'faculty');
 
   // Managing Director (MD) Specific Verified Data (Institution-Wide Leadership Scope)
-  const rawMdName = user?.name?.replace(/\s*\((Managing Director|MD)\)/gi, '').trim() || 'Dushyant Kaistha';
+  const rawMdName = user?.name?.replace(/\s*\((Managing Director|MD)\)/gi, '').trim() || 'Mr Dushyant Kaistha';
   const mdName = rawMdName;
   const mdDisplayId = user?.identifier?.startsWith('HIET-MD')
     ? (user.identifier === 'HIET-MD-001' ? 'HIET-MD-2026-001' : user.identifier)

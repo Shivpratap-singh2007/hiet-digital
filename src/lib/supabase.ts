@@ -1701,7 +1701,7 @@ export const apiService = {
       action: `Managing Director Decision: ${details.resolution}`,
       remarks: details.remarks,
       actor_role: 'managing_director',
-      actor_name: 'Dushyant Kaistha (Managing Director)'
+      actor_name: 'Mr Dushyant Kaistha (Managing Director)'
     };
 
     const update: Partial<Complaint> = {

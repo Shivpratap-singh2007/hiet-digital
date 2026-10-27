@@ -3554,7 +3554,7 @@ export const INITIAL_PROFILES: Profile[] = [
     id: 'prof-md-01',
     auth_user_id: 'auth-md-01',
     role: 'managing_director',
-    name: 'Dushyant Kaistha',
+    name: 'Mr Dushyant Kaistha',
     email: 'md@hiet.ac.in',
     must_change_password: false,
     created_at: '2026-08-01T10:00:00Z',
