@@ -1500,7 +1500,7 @@ export const apiService = {
         .select()
         .single();
       if (!error && data) {
-        // Stage 1: Notify Principal (Dr. Vinod Kumar - prof-principal-01)
+        // Stage 1: Notify Principal (Dr Arjun Kumar - prof-principal-01)
         await this.createNotification({
           recipient_user_id: 'prof-principal-01',
           title: 'New Confidential Grievance [Stage 1: Principal Review]',
@@ -1516,7 +1516,7 @@ export const apiService = {
     const current = dataStore.getComplaints();
     dataStore.setComplaints([newComplaint, ...current]);
 
-    // Stage 1: Local notification for Principal (Dr. Vinod Kumar - prof-principal-01)
+    // Stage 1: Local notification for Principal (Dr Arjun Kumar - prof-principal-01)
     await this.createNotification({
       recipient_user_id: 'prof-principal-01',
       title: 'New Confidential Grievance [Stage 1: Principal Review]',
@@ -1578,7 +1578,7 @@ export const apiService = {
             stage: 'Stage 2: Principal Reminder',
             timestamp: new Date().toISOString(),
             action: '48-Hour Principal Action Reminder Dispatched',
-            remarks: `No review recorded within ${config.principal_action_deadline_hours} hours. Overdue reminder sent to Principal Dr. Vinod Kumar.`,
+            remarks: `No review recorded within ${config.principal_action_deadline_hours} hours. Overdue reminder sent to Principal Dr Arjun Kumar.`,
             actor_role: 'system'
           }
         ];
@@ -1654,7 +1654,7 @@ export const apiService = {
         : `Principal Recorded Action: ${details.actionTaken}`,
       remarks: details.remarks,
       actor_role: 'principal',
-      actor_name: 'Dr. Vinod Kumar (Principal / Director)'
+      actor_name: 'Dr Arjun Kumar (Principal)'
     };
 
     const update: Partial<Complaint> = {
@@ -1674,7 +1674,7 @@ export const apiService = {
       await this.createNotification({
         recipient_user_id: 'prof-md-01',
         title: 'Escalated Grievance Referred by Principal',
-        message: `Grievance [${target.reference_id}] "${target.title}" referred to MD Desk by Principal Dr. Vinod Kumar.`,
+        message: `Grievance [${target.reference_id}] "${target.title}" referred to MD Desk by Principal Dr Arjun Kumar.`,
         type: 'complaint',
         related_record_id: target.id,
         is_read: false
@@ -1701,7 +1701,7 @@ export const apiService = {
       action: `Managing Director Decision: ${details.resolution}`,
       remarks: details.remarks,
       actor_role: 'managing_director',
-      actor_name: 'Er. D. S. Pathania (Managing Director)'
+      actor_name: 'Dushyant Kaistha (Managing Director)'
     };
 
     const update: Partial<Complaint> = {

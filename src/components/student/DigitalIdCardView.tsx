@@ -378,7 +378,7 @@ export const DigitalIdCardView: React.FC<Props> = ({ onNavigate: _onNavigate }) 
                   </div>
                   <div className="text-right">
                     <div className="w-24 border-b border-white/30 pb-1 mb-1 font-serif italic text-white text-xs">
-                      Dr. R. Pathania
+                      Dr Arjun Kumar
                     </div>
                     <span className="text-[9px] font-black uppercase tracking-wider text-slate-200 block">
                       REGISTRAR / DIRECTOR

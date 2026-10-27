@@ -94,7 +94,7 @@ export const ManagingDirectorDashboard: React.FC<Props> = ({ currentTab, onNavig
   const notices = dataStore.getNotices();
 
   // Managing Director Verified Identity
-  const mdName = user?.name?.replace(/\s*\((Managing Director|MD)\)/gi, '').trim() || 'Er. D. S. Pathania';
+  const mdName = user?.name?.replace(/\s*\((Managing Director|MD)\)/gi, '').trim() || 'Dushyant Kaistha';
   const mdDisplayId = user?.identifier?.startsWith('HIET-MD')
     ? (user.identifier === 'HIET-MD-001' ? 'HIET-MD-2026-001' : user.identifier)
     : 'HIET-MD-2026-001';
@@ -388,7 +388,7 @@ export const ManagingDirectorDashboard: React.FC<Props> = ({ currentTab, onNavig
     <div className="space-y-6 font-sans text-black dark:text-white w-full max-w-full">
       {/* Official HIET Campus Hero & Managing Director Greeting */}
       <CampusHero
-        userName={mdName || 'Er. D. S. Pathania'}
+        userName={mdName || 'Dushyant Kaistha'}
         roleLabel="Managing Director"
         subtitle="Strategic institutional governance, executive performance and campus vision."
         departmentOrBranch="HIET Group of Institutions • Board of Governors"

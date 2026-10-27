@@ -190,5 +190,5 @@ graph TD
 |-----------|----------|-------------------|--------|
 | **Test 1: Short Leave** | Aditya Nanda (CSE Sem 1 Sec A) applies for 2 days leave. | Routes to Class In-Charge (Mr. Rohit Mehta). Upon approval, status transitions to `Approved` immediately without HOD review. Student dashboard updates. | Verified |
 | **Test 2: HOD Leave** | Aarav Sharma (CSE) applies for 4 days leave. | Routes to Mr. Rohit Mehta. Faculty approves → status transitions to `pending_hod`. Appears in Dr. Anuj Sharma's HOD queue. HOD approves → status transitions to `Approved`. | Verified |
-| **Test 3: Principal Leave** | Priya Verma (CSE) applies for 8 days leave. | Routes Faculty → HOD → Principal (Dr. Rajesh Kumar). Each stage advances with notifications and history. Principal action finalizes status. | Verified |
+| **Test 3: Principal Leave** | Priya Verma (CSE) applies for 8 days leave. | Routes Faculty → HOD → Principal (Dr Arjun Kumar). Each stage advances with notifications and history. Principal action finalizes status. | Verified |
 | **Test 4: Multi-Role Safeguard** | Dr. Anuj Sharma acts as faculty for a 4-day leave where he is also HOD. | System detects Faculty = HOD. Skips duplicate HOD stage (Option A). History records: *"Faculty and HOD role held by same user; duplicate HOD approval skipped."* | Verified |

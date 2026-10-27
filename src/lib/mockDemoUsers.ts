@@ -353,25 +353,27 @@ export const DEMO_PRINCIPAL_RAJESH: Profile & { identifier: string } = {
   id: 'prof-principal-01',
   auth_user_id: 'auth-principal-01',
   role: 'principal',
-  name: 'Dr. Rajesh Kumar',
+  name: 'Dr Arjun Kumar',
   email: 'principal@hiet.demo',
   identifier: 'HIET-PRI-001',
   activeRoles: ['principal'],
   activeWorkspaceRole: 'principal',
   must_change_password: false
 };
+export const DEMO_PRINCIPAL_ARJUN = DEMO_PRINCIPAL_RAJESH;
 
 export const DEMO_MD_SHARMA: Profile & { identifier: string } = {
   id: 'prof-md-01',
   auth_user_id: 'auth-md-01',
   role: 'managing_director',
-  name: 'Er. D. S. Pathania',
+  name: 'Dushyant Kaistha',
   email: 'md@hiet.ac.in',
   identifier: 'HIET-MD-2026-001',
   activeRoles: ['managing_director'],
   activeWorkspaceRole: 'managing_director',
   must_change_password: false
 };
+export const DEMO_MD_DUSHYANT = DEMO_MD_SHARMA;
 
 export const DEMO_SECURITY_RAMESH: Profile & { identifier: string } = {
   id: 'prof-security-01',

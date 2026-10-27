@@ -41,13 +41,13 @@ BEGIN
     -- 2. Insert Users for each Role
     -- Principal
     INSERT INTO public.users (email, full_name, role, department_id, is_active)
-    VALUES ('principal@hiet.ac.in', 'Dr. Rajesh Sharma', 'principal', dept_cse_id, true)
+    VALUES ('principal@hiet.ac.in', 'Dr Arjun Kumar', 'principal', dept_cse_id, true)
     ON CONFLICT (email) DO UPDATE SET full_name = EXCLUDED.full_name
     RETURNING id INTO user_principal_id;
 
     -- Managing Director
     INSERT INTO public.users (email, full_name, role, department_id, is_active)
-    VALUES ('md@hiet.ac.in', 'Er. Vikram Mahajan', 'managing_director', dept_cse_id, true)
+    VALUES ('md@hiet.ac.in', 'Dushyant Kaistha', 'managing_director', dept_cse_id, true)
     ON CONFLICT (email) DO UPDATE SET full_name = EXCLUDED.full_name
     RETURNING id INTO user_md_id;
 

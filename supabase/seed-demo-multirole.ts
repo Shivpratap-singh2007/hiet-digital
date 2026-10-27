@@ -191,8 +191,8 @@ const DEMO_STUDENTS: DemoStudentSpec[] = [
 
 // Institutional executive and support users
 const INSTITUTIONAL_USERS = [
-  { email: 'principal@hiet.demo', name: 'Dr. Rajesh Kumar', identifier: 'HIET-PRI-001', role: 'principal' },
-  { email: 'md@hiet.demo', name: 'Mr. R. K. Sharma', identifier: 'HIET-MD-001', role: 'managing_director' },
+  { email: 'principal@hiet.demo', name: 'Dr Arjun Kumar', identifier: 'HIET-PRI-001', role: 'principal' },
+  { email: 'md@hiet.demo', name: 'Dushyant Kaistha', identifier: 'HIET-MD-001', role: 'managing_director' },
   { email: 'security@hiet.demo', name: 'Ramesh Thakur', identifier: 'HIET-SEC-001', role: 'security' },
   { email: 'library@hiet.demo', name: 'Sunita Devi', identifier: 'HIET-LIB-001', role: 'library_staff' },
   { email: 'lab@hiet.demo', name: 'Mohit Kumar', identifier: 'HIET-LAB-001', role: 'lab_staff' },

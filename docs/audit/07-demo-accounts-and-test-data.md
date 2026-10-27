@@ -24,8 +24,8 @@ The accounts below are grounded directly in the codebase seed migrations ([`2026
 | **Mr. Rohit Mehta** | `faculty`, `class_incharge` | `faculty.cse03@hiet.demo` | `HIET-FAC-CSE-003` | `Hiet@12345` | `seed_master_demo_data.sql:L96`, `AuthContext.tsx:L226` | Teaches Basic Electrical, Class In-charge CSE-1A, Leave Approvals queue | ✅ Active & Verified |
 | **Dr. Sunita Dogra** | `hod` (ECE) | `hod.ece@hiet.demo` | `HIET-FAC-ECE-001` | `Hiet@12345` | `mockData.ts:L310` | HOD Electronics & Comm, ECE Faculty Directory, ECE Timetable & Labs | ✅ Active & Verified |
 | **Er. Rajesh Bakshi** | `hod` (ME) | `hod.me@hiet.demo` | `HIET-FAC-ME-001` | `Hiet@12345` | `mockData.ts:L318` | HOD Mechanical Engineering, Workshop Utilization, ME Timetable & Faculty | ✅ Active & Verified |
-| **Dr. Rajesh Kumar** | `principal`, `admin` | `principal@hiet.demo` | `HIET-PRI-001` | `Hiet@12345` | `seed_master_demo_data.sql:L160`, `AuthContext.tsx:L258` | Institution Overview, All 3 Departments, Master Data Import, Audit Trail, No-Dues | ✅ Active & Verified |
-| **Mr. R. K. Sharma** | `managing_director`, `md` | `md@hiet.demo` | `HIET-MD-001` | `Hiet@12345` | `seed_master_demo_data.sql:L161`, `AuthContext.tsx:L270` | Executive Analytics, Enrollment KPIs, Financial indicators, Read-only Audit Log | ✅ Active & Verified |
+| **Dr Arjun Kumar** | `principal`, `admin` | `principal@hiet.demo` | `HIET-PRI-001` | `Hiet@12345` | `seed_master_demo_data.sql:L160`, `AuthContext.tsx:L258` | Institution Overview, All 3 Departments, Master Data Import, Audit Trail, No-Dues | ✅ Active & Verified |
+| **Dushyant Kaistha** | `managing_director`, `md` | `md@hiet.demo` | `HIET-MD-001` | `Hiet@12345` | `seed_master_demo_data.sql:L161`, `AuthContext.tsx:L270` | Executive Analytics, Enrollment KPIs, Financial indicators, Read-only Audit Log | ✅ Active & Verified |
 | **Ramesh Thakur** | `security`, `security_guard` | `security@hiet.demo` | `HIET-SEC-001` | `Hiet@12345` | `seed_master_demo_data.sql:L162`, `AuthContext.tsx:L282` | Gate QR Scanner, Entry/Exit Reconciliation, Gate Pass #1 Verification, Overdue alerts | ✅ Active & Verified |
 | **Ms. Neha Verma** | `warden` | `warden@hiet.demo` | `HIET-WAR-001` | `Hiet@12345` | `seed_master_demo_data.sql:L163`, `AuthContext.tsx:L294` | Girls Hostel Warden, Overnight Outpass queue, Parent Consent logs, Residency list | ✅ Active & Verified |
 | **Sunita Devi** | `library_staff` | `library@hiet.demo` | `HIET-LIB-001` | `Hiet@12345` | `seed_master_demo_data.sql:L164`, `AuthContext.tsx:L306` | Central Library Book Catalog, Book Return Dues, Student No-Dues Clearance Queue | ✅ Active & Verified |
@@ -58,7 +58,7 @@ The accounts below are grounded directly in the codebase seed migrations ([`2026
   - Subject Allocation: Matrix showing faculty mapping for CSE Semester 1.
   - Approvals: Review queue for Tier-2 student leaves exceeding 3 days.
 
-### 2.3 Institution Executive: Dr. Rajesh Kumar (`principal@hiet.demo`)
+### 2.3 Institution Executive: Dr Arjun Kumar (`principal@hiet.demo`)
 - **Institutional Overview:** Cross-department cards for CSE, ECE, ME with total intake of 180 seats.
 - **Administration Actions:**
   - Department Management modal with HOD appointment capabilities.

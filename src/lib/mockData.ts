@@ -2168,7 +2168,7 @@ export const INITIAL_LEAVES: LeaveRequest[] = [
     created_at: '2026-10-04T09:00:00Z',
     updated_at: '2026-10-04T11:30:00Z'
   },
-  // Test 4 — Principal Leave (7+ days): Student Priya Verma -> Faculty + HOD approved -> Pending with Dr. Rajesh Kumar (Principal)
+  // Test 4 — Principal Leave (7+ days): Student Priya Verma -> Faculty + HOD approved -> Pending with Dr Arjun Kumar (Principal)
   {
     id: 'lv-test-04',
     leave_id: 'lv-test-04',
@@ -2190,7 +2190,7 @@ export const INITIAL_LEAVES: LeaveRequest[] = [
     current_stage: 'principal',
     current_assignee_user_id: 'prof-principal-01',
     current_assignee_role_key: 'principal',
-    current_assignee_name: 'Dr. Rajesh Kumar (Principal)',
+    current_assignee_name: 'Dr Arjun Kumar (Principal)',
     submitted_by_user_id: 'prof-std-cse-2026-003',
     submitted_at: '2026-10-05T08:15:00Z',
     reviewed_by: 'prof-tch-fac-cse-001',
@@ -3544,8 +3544,18 @@ export const INITIAL_PROFILES: Profile[] = [
     id: 'prof-principal-01',
     auth_user_id: 'auth-principal-01',
     role: 'principal',
-    name: 'Dr. Vinod Kumar (Principal / Director)',
+    name: 'Dr Arjun Kumar',
     email: 'principal@hiet.ac.in',
+    must_change_password: false,
+    created_at: '2026-08-01T10:00:00Z',
+    updated_at: '2026-08-01T10:00:00Z'
+  },
+  {
+    id: 'prof-md-01',
+    auth_user_id: 'auth-md-01',
+    role: 'managing_director',
+    name: 'Dushyant Kaistha',
+    email: 'md@hiet.ac.in',
     must_change_password: false,
     created_at: '2026-08-01T10:00:00Z',
     updated_at: '2026-08-01T10:00:00Z'

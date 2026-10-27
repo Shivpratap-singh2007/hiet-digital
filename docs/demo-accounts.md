@@ -85,8 +85,8 @@ All faculty accounts use the universal password `Hiet@12345`. Login is supported
 
 | Persona | Officer Name | Employee Code | Login Email | Operational Role | Target Route & Workspace | Key Responsibilities |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Principal / Director** | Dr. Rajesh Kumar | `HIET-PRI-001` | `principal@hiet.demo` | `principal`, `admin` | `/app/admin` | Final sanction for leaves > 7 days, institute-wide metrics, no-dues oversight |
-| **Managing Director** | Mr. R. K. Sharma | `HIET-MD-001` | `md@hiet.demo` | `managing_director` | `/app/md` | Board audit dashboard, statutory compliance, 48h SLA grievance reviews |
+| **Principal / Director** | Dr Arjun Kumar | `HIET-PRI-001` | `principal@hiet.demo` | `principal`, `admin` | `/app/admin` | Final sanction for leaves > 7 days, institute-wide metrics, no-dues oversight |
+| **Managing Director** | Dushyant Kaistha | `HIET-MD-001` | `md@hiet.demo` | `managing_director` | `/app/md` | Board audit dashboard, statutory compliance, 48h SLA grievance reviews |
 | **Campus Security Incharge**| Ramesh Thakur | `HIET-SEC-001` | `security@hiet.demo` | `security` | `/app/security` | Main Gate scanner, live pedestrian/vehicle transit logs, QR pass verification |
 | **Central Library Officer** | Sunita Devi | `HIET-LIB-001` | `library@hiet.demo` | `library_staff` | `/app/library` | Book issue/return catalog, overdue fine management, digital no-dues clearance |
 | **Laboratory Incharge** | Mohit Kumar | `HIET-LAB-001` | `lab@hiet.demo` | `lab_staff` | `/app/lab` | Lab equipment fault tickets (workstation #12), inventory, lab no-dues |

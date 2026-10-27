@@ -55,7 +55,7 @@ export const MdWelcomeSection: React.FC = () => {
 
   // Extract clean authenticated name
   const rawName = user?.name || 'Managing Director';
-  // Strip parenthetical suffix if present (e.g. "Er. D. S. Pathania (Managing Director)" -> "Er. D. S. Pathania")
+  // Strip parenthetical suffix if present (e.g. "Dushyant Kaistha (Managing Director)" -> "Dushyant Kaistha")
   const displayName = rawName.replace(/\s*\([^)]*\)/g, '').trim() || 'Managing Director';
 
 
