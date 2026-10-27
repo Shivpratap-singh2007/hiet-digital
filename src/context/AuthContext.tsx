@@ -287,6 +287,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const saved = localStorage.getItem('hiet_current_user');
       if (saved && saved !== 'null' && saved !== 'undefined') {
         const parsed = JSON.parse(saved);
+        if (parsed.role === 'managing_director' || parsed.id === 'prof-md-01') {
+          parsed.name = 'Mr Dushyant Kaistha';
+        } else if (parsed.role === 'principal' || parsed.id === 'prof-principal-01') {
+          parsed.name = 'Dr Arjun Kumar';
+        }
         if (parsed.role === 'student') {
           if (parsed.studentMaster && parsed.studentMaster.branch === 'ECE') {
             parsed.studentMaster.department = 'B.Tech';
@@ -348,6 +353,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const saved = localStorage.getItem('hiet_current_user');
         if (saved && saved !== 'null' && saved !== 'undefined') {
           candidate = JSON.parse(saved);
+          if (candidate?.role === 'managing_director' || candidate?.id === 'prof-md-01') {
+            candidate.name = 'Mr Dushyant Kaistha';
+          } else if (candidate?.role === 'principal' || candidate?.id === 'prof-principal-01') {
+            candidate.name = 'Dr Arjun Kumar';
+          }
           if (candidate?.role === 'student' && candidate.studentMaster && candidate.studentMaster.branch === 'ECE') {
             candidate.studentMaster.department = 'B.Tech';
             candidate.department = 'B.Tech';

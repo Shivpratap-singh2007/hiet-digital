@@ -3,7 +3,7 @@
 // Himachal Institute of Engineering & Technology, Shahpur (H.P.)
 // =============================================================================
 
-const CACHE_NAME = 'hiet-campus-pwa-v4';
+const CACHE_NAME = 'hiet-campus-pwa-v5';
 const PRECACHE_ASSETS = [
   '/',
   '/?source=pwa',
@@ -57,6 +57,20 @@ self.addEventListener('fetch', (event) => {
   // API calls & Supabase endpoints: Network Only (do not cache dynamic DB queries)
   if (url.pathname.includes('/rest/v1/') || url.pathname.includes('/functions/v1/')) {
     return;
+  }
+
+  // On localhost/dev server, always bypass caching for scripts and styles to prevent stale development bundles
+  if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
+    if (
+      url.pathname.endsWith('.js') ||
+      url.pathname.endsWith('.css') ||
+      url.pathname.includes('/src/') ||
+      url.pathname.includes('/@vite/') ||
+      url.pathname.includes('/@fs/') ||
+      url.pathname.includes('/node_modules/')
+    ) {
+      return;
+    }
   }
 
   // Navigation requests (HTML pages): Fast Network-First (2.5s timeout) with instant App Shell Cache Fallback

@@ -20,6 +20,18 @@
         try {
           localStorage.removeItem("hiet-digital-campus-theme");
           localStorage.removeItem("hiet_theme_mode");
+          // Clean up old cached session if stored with outdated demo name
+          var u = localStorage.getItem("hiet_current_user");
+          if (u) {
+            var p = JSON.parse(u);
+            if (p && (p.role === 'managing_director' || p.id === 'prof-md-01') && p.name !== 'Mr Dushyant Kaistha') {
+              p.name = 'Mr Dushyant Kaistha';
+              localStorage.setItem("hiet_current_user", JSON.stringify(p));
+            } else if (p && (p.role === 'principal' || p.id === 'prof-principal-01') && p.name !== 'Dr Arjun Kumar') {
+              p.name = 'Dr Arjun Kumar';
+              localStorage.setItem("hiet_current_user", JSON.stringify(p));
+            }
+          }
         } catch (e) {}
         document.documentElement.classList.remove("dark");
         document.documentElement.classList.add("light");
